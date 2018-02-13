@@ -107,9 +107,7 @@ class widget_pl( QWidget ) :
                                      azim_cen=a['phi'][0], phi_del=a['d_phi'][0],
                                      volt_cen=a['nrg'][0], volt_del=a['d_nrg'][0], psd=a['psd'][0] )
 
-		print self.core.pl_spec['vel_strt'][0]
-		print self.core.pl_spec['vel_stop'][-1]
-		print where(array(self.core.pl_spec['psd_flat'] != 0.))
+		print where(array(self.core.pl_spec['psd_flat']) != 0.)
 #		a = [self.core.pl_spec['psd_flat'][i] for i in (where(array(self.core.pl_spec['psd_flat'] != 0.))[0])]
 #		print a
 
