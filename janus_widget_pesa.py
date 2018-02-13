@@ -106,10 +106,8 @@ class widget_pl( QWidget ) :
                                      elev_cen=a['the'][0], the_del=a['d_the'][0],
                                      azim_cen=a['phi'][0], phi_del=a['d_phi'][0],
                                      volt_cen=a['nrg'][0], volt_del=a['d_nrg'][0], psd=a['psd'][0] )
+		print a['the'][0]
 
-		print where(array(self.core.pl_spec['psd_flat']) != 0.)
-#		a = [self.core.pl_spec['psd_flat'][i] for i in (where(array(self.core.pl_spec['psd_flat'] != 0.))[0])]
-#		print a
 
 
 
@@ -177,8 +175,8 @@ class widget_pl( QWidget ) :
 		# selection points, and the fit curves.
 
 		self.make_hst( )
-		self.make_pnt( )
-		self.make_crv( )
+#		self.make_pnt( )
+#		self.make_crv( )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR INITIALIZING THE WIDGET AND ITS PLOTS.
@@ -343,7 +341,7 @@ class widget_pl( QWidget ) :
 			self.lim_x = [self.core.pl_spec['vel_strt'][0],
 			              self.core.pl_spec['vel_stop'][-1]]
 
-			arr_psd_flat = where( self.core.pl_spec['psd_flat'] != 0. )
+			arr_psd_flat = [self.core.pl_spec['psd_flat'][i] for i in (where(array(self.core.pl_spec['psd_flat']) != 0.)[0])]
 
 			self.lim_y = [ min(arr_psd_flat), max(arr_psd_flat)  ]
 
@@ -395,8 +393,8 @@ class widget_pl( QWidget ) :
 						for t in range(self.core.pl_spec['n_the']) ])
 
 			stp_pnt = array( [ array( self.stp[t]\
-			                              .calc_pnt( lev_min=curr_min ) )
-			                for t in range( self.core.fc_spec['n_the'] ) ] )
+			                              .calc_pnt( lev_min=0 ) )
+			                for t in range( self.core.pl_spec['n_the'] ) ] )
 
 			self.stp_x = stp_pnt[:,0,:]
 			self.stp_y = stp_pnt[:,1,:]
@@ -417,7 +415,7 @@ class widget_pl( QWidget ) :
 			# For each plot in the grid, adjust its limits, add a histogram,
 			# and add a direction label.
 
-			for t in range( min( self.core.fc_spec['n_the'], self.n_plt ) ) :
+			for t in range( min( self.core.pl_spec['n_the'], self.n_plt ) ) :
 
 				# Determine the location of this plot within the grid
 				# layout.
@@ -453,8 +451,12 @@ class widget_pl( QWidget ) :
 				# Update this plot's label with appropriate text
 				# indicating the pointing direction.
 
-				r_alt = round( self.core.fc_spec['elev'][self.c] )
-				r_dir = round( self.core.fc_spec['azim'][self.c][d])
+				print self.core.pl_spec['elev_cen']
+				print self.core.pl_spec['azim_cen']
+
+
+				r_alt = round( self.core.pl_spec['elev_cen'][t] )
+				r_dir = round( self.core.pl_spec['azim_cen'][p])
 
 				txt = ( u'({0:+.0f}\N{DEGREE SIGN}, ' + 
 				        u'{1:+.0f}\N{DEGREE SIGN})'     ).format(
@@ -466,8 +468,8 @@ class widget_pl( QWidget ) :
 				# Generate the histogram for the data from this look
 				# direction and display it in the plot.
 
-				self.hst[j,i] = PlotDataItem( self.asp_x[d,:],
-				                              self.asp_y[d,:],
+				self.hst[j,i] = PlotDataItem( self.asp_x[p,:],
+				                              self.asp_y[p,:],
 				                              pen=self.pen_hst )
 
 				self.plt[j,i].addItem( self.hst[j,i] )

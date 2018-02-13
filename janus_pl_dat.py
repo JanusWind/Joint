@@ -138,7 +138,7 @@ class pl_dat( ) :
 		elif ( key == 'azim_cen' ) :
 			return self._azim_cen
 		elif ( key == 'elev_cen' ) :
-			return self._elev
+			return self._elev_cen
 		elif ( key == 'the_cen' ) :
 			return self._the_cen
 		elif ( key == 'the_del' ) :
