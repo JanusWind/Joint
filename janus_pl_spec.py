@@ -201,6 +201,11 @@ class pl_spec( ) :
 			             for b in range( self._n_bin ) ]
 			             for t in range( self._n_the ) ]
 			             for p in range( self._n_phi ) ]
+		elif ( key == 'psd_flat' ) :
+			return [ self.arr[p][t][b]['psd']
+			         for b in range( self._n_bin )
+			         for t in range( self._n_the )
+			         for p in range( self._n_phi ) ]
 		elif ( key == 'rot' ) :
 			return self._rot
 		else :

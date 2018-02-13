@@ -50,12 +50,18 @@ from numpy import amax, amin, array, ceil, floor, log10, sqrt, tile, where
 from threading import Thread
 from janus_thread import n_thread, thread_chng_mom_sel, thread_chng_nln_sel
 
+# Load the module for TESTING joint
+
+from scipy.io import readsav
+from janus_pl_spec import pl_spec
+from numpy import zeros
+
 
 ################################################################################
 ## DEFINE THE "widget_fc_cup" CLASS TO CUSTOMIZE "QWidget" FOR Wind/FC PLOTS.
 ################################################################################
 
-class widget_fc_cup( QWidget ) :
+class widget_pl( QWidget ) :
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE INITIALIZATION FUNCTION.
@@ -66,7 +72,7 @@ class widget_fc_cup( QWidget ) :
 
 		# Inherit all attributes of an instance of "QWidget".
 
-		super( widget_pesa, self ).__init__( )
+		super( widget_pl, self ).__init__( )
 
 		# Initialize the counter of repaint events for this widget as
 		# well as a maximum value for this counter.
@@ -89,29 +95,49 @@ class widget_fc_cup( QWidget ) :
 
 		self.core = core
 
+		
+		# TESTING
+
+		a = readsav('wind-faces_esa_1997-01-08.idl')
+
+		#self.core.pl_spec = zeros(4)
+
+		self.core.pl_spec = pl_spec( t_strt=a['sec_beg'][0], t_stop=a['sec_end'][0],
+                                     elev_cen=a['the'][0], the_del=a['d_the'][0],
+                                     azim_cen=a['phi'][0], phi_del=a['d_phi'][0],
+                                     volt_cen=a['nrg'][0], volt_del=a['d_nrg'][0], psd=a['psd'][0] )
+
+		print self.core.pl_spec['vel_strt'][0]
+		print self.core.pl_spec['vel_stop'][-1]
+		print where(array(self.core.pl_spec['psd_flat'] != 0.))
+#		a = [self.core.pl_spec['psd_flat'][i] for i in (where(array(self.core.pl_spec['psd_flat'] != 0.))[0])]
+#		print a
+
+
+
 		# Prepare to respond to signals received from the Janus core.
 
-		self.connect( self.core, SIGNAL('janus_rset'), self.resp_rset )
-		self.connect( self.core, SIGNAL('janus_chng_spc'),
-		                                            self.resp_chng_spc )
-		self.connect( self.core, SIGNAL('janus_chng_mom_sel_bin'),
-		                                    self.resp_chng_mom_sel_bin )
-		self.connect( self.core, SIGNAL('janus_chng_mom_sel_dir'),
-		                                    self.resp_chng_mom_sel_dir )
-		self.connect( self.core, SIGNAL('janus_chng_mom_sel_all'),
-		                                    self.resp_chng_mom_sel_all )
-		self.connect( self.core, SIGNAL('janus_chng_mom_res'),
-		                                        self.resp_chng_mom_res )
-		self.connect( self.core, SIGNAL('janus_chng_nln_gss'),
-		                                        self.resp_chng_nln_gss )
-		self.connect( self.core, SIGNAL('janus_chng_nln_sel_bin'),
-		                                    self.resp_chng_nln_sel_bin )
-		self.connect( self.core, SIGNAL('janus_chng_nln_sel_all'),
-		                                    self.resp_chng_nln_sel_all )
-		self.connect( self.core, SIGNAL('janus_chng_nln_res'),
-		                                        self.resp_chng_nln_res )
-		self.connect( self.core, SIGNAL('janus_chng_dsp'),
-		                                            self.resp_chng_dsp )
+#		self.connect( self.core, SIGNAL('janus_rset'), self.resp_rset )
+#		self.connect( self.core, SIGNAL('janus_chng_spc'),
+#		                                            self.resp_chng_spc )
+#		self.connect( self.core, SIGNAL('janus_chng_mom_sel_bin'),
+#		                                    self.resp_chng_mom_sel_bin )
+#		self.connect( self.core, SIGNAL('janus_chng_mom_sel_dir'),
+#		                                    self.resp_chng_mom_sel_dir )
+#		self.connect( self.core, SIGNAL('janus_chng_mom_sel_all'),
+#		                                    self.resp_chng_mom_sel_all )
+#		self.connect( self.core, SIGNAL('janus_chng_mom_res'),
+#		                                        self.resp_chng_mom_res )
+#		self.connect( self.core, SIGNAL('janus_chng_nln_gss'),
+#		                                        self.resp_chng_nln_gss )
+#		self.connect( self.core, SIGNAL('janus_chng_nln_sel_bin'),
+#		                                    self.resp_chng_nln_sel_bin )
+#		self.connect( self.core, SIGNAL('janus_chng_nln_sel_all'),
+#		                                    self.resp_chng_nln_sel_all )
+#		self.connect( self.core, SIGNAL('janus_chng_nln_res'),
+#		                                        self.resp_chng_nln_res )
+#		self.connect( self.core, SIGNAL('janus_chng_dsp'),
+#		                                            self.resp_chng_dsp )
 		#TODO add more signals
 
 		# Assign (if not done so already) and store the shape of the
@@ -184,7 +210,7 @@ class widget_fc_cup( QWidget ) :
 		# create the labels themselves and add them to the grid.
 
 		self.txt_axs_x = 'Projected Proton Inflow Velocity [km/s]'
-		self.txt_axs_y = 'Phase-space Density [unit?]'
+		self.txt_axs_y = r'Phase-space Density [cm^{-3}/(km/s)^3]'
 
 		if ( self.core.app.res_lo ) :
 			size =  '8pt'
@@ -316,13 +342,13 @@ class widget_fc_cup( QWidget ) :
 
 		else :
 
-			self.lim_x = [self.core.pl_spec['vel_strt'][0 ],
+			self.lim_x = [self.core.pl_spec['vel_strt'][0],
 			              self.core.pl_spec['vel_stop'][-1]]
-			#TODO
-			arr_curr_flat = self.core.fc_spec['curr_flat']
 
-			self.lim_y = [ min(arr_curr_flat), max(arr_curr_flat)  ]
-			#/TODO
+			arr_psd_flat = where( self.core.pl_spec['psd_flat'] != 0. )
+
+			self.lim_y = [ min(arr_psd_flat), max(arr_psd_flat)  ]
+
 			if ( self.log_y ) :
 				self.lim_y[1] = self.lim_y[1] ** 1.1
 			else :
@@ -345,14 +371,14 @@ class widget_fc_cup( QWidget ) :
 	# DEFINE THE FUNCTION FOR CREATING THE PLOTS' HISTOGRAMS (AND LABELS).
 	#-----------------------------------------------------------------------
 
-	def make_hst( self, curr_min=0.69 ) :
+	def make_hst( self ) :
 
 		# If no spectrum has been loaded, clear any existing histograms
 		# and abort.
 
-		if ( self.core.fc_spec is None ) :
+		if ( self.core.pl_spec is None ) :
 
-			self.rset_hst( )
+#			self.rset_hst( )
 
 			return
 
@@ -363,85 +389,143 @@ class widget_fc_cup( QWidget ) :
 		# Generate a step function for each look direction associated
 		# with this widget.
 
-		self.stp = array( [ step(  self.core.fc_spec['vel_cen'][self.c] ,
-					   self.core.fc_spec['vel_del'][self.c] ,
-					   self.core.fc_spec['curr'][self.c][d])
-						for d in range(self.core.fc_spec['n_dir']) ])
+		for p in range( self.core.pl_spec['n_phi'] ):
 
-		stp_pnt = array( [ array( self.stp[d]\
-		                              .calc_pnt( lev_min=curr_min ) )
-		                for d in range( self.core.fc_spec['n_dir'] ) ] )
+			self.stp = array( [ step(  self.core.pl_spec['vel_cen'],
+						   self.core.pl_spec['vel_del'],
+						   self.core.pl_spec['psd'][p][t])
+						for t in range(self.core.pl_spec['n_the']) ])
 
-		self.stp_x = stp_pnt[:,0,:]
-		self.stp_y = stp_pnt[:,1,:]
+			stp_pnt = array( [ array( self.stp[t]\
+			                              .calc_pnt( lev_min=curr_min ) )
+			                for t in range( self.core.fc_spec['n_the'] ) ] )
 
-		self.asp_x = log10( self.stp_x ) if ( self.log_x ) else \
-		                    self.stp_x
-		self.asp_y = log10( self.stp_y ) if ( self.log_y ) else \
-		                    self.stp_y
+			self.stp_x = stp_pnt[:,0,:]
+			self.stp_y = stp_pnt[:,1,:]
 
-		# Adjust the individual axes to the new limits.
+			self.asp_x = log10( self.stp_x ) if ( self.log_x ) else \
+			                    self.stp_x
+			self.asp_y = log10( self.stp_y ) if ( self.log_y ) else \
+			                    self.stp_y
 
-		for i in range( self.n_plt_x ) :
-			self.axs_x[i].setRange( self.alm_x[0], self.alm_x[1] )
+			# Adjust the individual axes to the new limits.
+
+			for i in range( self.n_plt_x ) :
+				self.axs_x[i].setRange( self.alm_x[0], self.alm_x[1] )
+
+			for j in range( self.n_plt_y ) :
+				self.axs_y[j].setRange( self.alm_y[0], self.alm_y[1] )
+
+			# For each plot in the grid, adjust its limits, add a histogram,
+			# and add a direction label.
+
+			for t in range( min( self.core.fc_spec['n_the'], self.n_plt ) ) :
+
+				# Determine the location of this plot within the grid
+				# layout.
+
+				j = t
+				i = p
+
+				# If this plot does not exist, move onto the next one.
+
+				if ( self.plt[j,i] is None ) :
+					continue
+
+				# If a histogram already exists for this plot, remove
+				# and delete it.
+
+				if ( self.hst[j,i] is not None ) :
+					self.plt[j,i].removeItem( self.hst[j,i] )
+					self.hst[j,i] = None
+
+				# Clear this plot's label of text.
+
+				self.lbl[j,i].setText( '' )
+
+				# Adjust this plot's limits and then move it's label in
+				# response.
+
+				self.plt[j,i].setRange( xRange=self.alm_x,
+				                        yRange=self.alm_y,
+				                        padding=0.         )
+
+				self.lbl[j,i].setPos( self.alm_x[1], self.alm_y[1] )
+
+				# Update this plot's label with appropriate text
+				# indicating the pointing direction.
+
+				r_alt = round( self.core.fc_spec['elev'][self.c] )
+				r_dir = round( self.core.fc_spec['azim'][self.c][d])
+
+				txt = ( u'({0:+.0f}\N{DEGREE SIGN}, ' + 
+				        u'{1:+.0f}\N{DEGREE SIGN})'     ).format(
+				                                          r_alt, r_dir )
+
+				self.lbl[j,i].setText( txt, color=(0,0,0) )
+				#self.lbl[j,i].setFont( self.fnt           )
+
+				# Generate the histogram for the data from this look
+				# direction and display it in the plot.
+
+				self.hst[j,i] = PlotDataItem( self.asp_x[d,:],
+				                              self.asp_y[d,:],
+				                              pen=self.pen_hst )
+
+				self.plt[j,i].addItem( self.hst[j,i] )
+
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR RESETTING THE PLOTS' HISTOGRAMS (AND LABELS).
+	#-----------------------------------------------------------------------
+
+	def rset_hst( self, rset_lbl=False ) :
+
+		# For each plot that exists in the grid, remove and delete it's
+		# histogram.  Likewise, if requested, empty it's label (but
+		# still leave the label itself intact).
 
 		for j in range( self.n_plt_y ) :
-			self.axs_y[j].setRange( self.alm_y[0], self.alm_y[1] )
 
-		# For each plot in the grid, adjust its limits, add a histogram,
-		# and add a direction label.
+			for i in range( self.n_plt_x ) :
 
-		for d in range( min( self.core.fc_spec['n_dir'], self.n_plt ) ) :
+				# If the plot does not exist, move onto the the
+				# next one.
 
-			# Determine the location of this plot within the grid
-			# layout.
+				if ( self.plt[j,i] is None ) :
+					continue
 
-			j = self.calc_ind_j( d )
-			i = self.calc_ind_i( d )
+				# If a histogram exists for this plot, remove
+				# and delete it.
 
-			# If this plot does not exist, move onto the next one.
+				if ( self.hst[j,i] is not None ) :
+					self.plt[j,i].removeItem(
+					                         self.hst[j,i] )
+					self.hst[j,i] = None
 
-			if ( self.plt[j,i] is None ) :
-				continue
+				# If requested, reset this plot's label text to
+				# the empty string.
 
-			# If a histogram already exists for this plot, remove
-			# and delete it.
+				if ( rset_lbl ) :
+					self.lbl[j,i].setText( '',
+					                       color=(0,0,0) )
 
-			if ( self.hst[j,i] is not None ) :
-				self.plt[j,i].removeItem( self.hst[j,i] )
-				self.hst[j,i] = None
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION CALCULATING INDEX "d" FROM INDICES "j" AND "i".
+	#-----------------------------------------------------------------------
 
-			# Clear this plot's label of text.
+	def calc_ind_d( self, j, i ) :
 
-			self.lbl[j,i].setText( '' )
+		# Return the index "d" (i.e., look direction value) 
+		# corresponding to the indices "j" and "i" (i.e., location in 
+		# the grid of plots) passed by the user.
 
-			# Adjust this plot's limits and then move it's label in
-			# response.
+		return i + ( j * self.n_plt_x )
 
-			self.plt[j,i].setRange( xRange=self.alm_x,
-			                        yRange=self.alm_y,
-			                        padding=0.         )
 
-			self.lbl[j,i].setPos( self.alm_x[1], self.alm_y[1] )
 
-			# Update this plot's label with appropriate text
-			# indicating the pointing direction.
 
-			r_alt = round( self.core.fc_spec['elev'][self.c] )
-			r_dir = round( self.core.fc_spec['azim'][self.c][d])
 
-			txt = ( u'({0:+.0f}\N{DEGREE SIGN}, ' + 
-			        u'{1:+.0f}\N{DEGREE SIGN})'     ).format(
-			                                          r_alt, r_dir )
 
-			self.lbl[j,i].setText( txt, color=(0,0,0) )
-			#self.lbl[j,i].setFont( self.fnt           )
 
-			# Generate the histogram for the data from this look
-			# direction and display it in the plot.
 
-			self.hst[j,i] = PlotDataItem( self.asp_x[d,:],
-			                              self.asp_y[d,:],
-			                              pen=self.pen_hst )
-
-			self.plt[j,i].addItem( self.hst[j,i] )

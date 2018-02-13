@@ -31,6 +31,7 @@ from PyQt4.QtGui import QTabWidget
 
 from janus_widget_fc_cup import widget_fc_cup
 
+from janus_widget_pesa import widget_pl
 
 ################################################################################
 ## DEFINE THE "widget_fcspec" CLASS TO CUSTOMIZE "QTabWidget" FOR Wind/FC PLOTS.
@@ -60,6 +61,9 @@ class widget_fc( QTabWidget ) :
 		                              n_plt_x=n_plt_x, n_plt_y=n_plt_y )
 		self.wdg_fc2 = widget_fc_cup( core=self.core, cup=2,
 		                              n_plt_x=n_plt_x, n_plt_y=n_plt_y )
+		self.wdg_pl  = widget_pl( core=self.core, n_plt_x=5, n_plt_y=5)
+#		                              n_plt_x=n_plt_x, n_plt_y=n_plt_y )
 
 		self.addTab( self.wdg_fc1, 'Faraday Cup 1' )
 		self.addTab( self.wdg_fc2, 'Faraday Cup 2' )
+		self.addTab( self.wdg_pl,  'PESA Low' )
