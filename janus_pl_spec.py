@@ -153,19 +153,19 @@ class pl_spec( ) :
 		elif ( key == 'n_bin' ) :
 			return self._n_bin
 		elif ( key == 'time' ) :
-			return [ self.arr[p][0][0]['time']
+			return [ self.arr[0][p][0]['time']
 					for p in range(self._n_phi)]
 		elif ( key == 'elev_cen' ) :
-			return [ self.arr[0][t][0]['elev_cen']
+			return [ self.arr[t][0][0]['elev_cen']
 					for t in range(self._n_the)]
 		elif ( key == 'the_del' ) :
-			return [ self.arr[0][t][0]['the_del']
+			return [ self.arr[t][0][0]['the_del']
 					for t in range(self._n_the)]
 		elif ( key == 'azim_cen' ) :
-			return [ self.arr[p][0][0]['azim_cen']
+			return [ self.arr[0][p][0]['azim_cen']
 					for p in range(self._n_phi)]
 		elif ( key == 'phi_del' ) :
-			return [ self.arr[p][0][0]['phi_del']
+			return [ self.arr[0][p][0]['phi_del']
 					for p in range(self._n_phi)]
 		elif ( key == 'volt_strt' ) :
 			return  [ self.arr[0][0][b]['volt_strt'] 
@@ -192,20 +192,20 @@ class pl_spec( ) :
 			return  [ self.arr[0][0][b]['vel_del'] 
 					for b in range(self._n_bin)]
 		elif ( key == 'psd' ) :
-			return [ [ [ self.arr[p][t][b]['psd']
+			return [ [ [ self.arr[t][p][b]['psd']
 			             for b in range( self._n_bin ) ]
-			             for t in range( self._n_the ) ]
-			             for p in range( self._n_phi ) ]
+			             for t in range( self._n_phi ) ]
+			             for p in range( self._n_the ) ]
 		elif ( key == 'psd_valid' ) :
-			return [ [ [ self.arr[p][t][b]['psd']
+			return [ [ [ self.arr[t][p][b]['psd']
 			             for b in range( self._n_bin ) ]
-			             for t in range( self._n_the ) ]
-			             for p in range( self._n_phi ) ]
+			             for t in range( self._n_phi ) ]
+			             for p in range( self._n_the ) ]
 		elif ( key == 'psd_flat' ) :
-			return [ self.arr[p][t][b]['psd']
+			return [ self.arr[t][p][b]['psd']
 			         for b in range( self._n_bin )
-			         for t in range( self._n_the )
-			         for p in range( self._n_phi ) ]
+			         for t in range( self._n_phi )
+			         for p in range( self._n_the ) ]
 		elif ( key == 'rot' ) :
 			return self._rot
 		else :

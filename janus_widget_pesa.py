@@ -98,7 +98,7 @@ class widget_pl( QWidget ) :
 		
 		# TESTING
 
-		a = readsav('wind-faces_esa_1997-01-08.idl')
+		a = readsav('wind-faces_esa_1997-01-09.idl')
 
 		#self.core.pl_spec = zeros(4)
 
@@ -106,8 +106,6 @@ class widget_pl( QWidget ) :
                                      elev_cen=a['the'][0], the_del=a['d_the'][0],
                                      azim_cen=a['phi'][0], phi_del=a['d_phi'][0],
                                      volt_cen=a['nrg'][0], volt_del=a['d_nrg'][0], psd=a['psd'][0] )
-		print a['the'][0]
-
 
 
 
@@ -206,7 +204,7 @@ class widget_pl( QWidget ) :
 		# create the labels themselves and add them to the grid.
 
 		self.txt_axs_x = 'Projected Proton Inflow Velocity [km/s]'
-		self.txt_axs_y = r'Phase-space Density [cm^{-3}/(km/s)^3]'
+		self.txt_axs_y = u'Phase-space Density [cm^{-3}/(km/s)^3]'
 
 		if ( self.core.app.res_lo ) :
 			size =  '8pt'
@@ -341,7 +339,9 @@ class widget_pl( QWidget ) :
 			self.lim_x = [self.core.pl_spec['vel_strt'][0],
 			              self.core.pl_spec['vel_stop'][-1]]
 
-			arr_psd_flat = [self.core.pl_spec['psd_flat'][i] for i in (where(array(self.core.pl_spec['psd_flat']) != 0.)[0])]
+			arr_psd_flat = [self.core.pl_spec['psd_flat'][i] for i
+			          in (where(array(self.core.pl_spec['psd_flat'])
+			                                             != 0.)[0])]
 
 			self.lim_y = [ min(arr_psd_flat), max(arr_psd_flat)  ]
 
@@ -389,7 +389,7 @@ class widget_pl( QWidget ) :
 
 			self.stp = array( [ step(  self.core.pl_spec['vel_cen'],
 						   self.core.pl_spec['vel_del'],
-						   self.core.pl_spec['psd'][p][t])
+						   self.core.pl_spec['psd'][t][p])
 						for t in range(self.core.pl_spec['n_the']) ])
 
 			stp_pnt = array( [ array( self.stp[t]\
@@ -398,6 +398,7 @@ class widget_pl( QWidget ) :
 
 			self.stp_x = stp_pnt[:,0,:]
 			self.stp_y = stp_pnt[:,1,:]
+					
 
 			self.asp_x = log10( self.stp_x ) if ( self.log_x ) else \
 			                    self.stp_x
@@ -451,9 +452,6 @@ class widget_pl( QWidget ) :
 				# Update this plot's label with appropriate text
 				# indicating the pointing direction.
 
-				print self.core.pl_spec['elev_cen']
-				print self.core.pl_spec['azim_cen']
-
 
 				r_alt = round( self.core.pl_spec['elev_cen'][t] )
 				r_dir = round( self.core.pl_spec['azim_cen'][p])
@@ -467,6 +465,8 @@ class widget_pl( QWidget ) :
 
 				# Generate the histogram for the data from this look
 				# direction and display it in the plot.
+
+				#self.asp_y[p] = [1e-9 if item == -1.*float('inf') else item for item in self.asp_y[p]]
 
 				self.hst[j,i] = PlotDataItem( self.asp_x[p,:],
 				                              self.asp_y[p,:],
