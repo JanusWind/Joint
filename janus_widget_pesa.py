@@ -98,7 +98,7 @@ class widget_pl( QWidget ) :
 		
 		# TESTING
 
-		a = readsav('wind-faces_esa_1997-01-09.idl')
+		a = readsav('./data/pl/wind-faces_esa_1997-01-09.idl')
 
 		#self.core.pl_spec = zeros(4)
 
@@ -173,8 +173,6 @@ class widget_pl( QWidget ) :
 		# selection points, and the fit curves.
 
 		self.make_hst( )
-#		self.make_pnt( )
-#		self.make_crv( )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR INITIALIZING THE WIDGET AND ITS PLOTS.
@@ -204,7 +202,7 @@ class widget_pl( QWidget ) :
 		# create the labels themselves and add them to the grid.
 
 		self.txt_axs_x = 'Projected Proton Inflow Velocity [km/s]'
-		self.txt_axs_y = u'Phase-space Density [cm^{-3}/(km/s)^3]'
+		self.txt_axs_y = 'Phase-space Density [cm^{-3}/(km/s)^3]'
 
 		if ( self.core.app.res_lo ) :
 			size =  '8pt'
@@ -233,13 +231,6 @@ class widget_pl( QWidget ) :
 		self.hst = tile( None, [ self.n_plt_y, self.n_plt_x ] )
 		self.lbl = tile( None, [ self.n_plt_y, self.n_plt_x ] )
 
-		self.crv     = tile( None, [ self.n_plt_y, self.n_plt_x ] )
-		self.crv_ion = tile( None, [ self.n_plt_y, self.n_plt_x,
-		                             self.n_ion                  ] )
-
-		self.pnt = tile( None, [ self.n_plt_y, self.n_plt_x, 
-		                         self.n_k                    ] )
-
 		# Initialize the scale-type for each axis, then generate the
 		# (default) axis-limits and adjusted axis-limits.
 
@@ -255,7 +246,7 @@ class widget_pl( QWidget ) :
 
 			self.axs_x[i] = AxisItem( 'bottom', maxTickLength=5 )
 			self.axs_x[i].setLogMode( self.log_x )
-			self.axs_x[i].setRange( self.alm_x[0], self.alm_x[1] )
+			self.axs_x[i].setRange( self.x_lim[0], self.x_lim[1] )
 			self.axs_x[i].setTickFont( self.fnt )
 
 			if ( self.core.app.res_lo ) :
@@ -269,7 +260,7 @@ class widget_pl( QWidget ) :
 
 			self.axs_y[j] = AxisItem( 'left', maxTickLength=5 )
 			self.axs_y[j].setLogMode( self.log_y )
-			self.axs_y[j].setRange( self.alm_y[0], self.alm_y[1] )
+			self.axs_y[j].setRange( self.y_lim[0], self.y_lim[1] )
 			self.axs_y[j].setTickFont( self.fnt )
 
 			if ( self.core.app.res_lo ) :
@@ -282,14 +273,13 @@ class widget_pl( QWidget ) :
 		# Create, store, and add to the grid the individual plots.
 		# Likewise, create, store, and add to each plot a label.
 
-		for j in range( self.n_plt_y ) :
+		for t in range( self.n_plt_y ) :
 
-			for i in range( self.n_plt_x ) :
+			for p in range( self.n_plt_x ) :
 
 				# Compute the plot number of this plot.
 
-				d = self.calc_ind_d( j, i )
-
+				d = p + ( t * self.n_plt_x )
 
 				# If creating this plot would exceed the
 				# specified number of plots, don't create it.
@@ -300,25 +290,25 @@ class widget_pl( QWidget ) :
 				# Create and store this plot, adjust its limits,
 				# and add it to the grid.
 
-				self.plt[j,i] = event_ViewBox( self,
+				self.plt[t,p] = event_ViewBox( self,
 				                          border=self.pen_plt,
 				                          enableMouse=False,
 				                          enableMenu=False     )
 
-				self.plt[j,i].setRange( xRange=self.alm_x,
-				                        yRange=self.alm_y,
+				self.plt[t,p].setRange( xRange=self.x_lim,
+				                        yRange=self.y_lim,
 				                        padding=0.         )
 
-				self.grd.addItem( self.plt[j,i], j, i + 2 )
+				self.grd.addItem( self.plt[t,p], t, p + 2 )
 
 				# Create and store an (empty) label and add it
 				# to this plot.
 
-				self.lbl[j,i] = TextItem( anchor=(1,0) )
+				self.lbl[t,p] = TextItem( anchor=(1,0) )
 
-				self.lbl[j,i].setFont( self.fnt )
+				self.lbl[t,p].setFont( self.fnt )
 
-				self.plt[j,i].addItem( self.lbl[j,i] )
+				self.plt[t,p].addItem( self.lbl[t,p] )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR GENERATING AXIS-LIMITS (AND ADJUSTED LIMITS).
@@ -331,37 +321,39 @@ class widget_pl( QWidget ) :
 
 		if ( self.core.pl_spec is None ) :
 
-			self.lim_x = [ 250. , 750. ]
-			self.lim_y = [   0.7,  70. ]
+			self.domain = [ 300. , 900. ]
+			self.range = [ 1.e-10,  1.e-5 ]
 
 		else :
 
-			self.lim_x = [self.core.pl_spec['vel_strt'][0],
-			              self.core.pl_spec['vel_stop'][-1]]
+			self.domain = [self.core.pl_spec['vel_strt'][0],
+			               self.core.pl_spec['vel_stop'][-1]]
 
 			arr_psd_flat = [self.core.pl_spec['psd_flat'][i] for i
 			          in (where(array(self.core.pl_spec['psd_flat'])
 			                                             != 0.)[0])]
 
-			self.lim_y = [ min(arr_psd_flat), max(arr_psd_flat)  ]
+			self.range = [ min(arr_psd_flat), max(arr_psd_flat)  ]
+
+			# Note: psd values are less than 1
 
 			if ( self.log_y ) :
-				self.lim_y[1] = self.lim_y[1] ** 1.1
+				self.range[1] = self.range[1] ** 0.9
 			else :
-				self.lim_y[1] += 0.1 * ( self.lim_y[1] -
-				                         self.lim_y[0]   )
+				self.range[1] += 0.1 * ( self.range[1] -
+				                         self.range[0]   )
 
 		# Compute the "adjusted limits" for each axis.
 
 		if ( self.log_x ) :
-			self.alm_x = [ log10( x ) for x in self.lim_x ]
+			self.x_lim = [ log10( x ) for x in self.domain ]
 		else :
-			self.alm_x = self.lim_x
+			self.x_lim = self.domain
 
 		if ( self.log_y ) :
-			self.alm_y = [ log10( y ) for y in self.lim_y ]
+			self.y_lim = [ log10( y ) for y in self.range ]
 		else :
-			self.alm_y = self.lim_y
+			self.y_lim = self.range
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR CREATING THE PLOTS' HISTOGRAMS (AND LABELS).
@@ -372,108 +364,116 @@ class widget_pl( QWidget ) :
 		# If no spectrum has been loaded, clear any existing histograms
 		# and abort.
 
-		if ( self.core.pl_spec is None ) :
-
-#			self.rset_hst( )
-
-			return
+		if ( self.core.pl_spec is None ) : return
 
 		# Use the spectral data to compute new axis-limits.
 
 		self.make_lim( )
 
-		# Generate a step function for each look direction associated
-		# with this widget.
+		for p in range( self.n_plt_x ) :
+			 self.axs_x[p].setRange( self.x_lim[0], self.x_lim[1] )
+
+		for t in range( self.n_plt_y ) :
+			 self.axs_y[t].setRange( self.y_lim[0], self.y_lim[1] )
+
+		# Histograms are broken down by phi horizontally and
+		# theta vertically
 
 		for p in range( self.core.pl_spec['n_phi'] ):
 
-			self.stp = array( [ step(  self.core.pl_spec['vel_cen'],
-						   self.core.pl_spec['vel_del'],
-						   self.core.pl_spec['psd'][t][p])
-						for t in range(self.core.pl_spec['n_the']) ])
+			for t in range ( self.core.pl_spec['n_the'] ):
 
-			stp_pnt = array( [ array( self.stp[t]\
-			                              .calc_pnt( lev_min=0 ) )
-			                for t in range( self.core.pl_spec['n_the'] ) ] )
+				# If this plot does not exist, move onto
+				# the next one.
 
-			self.stp_x = stp_pnt[:,0,:]
-			self.stp_y = stp_pnt[:,1,:]
-					
-
-			self.asp_x = log10( self.stp_x ) if ( self.log_x ) else \
-			                    self.stp_x
-			self.asp_y = log10( self.stp_y ) if ( self.log_y ) else \
-			                    self.stp_y
-
-			# Adjust the individual axes to the new limits.
-
-			for i in range( self.n_plt_x ) :
-				self.axs_x[i].setRange( self.alm_x[0], self.alm_x[1] )
-
-			for j in range( self.n_plt_y ) :
-				self.axs_y[j].setRange( self.alm_y[0], self.alm_y[1] )
-
-			# For each plot in the grid, adjust its limits, add a histogram,
-			# and add a direction label.
-
-			for t in range( min( self.core.pl_spec['n_the'], self.n_plt ) ) :
-
-				# Determine the location of this plot within the grid
-				# layout.
-
-				j = t
-				i = p
-
-				# If this plot does not exist, move onto the next one.
-
-				if ( self.plt[j,i] is None ) :
+				if ( self.plt[t,p] is None ) :
 					continue
 
-				# If a histogram already exists for this plot, remove
-				# and delete it.
+				#-----------------------------#
+				#---DATA GENERATION SECTION---#
+				#-----------------------------#
 
-				if ( self.hst[j,i] is not None ) :
-					self.plt[j,i].removeItem( self.hst[j,i] )
-					self.hst[j,i] = None
+				# Generate a step function for the
+				# look direction associated with this widget.
+
+				self.stp = array( [step( self.core.pl_spec['vel_cen'],
+				                        self.core.pl_spec['vel_del'],
+				                        self.core.pl_spec['psd'][t][p])])
+
+				# Calculate the points to be plotted from the
+				# step function
+
+				stp_pnt = array( [ array( datum.calc_pnt( 
+				                     lev_min=self.range[0]/2.) )
+				                   for datum in self.stp     ] )
+
+				self.x_set = stp_pnt[:,0][0]
+				self.y_set = stp_pnt[:,1][0]
+
+				# If plotting log(y) and there are any psd
+				# values of zero, replace those points with an
+				# arbitrary minimum y value
+
+				if ( self.log_y ) :
+					y_min = self.range[0]/2.
+					self.y_lim[0] = log10(y_min)
+					self.y_set = [ max( y, y_min ) for y
+					                         in self.y_set ]
+
+				# If generating a log plot, take the log of the
+				# points to be plotted
+
+				self.x_pnts = log10( self.x_set ) if ( self.log_x ) else \
+				                     self.x_set
+				self.y_pnts = log10( self.y_set ) if ( self.log_y ) else \
+				                     self.y_set
+
+				#---------------------------------#
+				#---GRAPHICS GENERATION SECTION---#
+				#---------------------------------#
+
+				# If a histogram already exists for this plot,
+				# remove and delete it.
+
+				if ( self.hst[t,p] is not None ) :
+					self.plt[t,p].removeItem(self.hst[t,p])
+					self.hst[t,p] = None
 
 				# Clear this plot's label of text.
 
-				self.lbl[j,i].setText( '' )
+				self.lbl[t,p].setText( '' )
 
-				# Adjust this plot's limits and then move it's label in
-				# response.
+				# Adjust this plot's limits and then move it's
+				# label in response.
 
-				self.plt[j,i].setRange( xRange=self.alm_x,
-				                        yRange=self.alm_y,
+				self.plt[t,p].setRange( xRange=self.x_lim,
+				                        yRange=self.y_lim,
 				                        padding=0.         )
 
-				self.lbl[j,i].setPos( self.alm_x[1], self.alm_y[1] )
+				self.lbl[t,p].setPos( self.x_lim[1],
+				                      self.y_lim[1]  )
 
 				# Update this plot's label with appropriate text
 				# indicating the pointing direction.
 
 
-				r_alt = round( self.core.pl_spec['elev_cen'][t] )
-				r_dir = round( self.core.pl_spec['azim_cen'][p])
+				elev = round( self.core.pl_spec['elev_cen'][t] )
+				azim = round( self.core.pl_spec['azim_cen'][p] )
 
 				txt = ( u'({0:+.0f}\N{DEGREE SIGN}, ' + 
 				        u'{1:+.0f}\N{DEGREE SIGN})'     ).format(
-				                                          r_alt, r_dir )
+				                                          elev, azim )
 
-				self.lbl[j,i].setText( txt, color=(0,0,0) )
-				#self.lbl[j,i].setFont( self.fnt           )
+				self.lbl[t,p].setText( txt, color=(0,0,0) )
 
-				# Generate the histogram for the data from this look
-				# direction and display it in the plot.
+				# Generate the histogram for the data from this
+				# look direction and display it in the plot.
 
-				#self.asp_y[p] = [1e-9 if item == -1.*float('inf') else item for item in self.asp_y[p]]
-
-				self.hst[j,i] = PlotDataItem( self.asp_x[p,:],
-				                              self.asp_y[p,:],
+				self.hst[t,p] = PlotDataItem( self.x_pnts,
+				                              self.y_pnts,
 				                              pen=self.pen_hst )
 
-				self.plt[j,i].addItem( self.hst[j,i] )
-
+				self.plt[t,p].addItem( self.hst[t,p] )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RESETTING THE PLOTS' HISTOGRAMS (AND LABELS).
@@ -485,48 +485,27 @@ class widget_pl( QWidget ) :
 		# histogram.  Likewise, if requested, empty it's label (but
 		# still leave the label itself intact).
 
-		for j in range( self.n_plt_y ) :
+		for t in range( self.n_plt_y ) :
 
-			for i in range( self.n_plt_x ) :
+			for p in range( self.n_plt_x ) :
 
 				# If the plot does not exist, move onto the the
 				# next one.
 
-				if ( self.plt[j,i] is None ) :
+				if ( self.plt[t,p] is None ) :
 					continue
 
 				# If a histogram exists for this plot, remove
 				# and delete it.
 
-				if ( self.hst[j,i] is not None ) :
-					self.plt[j,i].removeItem(
-					                         self.hst[j,i] )
-					self.hst[j,i] = None
+				if ( self.hst[t,p] is not None ) :
+					self.plt[t,p].removeItem(
+					                         self.hst[t,p] )
+					self.hst[t,p] = None
 
 				# If requested, reset this plot's label text to
 				# the empty string.
 
 				if ( rset_lbl ) :
-					self.lbl[j,i].setText( '',
+					self.lbl[t,p].setText( '',
 					                       color=(0,0,0) )
-
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION CALCULATING INDEX "d" FROM INDICES "j" AND "i".
-	#-----------------------------------------------------------------------
-
-	def calc_ind_d( self, j, i ) :
-
-		# Return the index "d" (i.e., look direction value) 
-		# corresponding to the indices "j" and "i" (i.e., location in 
-		# the grid of plots) passed by the user.
-
-		return i + ( j * self.n_plt_x )
-
-
-
-
-
-
-
-
-

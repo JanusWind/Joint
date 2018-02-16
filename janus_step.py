@@ -114,5 +114,4 @@ class step( object ) :
 		pnt_y[(2*self.n)+1] = lev_min
 
 		# Return the computed points of the step function.
-
 		return ( pnt_x, pnt_y )
