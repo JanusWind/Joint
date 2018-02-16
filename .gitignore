@@ -108,6 +108,7 @@ results/save/*.jns
 data/fc/*.cdf
 data/mfi/*.cdf
 data/pl/*.idl
+*.idl
 data*.cfg
 .gitignore
 *.cdf
