@@ -27,7 +27,7 @@
 
 # Load the modules necessary for the graphical interface.
 
-from PyQt4.QtCore import QPointF, Qt, SIGNAL
+from PyQt4.QtCore import Qt, QPointF, SIGNAL
 from PyQt4.QtGui import QGridLayout, QWidget
 
 # Load the modules necessary for plotting.
@@ -55,7 +55,6 @@ from janus_thread import n_thread, thread_chng_mom_sel, thread_chng_nln_sel
 from scipy.io import readsav
 from janus_pl_spec import pl_spec
 from numpy import zeros
-
 
 ################################################################################
 ## DEFINE THE "widget_fc_cup" CLASS TO CUSTOMIZE "QWidget" FOR Wind/FC PLOTS.
