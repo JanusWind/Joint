@@ -101,13 +101,6 @@ class widget_pl( QWidget ) :
 
 		#self.core.pl_spec = zeros(4)
 
-		self.core.pl_spec = pl_spec( t_strt=a['sec_beg'][0], t_stop=a['sec_end'][0],
-                                     elev_cen=a['the'][0], the_del=a['d_the'][0],
-                                     azim_cen=a['phi'][0], phi_del=a['d_phi'][0],
-                                     volt_cen=a['nrg'][0], volt_del=a['d_nrg'][0], psd=a['psd'][0] )
-
-
-
 		# Prepare to respond to signals received from the Janus core.
 
 #		self.connect( self.core, SIGNAL('janus_rset'), self.resp_rset )

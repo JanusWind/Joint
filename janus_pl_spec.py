@@ -43,7 +43,7 @@ class pl_spec( ) :
 	def __init__( self,
 	              t_strt=None, t_stop=None, elev_cen=None, the_del=None,
 	              azim_cen=None, phi_del=None, volt_cen=None, volt_del=None,
-	              psd=None, rot=3.                                       ) :
+	              psd=None                                                   ) :
 
 		self._n_bin     = 14 #TODO Confirm
 		self._n_the     = 5
@@ -115,8 +115,6 @@ class pl_spec( ) :
 		                              for b in range( self._n_bin ) ]
 		                              for p in range( self._n_phi ) ]
 		                              for t in range( self._n_the ) ]
-
-#		self.set_rot( rot )
 
 		# Validate the data in the spectrum.
 
@@ -216,8 +214,8 @@ class pl_spec( ) :
 		raise KeyError( 'Reassignment not permitted except through'
 		                                    + ' "set_*" functions.' )
 
+	def set_mag( self, mfi_t, mfi_b_x, mfi_b_y, mfi_b_z ) :
 
+		#TODO
 
-
-
-
+		return

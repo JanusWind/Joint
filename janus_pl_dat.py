@@ -87,8 +87,6 @@ class pl_dat( ) :
 		self._norm_b_y  = None
 		self._norm_b_z  = None
 
-		self._maglook   = None
-
 		if ( ( self._time     is None ) or
 		     ( self._azim_cen is None ) or ( self._phi_del  is None ) or
                      ( self._elev_cen is None ) or ( self._the_del  is None ) or
@@ -163,8 +161,6 @@ class pl_dat( ) :
 			return self._norm_b_z
 		elif ( key == 'norm_b' ) :
 			return ( self._norm_b_x,self._norm_b_y,self._norm_b_z )
-		elif ( key == 'maglook' ) :
-			return ( self._maglook )
 		else :
 			raise KeyError( 'Invalid key for "pl_dat".' )
 
@@ -189,4 +185,6 @@ class pl_dat( ) :
 		self._norm_b_y = norm_b[1]
 		self._norm_b_z = norm_b[2]
 
-		self._maglook = calc_arr_dot( self['norm_b'], self['dir'] )
+		# Compute perpendicular and parallel velocities.
+
+		#TODO
