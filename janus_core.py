@@ -295,13 +295,21 @@ class core( QObject ) :
 		# If requested, (re-)initialize the varaibles for the Wind/PESA
 		# data associated with this spectrum.
 
+		#TODO
+
 		if ( var_pesa ) :
+
+			from scipy.io import readsav
+
+			a = readsav('./data/pl/wind-faces_esa_1997-01-08.idl')
 
 			self.pl_spec = pl_spec(
 			             t_strt=a['sec_beg'][0], t_stop=a['sec_end'][0],
                                      elev_cen=a['the'][0], the_del=a['d_the'][0],
                                      azim_cen=a['phi'][0], phi_del=a['d_phi'][0],
                                      volt_cen=a['nrg'][0], volt_del=a['d_nrg'][0], psd=a['psd'][0] )
+
+		#/TODO
 
 		# If requested, (re-)initialize the varaibles for the windows
 		# associated with automatic data selection for the moments

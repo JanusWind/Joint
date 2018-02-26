@@ -5,7 +5,7 @@ import matplotlib.pyplot as mpl
 
 mpl.close('all')
 
-a = readsav('wind-faces_esa_1997-01-08.idl')
+a = readsav('./data/pl/wind-faces_esa_1997-01-08.idl')
 
 data = np.zeros(4)
 

@@ -56,7 +56,7 @@ class pl_dat( ) :
 
 		self._time = t_strt + ( t_stop - t_strt ) / 360. * azim_cen
 
-		#Note: The voltage sweeps from high to low voltage
+		#Note: The voltage is recorded from high to low voltage
 		self._volt_strt = ( self._volt_cen + ( self._volt_del / 2. ) )
 		self._volt_stop = ( self._volt_cen - ( self._volt_del / 2. ) )
 
@@ -95,6 +95,9 @@ class pl_dat( ) :
 			self._valid = False
 		else :
 			self._valid = True
+	# ----------------------------------------------------------------------
+	# DEFINE THE KEYS FOR THIS CLASS.
+	# ----------------------------------------------------------------------
 
 	def __getitem__( self, key ) :
 #
@@ -170,7 +173,7 @@ class pl_dat( ) :
 
 
 	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR SETIING THE MAGNETIC FIELD DIRECTION.
+	# DEFINE THE FUNCTION FOR SETTING THE MAGNETIC FIELD DIRECTION.
 	#-----------------------------------------------------------------------
 
 	def set_mag( self, b_vec ) :
@@ -187,4 +190,14 @@ class pl_dat( ) :
 
 		# Compute perpendicular and parallel velocities.
 
-		#TODO
+		self._u_par   = self['vel_cen'] * calc_arr_dot( self['norm_b'],
+		                                                self['dir']    )
+		self._u_par_x = self._u_par * self._norm_b_x
+		self._u_par_y = self._u_par * self._norm_b_y
+		self._u_par_z = self._u_par * self._norm_b_z
+
+		self._u_per_x = self['vel_cen'] * self['dir_x'] - self._u_par_x
+		self._u_per_y = self['vel_cen'] * self['dir_y'] - self._u_par_y
+		self._u_per_z = self['vel_cen'] * self['dir_z'] - self._u_par_z
+		self._u_per   = sqrt( self._u_per_x**2 + self._u_per_y**2 +
+		                                         self._u_per_z **2  )

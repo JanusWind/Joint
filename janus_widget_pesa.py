@@ -194,7 +194,7 @@ class widget_pl( QWidget ) :
 		# create the labels themselves and add them to the grid.
 
 		self.txt_axs_x = 'Projected Proton Inflow Velocity [km/s]'
-		self.txt_axs_y = 'Phase-space Density [cm^{-3}/(km/s)^3]'
+		self.txt_axs_y = u'Phase-space Density [cm\u00AF\u00B3/(km/s)\u00B3]'
 
 		if ( self.core.app.res_lo ) :
 			size =  '8pt'

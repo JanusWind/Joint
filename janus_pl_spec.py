@@ -214,8 +214,24 @@ class pl_spec( ) :
 		raise KeyError( 'Reassignment not permitted except through'
 		                                    + ' "set_*" functions.' )
 
+        #-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION TO ASSIGN THE MAGNETIC FIELD TO EACH DATUM. 
+	#-----------------------------------------------------------------------
+
 	def set_mag( self, mfi_t, mfi_b_x, mfi_b_y, mfi_b_z ) :
 
 		#TODO
+
+		#secs = 
+
+
+
+
+
+
+
+
+
+
 
 		return
