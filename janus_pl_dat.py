@@ -28,6 +28,7 @@
 from math import sqrt, acos, pi
 from numpy import interp, sin, cos, deg2rad, exp, array
 from scipy.special import erf
+from datetime import datetime, timedelta
 
 from janus_const import const
 from janus_helper import calc_arr_norm, calc_arr_dot
@@ -54,7 +55,9 @@ class pl_dat( ) :
 		self._psd       = psd
 		self._valid     = valid
 
-		self._time = t_strt + ( t_stop - t_strt ) / 360. * azim_cen
+		self._time = ( datetime( 1970, 1, 1 ) + 
+		               timedelta( seconds = (t_strt +
+		               ( t_stop - t_strt ) / 360. * azim_cen ) ) )
 
 		#Note: The voltage is recorded from high to low voltage
 		self._volt_strt = ( self._volt_cen + ( self._volt_del / 2. ) )

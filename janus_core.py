@@ -54,6 +54,7 @@ from janus_fc_arcv   import fc_arcv
 from janus_spin_arcv import spin_arcv
 from janus_mfi_arcv_lres import mfi_arcv_lres
 from janus_mfi_arcv_hres import mfi_arcv_hres
+from janus_pl_arcv import pl_arcv
 
 from janus_fc_spec import fc_spec
 from janus_pl_spec import pl_spec
@@ -179,6 +180,8 @@ class core( QObject ) :
 		self.mfi_arcv_hres = mfi_arcv_hres( core=self,
 		                          n_file_max=self.opt['fls_n_mfi_h' ]  )
 
+		self.pl_arcv = pl_arcv( core=self )
+
 		# Initialize a log of the analysis results.
 
 		self.series = series( )
@@ -299,15 +302,7 @@ class core( QObject ) :
 
 		if ( var_pesa ) :
 
-			from scipy.io import readsav
-
-			a = readsav('./data/pl/wind-faces_esa_1997-01-08.idl')
-
-			self.pl_spec = pl_spec(
-			             t_strt=a['sec_beg'][0], t_stop=a['sec_end'][0],
-                                     elev_cen=a['the'][0], the_del=a['d_the'][0],
-                                     azim_cen=a['phi'][0], phi_del=a['d_phi'][0],
-                                     volt_cen=a['nrg'][0], volt_del=a['d_nrg'][0], psd=a['psd'][0] )
+			self.pl_spec = None
 
 		#/TODO
 
@@ -735,6 +730,19 @@ class core( QObject ) :
 		# spectrum.
 
 		self.load_pl( )
+		self.pl_spec = self.pl_arcv.load_spec( self.time_txt,
+		                                       get_prev=get_prev,
+		                                       get_next=get_next )
+
+		# Message the user that a new Wind/FC ion spectrum has been
+		# loaded.
+
+		self.emit( SIGNAL('janus_mesg'), 'core', 'end', 'fc' )
+
+		# Emit a signal that indicates that a new Wind/FC ion spectrum
+		# has now been loaded.
+
+		self.emit( SIGNAL('janus_chng_spc') )
 
 		# Load the associated Wind/MFI magnetic field data associated
 		# with this spectrum.
@@ -909,9 +917,9 @@ class core( QObject ) :
 
 		self.fc_spec.set_mag( self.mfi_t, self.mfi_b_x,
 		                                  self.mfi_b_y, self.mfi_b_z )
-
-		self.pl_spec.set_mag( self.mfi_t, self.mfi_b_x,
-		                                  self.mfi_b_y, self.mfi_b_z )
+		if self.pl_spec is not None:
+			self.pl_spec.set_mag( self.mfi_t, self.mfi_b_x,
+		                              self.mfi_b_y, self.mfi_b_z )
 
 		# Message the user that new Wind/MFI data have been loaded.
 

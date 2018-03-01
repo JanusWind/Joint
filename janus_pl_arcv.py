@@ -35,7 +35,7 @@ from datetime import datetime, timedelta
 
 from janus_time import calc_time_str, calc_time_val, calc_time_epc
 
-from janus_fc_spec import fc_spec
+from janus_pl_spec import pl_spec
 
 # Load the necessary "numpy" array modules.
 
@@ -45,7 +45,7 @@ from operator import attrgetter
 
 # Load the modules necessary for file I/O (including FTP).
 
-from spacepy import pycdf
+from scipy.io import readsav
 
 import os.path
 
@@ -58,7 +58,7 @@ from ftplib import FTP
 ## DEFINE THE CLASS fc_tag TO HAVE SPECTRA FOR PARTICULAR TIME STAMP
 ################################################################################
 
-class fc_tag() :
+class pl_tag() :
 	
 	#-----------------------------------------------------------------------
 	# DEFINE THE INITIALIZATION FUNCTION.
@@ -75,14 +75,13 @@ class fc_tag() :
 ## DEFINE THE "fc_arcv" CLASS FOR ACCESSING THE ARCHIVE OF Wind/FC SPECTRA.
 ################################################################################
 
-class fc_arcv( object ) :
+class pl_arcv( object ) :
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE INITIALIZATION FUNCTION.
 	#-----------------------------------------------------------------------
 
 	def __init__( self, core=None, buf=None, tol=None,
-	                    n_file_max=float('inf'), n_date_max=None,
 	                    path=None, verbose=None                   ) :
 
 		# Save the arguments for later use.
@@ -98,26 +97,18 @@ class fc_arcv( object ) :
 		self.tol        = float( tol )      if ( tol is not None )\
 		                                    else 3600.
 
-		self.n_date_max = int( n_date_max ) if ( n_date_max 
-		                                    is not None ) else 40
-
 		self.path       = str( path )       if ( path  is not None )\
 		                                    else os.path.join( 
 		                                    os.path.dirname( __file__ ), 
-		                                    'data', 'fc' )
+		                                    'data', 'pl' )
 
 		self.verbose    = bool( verbose )   if ( verbose is not None )\
 		                                    else True
 
-		# Validate the values of the "self.max_*" parameters and, if
-		# necessary, provide values for them.
+		# Validate the values of parameters.
 
 		if ( self.buf < 0 ) :
 			raise ValueError( 'Time buffer cannot be negative.'    )
-
-		if ( self.n_date_max < 0 ) :
-			raise ValueError( 'Maximum number of dates ' +
-			                                 'cannot be negative.' )
 
 		# Initialize arrays of date and times loaded.
 
@@ -125,10 +116,6 @@ class fc_arcv( object ) :
 		self.arr_date = [ ]
 
 		self.arr_tag  = [ ]
-
-		# Initialize "n_file_max"
-
-		self.chng_n_file_max( n_file_max )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR LOADING (AND RETURNING) AN ION SPECTRUM.
@@ -185,7 +172,7 @@ class fc_arcv( object ) :
 		# Locate the spectrum whose timestamp is closest to the
 		# one requested.
 
-		adt = [ abs(tag.epoch - time_req_epc) for tag in self.arr_tag ]
+		adt = [ abs( datetime(1970, 1, 1) + timedelta( seconds=tag.epoch ) - time_req_epc ) for tag in self.arr_tag ]
 
 		adt_min = min( adt )
 
@@ -219,61 +206,30 @@ class fc_arcv( object ) :
 		cdf = self.arr_cdf[self.arr_tag[tk].c]
 		s   = self.arr_tag[ tk ].s
 
-		# Find actual no. of voltage bins 
-
-		n_bin_max = 31
-		n_dir = 20
-
-		for n_bin_1 in range( n_bin_max ) :
-			if ( n_bin_1 == n_bin_max + 1 ) :
-				break
-			if ( cdf['cup1_EperQ'][s][n_bin_1] >= 
-					     cdf['cup1_EperQ'][s][n_bin_1+1] ) :
-				break
-		n_bin_1 += 1
-
-		for n_bin_2 in range( n_bin_max ) :
-			if ( n_bin_2 == n_bin_max + 1 ) :
-				break
-			if ( cdf['cup2_EperQ'][s][n_bin_2] >= 
-					     cdf['cup2_EperQ'][s][n_bin_2+1] ) :
-				break
-		n_bin_2 += 1
-
-		n_bin = min( [ n_bin_1, n_bin_2 ] )
-
 		# Assigning all retrieved data to parameter values
 
-		time = cdf['Epoch'][s]
+		t_strt   = cdf['sec_beg'][s]
 
-		elev = [ float( cdf['inclination_angle'][0] ),
-		         float( cdf['inclination_angle'][1] ) ]
+		t_stop   = cdf['sec_end'][s]
 
-		azim = [ [ float( cdf['cup1_azimuth'][s][d] ) 
-		                for d in range( n_dir )       ],
-			 [ float( cdf['cup2_azimuth'][s][d] )
-		                for d in range( n_dir )       ]  ]
+                elev_cen = cdf['the'][s]
 
-		volt_cen=[ [ float( cdf['cup1_EperQ'][s][b] ) 
-		                  for b in range( n_bin )     ],
-			   [ float( cdf['cup2_EperQ'][s][b] )
-		                  for b in range( n_bin )     ]  ]
+		the_del  = cdf['d_the'][s]
 
-		volt_del=[ [ float( cdf['cup1_EperQ_DEL'][s][b] )
-		                  for b in range( n_bin )         ],
-			   [ float( cdf['cup2_EperQ_DEL'][s][b] )
-		                  for b in range( n_bin )         ]  ]
+                azim_cen = cdf['phi'][s]
 
-		curr = [ [ [ float( cdf['cup1_qflux'][s][d][b] )
-		             for b in range( n_bin )             ] 
-		             for d in range( n_dir )               ],
-			 [ [ float( cdf['cup2_qflux'][s][d][b] )
-		             for b in range( n_bin )             ]
-		             for d in range( n_dir )               ]  ]
+		phi_del  = cdf['d_phi'][s]
 
+                volt_cen = cdf['nrg'][s]
 
-		spec = fc_spec( n_bin, elev=elev, azim=azim, volt_cen=volt_cen,\
-		                       volt_del=volt_del, curr=curr, time=time )
+		volt_del = cdf['d_nrg'][s]
+
+		psd      = cdf['psd'][s]
+
+		spec = pl_spec( t_strt=t_strt, t_stop=t_stop, elev_cen=elev_cen,
+		                the_del=the_del, azim_cen=azim_cen,
+		                phi_del=phi_del, volt_cen=volt_cen,
+		                volt_del=volt_del, psd=psd )
 
 		# Request a cleanup of the data loaded into this archive.
 
@@ -282,7 +238,6 @@ class fc_arcv( object ) :
 		return spec
 
 		#fc_arcv().load_spec(1224246301)
-
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR LOADING ALL SPECTRA FROM DATE-SPECIFIED FILE.
 	#-----------------------------------------------------------------------
@@ -307,33 +262,21 @@ class fc_arcv( object ) :
 		# Determine the name of the file that contains data from the
 		# requested date.
 
-		fl0 = 'wi_sw-ion-dist_swe-faraday_' + \
-		       str_year + str_mon + str_day + '_v??.cdf'
+		fl0 = 'wind-faces_esa_' + \
+		       str_year + '-' + str_mon + '-' + str_day + '.idl'
 
 		fl0_path = os.path.join( self.path, fl0 )
 
 		gb = glob( fl0_path )	# returns all files with 
 		                        # common names in argument
 
-		# If the file does not exist, attempt to download it.
+		# If the file does not exist, say so.
 
-		if ( len( gb ) > 0 ) :	# Take the last one : gb[-1]
+		if ( len( gb ) <= 0 ) :	
+			self.mesg_txt( 'fail', date_str )
+			return
+		else : # Take the last one : gb[-1]
 			fl_path = gb[-1]
-		else :
-			try :
-				self.mesg_txt( 'ftp', date_str )
-				ftp = FTP( 'cdaweb.gsfc.nasa.gov' )
-				ftp.login( )
-				ftp.cwd( 'pub/data/wind/swe/swe_faraday/' )
-				ftp.cwd( str_year )
-				ls = ftp.nlst( fl0 )
-				fl = ls[-1]
-				fl_path = os.path.join( self.path, fl )
-				ftp.retrbinary( "RETR " + fl,
-					        open( fl_path, 'wb' ).write )
-			except :
-				self.mesg_txt( 'fail', date_str )
-				return
 
 		# If the file now exists, try to load it; otherwise, abort.
 
@@ -341,7 +284,7 @@ class fc_arcv( object ) :
 
 		if ( os.path.isfile( fl_path ) ) :
 			try :
-				cdf = pycdf.CDF( fl_path )
+				cdf = readsav( fl_path )
 			except :
 				self.mesg_txt( 'fail', date_str )
 				return
@@ -357,9 +300,9 @@ class fc_arcv( object ) :
 		self.arr_date = self.arr_date + [ date_str ] # arr_date of
 		                                             # same size
 
-		n_spec = len( cdf['Epoch'] )
-		self.arr_tag = self.arr_tag + [ fc_tag( c=c, s=s,
-		                                epoch=cdf['Epoch'][s] )
+		n_spec = len( cdf['sec_beg'] )
+		self.arr_tag = self.arr_tag + [ pl_tag( c=c, s=s,
+		                                epoch=cdf['sec_beg'][s] )
 		                                for s in range( n_spec ) ]
 
 		self.arr_tag = sorted( self.arr_tag, key=attrgetter('epoch') )
@@ -372,16 +315,14 @@ class fc_arcv( object ) :
 		#self.cleanup_file( )
 
 
+
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR CLEANING UP THIS ARCHIVE.
 	#-----------------------------------------------------------------------
 
 	def cleanup_date( self ) :
 
-		# If the number of dates is less than or equal to the maximum,
-		# abort (as nothing needs to be done).
-
-		if ( len(self.arr_date) <= self.n_date_max ) :
+		if ( len(self.arr_date) <= 0 ) :
 			return
 
 		# How to get the entire list of arr_cdf, arr_data, arr_tag for 
@@ -401,50 +342,6 @@ class fc_arcv( object ) :
 		self.cleanup_date()
 
 	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR CLEANING UP THE DATA DIRECTORY.
-	#-----------------------------------------------------------------------
-
-	def cleanup_file( self ) :
-
-		# If there is no limit on the number files in the data
-		# directory, abort (as there's nothing to be done).
-
-		if ( self.n_file_max >= float( 'infinity' ) ) :
-			return
-
-		# Generate a list of the names of all files of the requested
-		# type (as specified by the "use_*" keywords) in the data
-		# directory.
-
-		file_name = array( glob(
-			 os.path.join( self.path, 'wi_sw-ion*'     ) ) )
-
-		n_file = len( file_name )
-
-		# If the number of files is less than or equal to the maximum,
-		# abort (as nothing needs to be done).
-
-		if ( n_file <= self.n_file_max ) :
-			return
-
-		# Determine the access time of each of the files, and then sort
-		# the files in ascending value.
-
-		file_time = array( [ os.path.getatime( fl )
-		                     for fl in file_name    ] )
-
-		srt = argsort( file_time )
-
-		file_name = file_name[srt]
-		file_time = file_time[srt]
-
-		# Delete files so that the number of files equals the maximum
-		# allowed.
-
-		for f in range( n_file - self.n_file_max ) :
-			os.remove( file_name[f] )
-
-	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR SENDING INFORMATIONAL MESSAGES TO THE USER.
 	#-----------------------------------------------------------------------
 
@@ -461,33 +358,4 @@ class fc_arcv( object ) :
 		# message parameters.
 
 		self.core.emit( SIGNAL('janus_mesg'),
-		                'fc', mesg_typ, mesg_obj )
-
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR CHANGING THE MAXIMUM NUMBER OF FILES.
-	#-----------------------------------------------------------------------
-
-	def chng_n_file_max( self, val ) :
-
-		# Check the maximum file number input to ensure it is a postive
-		# integer. Change the maximum file number if it is. Otherwise,
-		# raise an error.
-
-		if ( ( val != float( 'inf' ) ) and
-		     ( type( val ) is not int     )     ) :
-
-			raise ValueError( 'Max file number must be ' +
-			                     'infinity or a positive integer.' )
-
-			return
-
-		if ( val < 0 ) :
-
-			raise ValueError( 'Max file number cannot be ' +
-			                                           'negative.' )
-
-			return
-
-		self.n_file_max = val
-
-		self.cleanup_file( )
+		                'pl', mesg_typ, mesg_obj )

@@ -40,7 +40,7 @@ from janus_core import core
 from janus_custom_Application import custom_Application
 from janus_custom_MainWindow import custom_MainWindow
 
-from janus_widget_fc import widget_fc
+from janus_widget_ion import widget_ion
 from janus_widget_ctrl import widget_ctrl
 from janus_widget_mfi import widget_mfi
 from janus_widget_mom import widget_mom
@@ -133,7 +133,7 @@ class janus( object ) :
 
 		# Initialize the widgets.
 
-		self.wdg_fcs = widget_fc(   self.core )
+		self.wdg_fcs = widget_ion(   self.core )
 
 		self.wdg_ctr = widget_ctrl( self.core )
 		self.wdg_mfi = widget_mfi(  self.core )

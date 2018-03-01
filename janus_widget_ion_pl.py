@@ -29,26 +29,25 @@
 
 from PyQt4.QtGui import QTabWidget
 
-from janus_widget_fc_cup import widget_fc_cup
+from janus_widget_ion_pl_grid import widget_pl_grid
 
-from janus_widget_pesa import widget_pl
+#from janus_widget_ion_pl_cont import widget_pl_cont
 
 ################################################################################
 ## DEFINE THE "widget_fcspec" CLASS TO CUSTOMIZE "QTabWidget" FOR Wind/FC PLOTS.
 ################################################################################
 
-class widget_fc( QTabWidget ) :
+class widget_pl( QTabWidget ) :
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE INITIALIZATION FUNCTION.
 	#-----------------------------------------------------------------------
 
-	def __init__( self, core,
-	              n_plt_x=None, n_plt_y=None ) :
+	def __init__( self, core ) :
 
 		# Inherit all attributes of an instance of "QTabWidget".
 
-		super( widget_fc, self ).__init__( )
+		super( widget_pl, self ).__init__( )
 
 		# Store the Janus core.
 
@@ -57,13 +56,10 @@ class widget_fc( QTabWidget ) :
 		# Create two instances of "widget_fc_cup" (one for each Faraday
 		# cup) and add each as a tab.
 
-		self.wdg_fc1 = widget_fc_cup( core=self.core, cup=1,
-		                              n_plt_x=n_plt_x, n_plt_y=n_plt_y )
-		self.wdg_fc2 = widget_fc_cup( core=self.core, cup=2,
-		                              n_plt_x=n_plt_x, n_plt_y=n_plt_y )
-		self.wdg_pl  = widget_pl( core=self.core, n_plt_x=5, n_plt_y=5)
+		self.wdg_pl_grid1 = widget_pl_grid( core=self.core,
+		                              n_plt_x=5, n_plt_y=5 )
+#		self.wdg_pl_cont1 = widget_pl_cont( core=self.core,
 #		                              n_plt_x=n_plt_x, n_plt_y=n_plt_y )
 
-		self.addTab( self.wdg_fc1, 'Faraday Cup 1' )
-		self.addTab( self.wdg_fc2, 'Faraday Cup 2' )
-		self.addTab( self.wdg_pl,  'PESA Low' )
+		self.addTab( self.wdg_pl_grid1, 'PESA-Low Grid 1' )
+#		self.addTab( self.wdg_pl_cont1, 'PESA-Low Countour 1' )

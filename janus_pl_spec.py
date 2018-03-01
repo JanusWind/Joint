@@ -220,18 +220,40 @@ class pl_spec( ) :
 
 	def set_mag( self, mfi_t, mfi_b_x, mfi_b_y, mfi_b_z ) :
 
-		#TODO
+		mfi_s = [ ( t - mfi_t[0] ).total_seconds( ) for t in mfi_t ]
 
-		#secs = 
+		fnc_b_x = interp1d( mfi_s, mfi_b_x )
+		fnc_b_y = interp1d( mfi_s, mfi_b_y )
+		fnc_b_z = interp1d( mfi_s, mfi_b_z )
 
+		try :
 
+			for t in range( self['n_the'] ) :
 
+				for p in range( self['n_phi'] ) :
 
+					for b in range( self['n_bin'] ) :
 
+						s = ( self.arr[t][p][b]['time']
+                                                  - mfi_t[0] ).total_seconds( )
 
+						b_x = fnc_b_x( s )
+						b_y = fnc_b_y( s )
+						b_z = fnc_b_z( s )
 
+						self.arr[t][p][b].set_mag( (
+						            b_x, b_y, b_z ) )
+		except :
 
+			avg_b_x = sum( mfi_b_x ) / float( len( mfi_b_x ) )
+			avg_b_y = sum( mfi_b_y ) / float( len( mfi_b_y ) )
+			avg_b_z = sum( mfi_b_z ) / float( len( mfi_b_z ) )
 
+			for t in range( self['n_the'] ) :
 
+                                for p in range( self['n_phi'] ) :
 
-		return
+                                        for b in range( self['n_bin'] ) :
+
+                                                self.arr[t][p][b].set_mag( (
+						avg_b_x, avg_b_y, avg_b_z ) )

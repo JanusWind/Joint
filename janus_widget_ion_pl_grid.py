@@ -60,7 +60,7 @@ from numpy import zeros
 ## DEFINE THE "widget_fc_cup" CLASS TO CUSTOMIZE "QWidget" FOR Wind/FC PLOTS.
 ################################################################################
 
-class widget_pl( QWidget ) :
+class widget_pl_grid( QWidget ) :
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE INITIALIZATION FUNCTION.
@@ -71,7 +71,7 @@ class widget_pl( QWidget ) :
 
 		# Inherit all attributes of an instance of "QWidget".
 
-		super( widget_pl, self ).__init__( )
+		super( widget_pl_grid, self ).__init__( )
 
 		# Initialize the counter of repaint events for this widget as
 		# well as a maximum value for this counter.
@@ -94,36 +94,11 @@ class widget_pl( QWidget ) :
 
 		self.core = core
 
-		
-		# TESTING
-
-		a = readsav('./data/pl/wind-faces_esa_1997-01-09.idl')
-
-		#self.core.pl_spec = zeros(4)
-
 		# Prepare to respond to signals received from the Janus core.
 
-#		self.connect( self.core, SIGNAL('janus_rset'), self.resp_rset )
-#		self.connect( self.core, SIGNAL('janus_chng_spc'),
-#		                                            self.resp_chng_spc )
-#		self.connect( self.core, SIGNAL('janus_chng_mom_sel_bin'),
-#		                                    self.resp_chng_mom_sel_bin )
-#		self.connect( self.core, SIGNAL('janus_chng_mom_sel_dir'),
-#		                                    self.resp_chng_mom_sel_dir )
-#		self.connect( self.core, SIGNAL('janus_chng_mom_sel_all'),
-#		                                    self.resp_chng_mom_sel_all )
-#		self.connect( self.core, SIGNAL('janus_chng_mom_res'),
-#		                                        self.resp_chng_mom_res )
-#		self.connect( self.core, SIGNAL('janus_chng_nln_gss'),
-#		                                        self.resp_chng_nln_gss )
-#		self.connect( self.core, SIGNAL('janus_chng_nln_sel_bin'),
-#		                                    self.resp_chng_nln_sel_bin )
-#		self.connect( self.core, SIGNAL('janus_chng_nln_sel_all'),
-#		                                    self.resp_chng_nln_sel_all )
-#		self.connect( self.core, SIGNAL('janus_chng_nln_res'),
-#		                                        self.resp_chng_nln_res )
-#		self.connect( self.core, SIGNAL('janus_chng_dsp'),
-#		                                            self.resp_chng_dsp )
+		self.connect( self.core, SIGNAL('janus_rset'), self.resp_rset )
+		self.connect( self.core, SIGNAL('janus_chng_spc'),
+		                                            self.resp_chng_spc )
 		#TODO add more signals
 
 		# Assign (if not done so already) and store the shape of the
@@ -501,3 +476,25 @@ class widget_pl( QWidget ) :
 				if ( rset_lbl ) :
 					self.lbl[t,p].setText( '',
 					                       color=(0,0,0) )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR RESPONDING TO THE "rset" SIGNAL.
+	#-----------------------------------------------------------------------
+
+	def resp_rset( self ) :
+
+		# Clear the plots of all their elements.
+
+		self.rset_hst( )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_spc" SIGNAL.
+	#-----------------------------------------------------------------------
+
+	def resp_chng_spc( self ) :
+
+		# Clear the plots of all their elements and regenerate them.
+
+		self.rset_hst( )
+
+		self.make_hst( )
