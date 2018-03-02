@@ -303,6 +303,7 @@ class core( QObject ) :
 		if ( var_pesa ) :
 
 			self.pl_spec = None
+			self.pl_num  = None
 
 		#/TODO
 

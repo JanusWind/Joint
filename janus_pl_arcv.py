@@ -176,6 +176,8 @@ class pl_arcv( object ) :
 
 		adt_min = min( adt )
 
+		time_tag = where( adt=adt_min )
+
 		tk = [ a for a in range( len( adt ) ) if adt[a] == adt_min ][0]
 
 		if ( get_prev ) :
@@ -188,6 +190,10 @@ class pl_arcv( object ) :
 			self.mesg_txt( 'none' )
 			return None
 
+		# Determine how many more PESA-L spectra exist within the next
+		# 30 rotations
+
+		num_spec = 
 
 		# If the selected spectrum is not within the the request
 		# tolerence, abort.
@@ -197,10 +203,6 @@ class pl_arcv( object ) :
 			self.mesg_txt( 'none' )
 			return None
 
-
-		# If the selected spectrum is not within the the request
-		# tolerence, abort.
-	
 		# Extract the spectrum to be returned.
 
 		cdf = self.arr_cdf[self.arr_tag[tk].c]
