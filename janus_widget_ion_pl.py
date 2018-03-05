@@ -25,6 +25,10 @@
 ## LOAD THE NECESSARY MODULES.
 ################################################################################
 
+# Load the necessary modules for signaling the graphical interface.
+
+from PyQt4.QtCore import SIGNAL
+
 # Load the modules necessary for the graphical interface.
 
 from PyQt4.QtGui import QTabWidget
@@ -43,7 +47,7 @@ class widget_pl( QTabWidget ) :
 	# DEFINE THE INITIALIZATION FUNCTION.
 	#-----------------------------------------------------------------------
 
-	def __init__( self, core ) :
+	def __init__( self, core, n ) :
 
 		# Inherit all attributes of an instance of "QTabWidget".
 
@@ -52,21 +56,27 @@ class widget_pl( QTabWidget ) :
 		# Store the Janus core.
 
 		self.core = core
+		self.n    = n
 
-		# Create two instances of "widget_fc_cup" (one for each Faraday
-		# cup) and add each as a tab.
+		self.connect( self.core, SIGNAL('janus_chng_pl_spc'),
+		                                            self.add_tab )
 
-		self.wdg_pl_grid1 = widget_pl_grid( core=self.core,
+		self.add_tab
+
+	def add_tab( self ) :
+
+		# Create one instance of "widget_pl_grid" and one instance of
+		# "widget_pl_cont and add each as a tab.
+		if self.core.pl_n is not None :
+			self.wdg_pl_grid = widget_pl_grid( core=self.core,
 		                              n_plt_x=5, n_plt_y=5 )
-#		self.wdg_pl_cont1 = widget_pl_cont( core=self.core,
+#			self.wdg_pl_cont = widget_pl_cont( core=self.core,
 #		                              n_plt_x=n_plt_x, n_plt_y=n_plt_y )
 
-		self.addTab( self.wdg_pl_grid1, 'PESA-Low Grid 1' )
-#		self.addTab( self.wdg_pl_cont1, 'PESA-Low Countour 1'
-
-
-
-
+		
+			self.addTab( self.wdg_pl_grid, 'P-L Grid {}'.format(self.n) )
+#			self.addTab( self.wdg_pl_cont1, 'PESA-Low Countour 1'
+			self.n += 1
 
 
 

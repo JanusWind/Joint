@@ -97,7 +97,7 @@ class widget_pl_grid( QWidget ) :
 		# Prepare to respond to signals received from the Janus core.
 
 		self.connect( self.core, SIGNAL('janus_rset'), self.resp_rset )
-		self.connect( self.core, SIGNAL('janus_chng_spc'),
+		self.connect( self.core, SIGNAL('janus_chng_spec'),
 		                                            self.resp_chng_spc )
 		#TODO add more signals
 

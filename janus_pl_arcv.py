@@ -39,7 +39,7 @@ from janus_pl_spec import pl_spec
 
 # Load the necessary "numpy" array modules.
 
-from numpy import argsort, array
+from numpy import argsort, array, where
 
 from operator import attrgetter		  
 
@@ -172,13 +172,18 @@ class pl_arcv( object ) :
 		# Locate the spectrum whose timestamp is closest to the
 		# one requested.
 
-		adt = [ abs( datetime(1970, 1, 1) + timedelta( seconds=tag.epoch ) - time_req_epc ) for tag in self.arr_tag ]
+		dt  = [ datetime(1970, 1, 1) + timedelta( seconds=tag.epoch ) - time_req_epc for tag in self.arr_tag ]
+
+		adt = [ abs( del_t ) for del_t in dt ]
 
 		adt_min = min( adt )
 
-		time_tag = where( adt=adt_min )
+		dt_min = dt[ where( [ del_t == adt_min  for del_t in adt ] )[0][0] ]
 
 		tk = [ a for a in range( len( adt ) ) if adt[a] == adt_min ][0]
+
+		if self.core.pl_n is not None :
+			tk += self.core.pl_n
 
 		if ( get_prev ) :
 			tk -= 1
@@ -193,7 +198,7 @@ class pl_arcv( object ) :
 		# Determine how many more PESA-L spectra exist within the next
 		# 30 rotations
 
-		num_spec = 
+		num_spec = len( where([( del_t >= dt_min and del_t <= dt_min+timedelta(seconds=30.*3.05) ) for del_t in dt])[0] )
 
 		# If the selected spectrum is not within the the request
 		# tolerence, abort.
@@ -237,7 +242,7 @@ class pl_arcv( object ) :
 
 		self.cleanup_date( )	
 
-		return spec
+		return spec, num_spec
 
 		#fc_arcv().load_spec(1224246301)
 	#-----------------------------------------------------------------------
