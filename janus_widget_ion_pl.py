@@ -57,11 +57,9 @@ class widget_pl( QTabWidget ) :
 
 		self.core = core
 		self.n    = n
-
-		self.connect( self.core, SIGNAL('janus_chng_pl_spc'),
-		                                            self.add_tab )
-
 		self.add_tab
+		self.connect( self.core, SIGNAL('janus_new_pl_spc'),
+		                                            self.add_tab )
 
 	def add_tab( self ) :
 
@@ -72,8 +70,6 @@ class widget_pl( QTabWidget ) :
 		                              n_plt_x=5, n_plt_y=5 )
 #			self.wdg_pl_cont = widget_pl_cont( core=self.core,
 #		                              n_plt_x=n_plt_x, n_plt_y=n_plt_y )
-
-		
 			self.addTab( self.wdg_pl_grid, 'P-L Grid {}'.format(self.n) )
 #			self.addTab( self.wdg_pl_cont1, 'PESA-Low Countour 1'
 			self.n += 1

@@ -738,7 +738,8 @@ class core( QObject ) :
 		self.pl_spec, self.pl_num = self.pl_arcv.load_spec( self.time_txt,
 		                                       get_prev=get_prev,
 		                                       get_next=get_next )
-		self.emit( SIGNAL('janus_chng_pl_spc') )
+		self.emit( SIGNAL( 'janus_chng_pl_spc' ) )
+		self.emit( SIGNAL( 'janus_new_pl_spc' ) )
 
 		for i in range( self.pl_num-1 ) : # Note: "n" is a placeholder
 			self.pl_n = i+1
@@ -746,6 +747,7 @@ class core( QObject ) :
 			                               get_prev=get_prev,
 			                               get_next=get_next )
 			self.emit( SIGNAL('janus_chng_pl_spc') )
+			self.emit( SIGNAL( 'janus_new_pl_spc' ) )
 
 		
 
