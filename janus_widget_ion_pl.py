@@ -67,13 +67,21 @@ class widget_pl( QTabWidget ) :
 		# Removes all instances of widget_arr and the corresponding
 		# tabs from the GUI
 
-		self.wdg_arr = []		
+		self.clear( )
+
+		for wdg in self.wdg_arr :
+			wdg.destroy( )
+
+		if ( len( self.wdg_arr ) > 0 ) :
+			self.wdg_arr[0].show( )
+
+		self.wdg_arr = [ ]
 
 	def make_tab( self ) :
 
 		# Clear any current tab widgets
 
-		self.clear
+		self.clear_tabs( )
 
 		if self.core.pl_spec_arr is not None :
 
@@ -93,7 +101,3 @@ class widget_pl( QTabWidget ) :
 				self.addTab( wdg, 'P-L Grid {}'.format(n+1) )
 
 #				self.addTab( self.wdg_pl_cont1, 'PESA-Low Countour 1'
-
-
-
-
