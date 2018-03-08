@@ -39,7 +39,7 @@ from janus_pl_spec import pl_spec
 
 # Load the necessary "numpy" array modules.
 
-from numpy import argsort, array, where
+from numpy import argsort, array, where, zeros
 
 from operator import attrgetter		  
 
@@ -182,9 +182,6 @@ class pl_arcv( object ) :
 
 		tk = [ a for a in range( len( adt ) ) if adt[a] == adt_min ][0]
 
-		if self.core.pl_n is not None :
-			tk += self.core.pl_n
-
 		if ( get_prev ) :
 			tk -= 1
 		if ( get_next ) :
@@ -208,41 +205,49 @@ class pl_arcv( object ) :
 			self.mesg_txt( 'none' )
 			return None
 
-		# Extract the spectrum to be returned.
+		# Get the PESA-L spectra that lie within this time
 
-		cdf = self.arr_cdf[self.arr_tag[tk].c]
-		s   = self.arr_tag[ tk ].s
+		spec = []
 
-		# Assigning all retrieved data to parameter values
+		for n in range( num_spec ) :
 
-		t_strt   = cdf['sec_beg'][s]
+			# Extract the spectrum to be returned.
 
-		t_stop   = cdf['sec_end'][s]
+			cdf = self.arr_cdf[self.arr_tag[tk].c]
+			s   = self.arr_tag[ tk ].s
 
-                elev_cen = cdf['the'][s]
+			# Assigning all retrieved data to parameter values
 
-		the_del  = cdf['d_the'][s]
+			t_strt   = cdf['sec_beg'][s]
 
-                azim_cen = cdf['phi'][s]
+			t_stop   = cdf['sec_end'][s]
 
-		phi_del  = cdf['d_phi'][s]
+	                elev_cen = cdf['the'][s]
 
-                volt_cen = cdf['nrg'][s]
+			the_del  = cdf['d_the'][s]
 
-		volt_del = cdf['d_nrg'][s]
+	                azim_cen = cdf['phi'][s]
 
-		psd      = cdf['psd'][s]
+			phi_del  = cdf['d_phi'][s]
 
-		spec = pl_spec( t_strt=t_strt, t_stop=t_stop, elev_cen=elev_cen,
-		                the_del=the_del, azim_cen=azim_cen,
-		                phi_del=phi_del, volt_cen=volt_cen,
-		                volt_del=volt_del, psd=psd )
+	                volt_cen = cdf['nrg'][s]
+
+			volt_del = cdf['d_nrg'][s]
+
+			psd      = cdf['psd'][s]
+
+			spec = spec + [ pl_spec( t_strt=t_strt, t_stop=t_stop,
+			                   elev_cen=elev_cen, the_del=the_del,
+			                   azim_cen=azim_cen, phi_del=phi_del,
+			                   volt_cen=volt_cen, volt_del=volt_del,
+			                   psd=psd                           ) ]
+			tk += 1
 
 		# Request a cleanup of the data loaded into this archive.
 
 		self.cleanup_date( )	
 
-		return spec, num_spec
+		return spec
 
 		#fc_arcv().load_spec(1224246301)
 	#-----------------------------------------------------------------------

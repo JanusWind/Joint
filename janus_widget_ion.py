@@ -62,16 +62,8 @@ class widget_ion( QTabWidget ) :
 		# "widget_pl and add each as a tab.
 
 		self.wdg_fc = widget_fc( core=self.core )
-		self.wdg_pl = widget_pl( core=self.core, n=1 )
+		self.wdg_pl = widget_pl( core=self.core )
 
 		self.addTab( self.wdg_fc, 'Faraday Cup' )
 		self.addTab( self.wdg_pl,  'PESA-Low' )
-
-		self.connect( self.core, SIGNAL('janus_pl_reset'), self.pl_reset )
-
-	def pl_reset( self ) :
-		self.removeTab(1)
-		self.wdg_pl = widget_pl( core=self.core, n=1 )
-		self.addTab( self.wdg_pl,  'PESA-Low' )
-		
 

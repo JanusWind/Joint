@@ -213,7 +213,7 @@ class core( QObject ) :
 		# analyses.
 
 		self.rset_var( var_swe     = True, var_spin    = True,
-		               var_pesa    = True, var_mfi     = True,
+		               var_pl      = True, var_mfi     = True,
 		               var_mom_win = True, var_mom_sel = True,
 		               var_mom_res = True, var_nln_ion = True,
 		               var_nln_set = True, var_nln_gss = True,
@@ -240,7 +240,7 @@ class core( QObject ) :
 
 	def rset_var( self,
 	              var_swe     = False, var_spin    = False,
-	              var_pesa    = False, var_mfi     = False,
+	              var_pl      = False, var_mfi     = False,
 	              var_mom_win = False, var_mom_sel = False,
 	              var_mom_res = False, var_nln_ion = False,
 	              var_nln_set = False, var_nln_gss = False,
@@ -300,11 +300,9 @@ class core( QObject ) :
 
 		#TODO
 
-		if ( var_pesa ) :
+		if ( var_pl ) :
 
-			self.pl_spec = None
-			self.pl_num  = None
-			self.pl_n    = None
+			self.pl_spec_arr = []
 
 		#/TODO
 
@@ -608,7 +606,7 @@ class core( QObject ) :
 		self.emit( SIGNAL('janus_rset') )
 
 		self.rset_var( var_swe     = True, var_spin    = True,
-		               var_pesa    = True, var_mfi     = True,
+		               var_pl      = True, var_mfi     = True,
 		               var_mom_sel = True, var_mom_res = True,
 		               var_nln_gss = True, var_nln_sel = True,
 		               var_nln_res = True                      )
@@ -731,26 +729,12 @@ class core( QObject ) :
 		# Load the associated Wind/PESA-L data associated with this
 		# spectrum.
 
-		self.emit( SIGNAL('janus_pl_reset') )
-
 		self.load_pl( )
-		self.pl_n = 0
-		self.pl_spec, self.pl_num = self.pl_arcv.load_spec( self.time_txt,
+		self.pl_spec_arr = self.pl_arcv.load_spec( self.time_txt,
 		                                       get_prev=get_prev,
 		                                       get_next=get_next )
+
 		self.emit( SIGNAL( 'janus_chng_pl_spc' ) )
-		self.emit( SIGNAL( 'janus_new_pl_spc' ) )
-
-		for i in range( self.pl_num-1 ) : # Note: "n" is a placeholder
-			self.pl_n = i+1
-			self.pl_spec, n = self.pl_arcv.load_spec( self.time_txt,
-			                               get_prev=get_prev,
-			                               get_next=get_next )
-			self.emit( SIGNAL('janus_chng_pl_spc') )
-			self.emit( SIGNAL( 'janus_new_pl_spc' ) )
-
-		
-
 
 		# Message the user that a new Wind/FC ion spectrum has been
 		# loaded.
@@ -827,7 +811,7 @@ class core( QObject ) :
 
 		# Reset the spin variables.
 
-		self.rset_var( var_pesa=True )
+		self.rset_var( var_pl=True )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR LOADING THE Wind/MFI MAGNETIC FIELD DATA.
@@ -935,9 +919,10 @@ class core( QObject ) :
 
 		self.fc_spec.set_mag( self.mfi_t, self.mfi_b_x,
 		                                  self.mfi_b_y, self.mfi_b_z )
-		if self.pl_spec is not None:
-			self.pl_spec.set_mag( self.mfi_t, self.mfi_b_x,
-		                              self.mfi_b_y, self.mfi_b_z )
+		if self.pl_spec_arr is not None :
+			for spec in self.pl_spec_arr :
+				spec.set_mag( self.mfi_t, self.mfi_b_x,
+		        	                    self.mfi_b_y, self.mfi_b_z )
 
 		# Message the user that new Wind/MFI data have been loaded.
 

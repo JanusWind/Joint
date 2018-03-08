@@ -66,7 +66,7 @@ class widget_pl_grid( QWidget ) :
 	# DEFINE THE INITIALIZATION FUNCTION.
 	#-----------------------------------------------------------------------
 
-	def __init__( self, core,
+	def __init__( self, core, n,
 	              n_plt_x=None, n_plt_y=None, n_plt=None ) :
 
 		# Inherit all attributes of an instance of "QWidget".
@@ -93,12 +93,13 @@ class widget_pl_grid( QWidget ) :
 		self.n_painted_max = 3
 
 		self.core = core
+		self.n = n
 
 		# Prepare to respond to signals received from the Janus core.
 
 		self.connect( self.core, SIGNAL('janus_rset'), self.resp_rset )
-		self.connect( self.core, SIGNAL('janus_chng_spec'),
-		                                            self.resp_chng_spc )
+		self.connect( self.core, SIGNAL('janus_chng_pl_spc'),
+		                                            self.resp_chng_pl_spc )
 		#TODO add more signals
 
 		# Assign (if not done so already) and store the shape of the
@@ -286,18 +287,18 @@ class widget_pl_grid( QWidget ) :
 		# If no spectrum has been loaded, use the default limits;
 		# otherwise, use the spectral data to compute axis limits.
 
-		if ( self.core.pl_spec is None ) :
+		if ( self.core.pl_spec_arr is None ) :
 
 			self.domain = [ 300. , 900. ]
 			self.range = [ 1.e-10,  1.e-5 ]
 
 		else :
 
-			self.domain = [self.core.pl_spec['vel_strt'][0],
-			               self.core.pl_spec['vel_stop'][-1]]
+			self.domain = [self.core.pl_spec_arr[self.n]['vel_strt'][0],
+			               self.core.pl_spec_arr[self.n]['vel_stop'][-1]]
 
-			arr_psd_flat = [self.core.pl_spec['psd_flat'][i] for i
-			          in (where(array(self.core.pl_spec['psd_flat'])
+			arr_psd_flat = [self.core.pl_spec_arr[self.n]['psd_flat'][i] for i
+			          in (where(array(self.core.pl_spec_arr[self.n]['psd_flat'])
 			                                             != 0.)[0])]
 
 			self.range = [ min(arr_psd_flat), max(arr_psd_flat)  ]
@@ -331,7 +332,7 @@ class widget_pl_grid( QWidget ) :
 		# If no spectrum has been loaded, clear any existing histograms
 		# and abort.
 
-		if ( self.core.pl_spec is None ) : return
+		if ( self.core.pl_spec_arr is None ) : return
 
 		# Use the spectral data to compute new axis-limits.
 
@@ -346,9 +347,9 @@ class widget_pl_grid( QWidget ) :
 		# Histograms are broken down by phi horizontally and
 		# theta vertically
 
-		for p in range( self.core.pl_spec['n_phi'] ):
+		for p in range( self.core.pl_spec_arr[self.n]['n_phi'] ):
 
-			for t in range ( self.core.pl_spec['n_the'] ):
+			for t in range ( self.core.pl_spec_arr[self.n]['n_the'] ):
 
 				# If this plot does not exist, move onto
 				# the next one.
@@ -363,9 +364,9 @@ class widget_pl_grid( QWidget ) :
 				# Generate a step function for the
 				# look direction associated with this widget.
 
-				self.stp = array( [step( self.core.pl_spec['vel_cen'],
-				                        self.core.pl_spec['vel_del'],
-				                        self.core.pl_spec['psd'][t][p])])
+				self.stp = array( [step( self.core.pl_spec_arr[self.n]['vel_cen'],
+				                        self.core.pl_spec_arr[self.n]['vel_del'],
+				                        self.core.pl_spec_arr[self.n]['psd'][t][p])])
 
 				# Calculate the points to be plotted from the
 				# step function
@@ -424,8 +425,8 @@ class widget_pl_grid( QWidget ) :
 				# indicating the pointing direction.
 
 
-				elev = round( self.core.pl_spec['elev_cen'][t] )
-				azim = round( self.core.pl_spec['azim_cen'][p] )
+				elev = round( self.core.pl_spec_arr[self.n]['elev_cen'][t] )
+				azim = round( self.core.pl_spec_arr[self.n]['azim_cen'][p] )
 
 				txt = ( u'({0:+.0f}\N{DEGREE SIGN}, ' + 
 				        u'{1:+.0f}\N{DEGREE SIGN})'     ).format(
@@ -488,10 +489,10 @@ class widget_pl_grid( QWidget ) :
 		self.rset_hst( )
 
 	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_spc" SIGNAL.
+	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_pl_spc" SIGNAL.
 	#-----------------------------------------------------------------------
 
-	def resp_chng_spc( self ) :
+	def resp_chng_pl_spc( self ) :
 
 		# Clear the plots of all their elements and regenerate them.
 

@@ -47,7 +47,7 @@ class widget_pl( QTabWidget ) :
 	# DEFINE THE INITIALIZATION FUNCTION.
 	#-----------------------------------------------------------------------
 
-	def __init__( self, core, n ) :
+	def __init__( self, core ) :
 
 		# Inherit all attributes of an instance of "QTabWidget".
 
@@ -56,23 +56,43 @@ class widget_pl( QTabWidget ) :
 		# Store the Janus core.
 
 		self.core = core
-		self.n    = n
-		self.add_tab
-		self.connect( self.core, SIGNAL('janus_new_pl_spc'),
-		                                            self.add_tab )
 
-	def add_tab( self ) :
+		self.wdg_arr = []
 
-		# Create one instance of "widget_pl_grid" and one instance of
-		# "widget_pl_cont and add each as a tab.
-		if self.core.pl_n is not None :
-			self.wdg_pl_grid = widget_pl_grid( core=self.core,
-		                              n_plt_x=5, n_plt_y=5 )
-#			self.wdg_pl_cont = widget_pl_cont( core=self.core,
-#		                              n_plt_x=n_plt_x, n_plt_y=n_plt_y )
-			self.addTab( self.wdg_pl_grid, 'P-L Grid {}'.format(self.n) )
-#			self.addTab( self.wdg_pl_cont1, 'PESA-Low Countour 1'
-			self.n += 1
+		self.connect( self.core, SIGNAL('janus_chng_pl_spc'),
+		                                            self.make_tab )
+
+	def clear_tabs( self ) :
+
+		# Removes all instances of widget_arr and the corresponding
+		# tabs from the GUI
+
+		self.wdg_arr = []		
+
+	def make_tab( self ) :
+
+		# Clear any current tab widgets
+
+		self.clear
+
+		if self.core.pl_spec_arr is not None :
+
+			# Create each instance of "widget_pl_grid" and each
+			# instance of "widget_pl_cont" and add each as a tab.
+
+			for n in range( len( self.core.pl_spec_arr ) ) :
+
+				wdg = widget_pl_grid( self.core, n,
+			                                  n_plt_x=5, n_plt_y=5 )
+
+				self.wdg_arr = self.wdg_arr + [ wdg ]
+
+#				self.wdg_pl_cont = widget_pl_cont( core=self.core,
+#			                              n_plt_x=n_plt_x, n_plt_y=n_plt_y )
+
+				self.addTab( wdg, 'P-L Grid {}'.format(n+1) )
+
+#				self.addTab( self.wdg_pl_cont1, 'PESA-Low Countour 1'
 
 
 
