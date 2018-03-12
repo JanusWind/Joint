@@ -59,8 +59,9 @@ class widget_pl( QTabWidget ) :
 
 		self.wdg_arr = []
 
+		self.connect( self.core, SIGNAL('janus_reset'), self.resp_rset )
 		self.connect( self.core, SIGNAL('janus_chng_pl_spc'),
-		                                            self.make_tab )
+		                                         self.resp_chng_pl_spc )
 
 	def clear_tabs( self ) :
 
@@ -77,27 +78,29 @@ class widget_pl( QTabWidget ) :
 
 		self.wdg_arr = [ ]
 
-	def make_tab( self ) :
+	def resp_rset( self ) :
+
+		self.clear_tabs( )
+
+	def resp_chng_pl_spc( self ) :
 
 		# Clear any current tab widgets
 
 		self.clear_tabs( )
 
-		if self.core.pl_spec_arr is not None :
-
 			# Create each instance of "widget_pl_grid" and each
 			# instance of "widget_pl_cont" and add each as a tab.
 
-			for n in range( len( self.core.pl_spec_arr ) ) :
+		for n in range( len( self.core.pl_spec_arr ) ) :
 
-				wdg = widget_pl_grid( self.core, n,
-			                                  n_plt_x=5, n_plt_y=5 )
+			wdg = widget_pl_grid( self.core, n,
+		                                  n_plt_x=5, n_plt_y=5 )
 
-				self.wdg_arr = self.wdg_arr + [ wdg ]
+			self.wdg_arr = self.wdg_arr + [ wdg ]
 
-#				self.wdg_pl_cont = widget_pl_cont( core=self.core,
-#			                              n_plt_x=n_plt_x, n_plt_y=n_plt_y )
+#			self.wdg_pl_cont = widget_pl_cont( core=self.core,
+#		                              n_plt_x=n_plt_x, n_plt_y=n_plt_y )
 
-				self.addTab( wdg, 'P-L Grid {}'.format(n+1) )
+			self.addTab( wdg, 'P-L Grid {}'.format(n+1) )
 
-#				self.addTab( self.wdg_pl_cont1, 'PESA-Low Countour 1'
+#			self.addTab( self.wdg_pl_cont1, 'PESA-Low Countour 1'
