@@ -143,7 +143,8 @@ class widget_ctrl_info( format_TextEdit ) :
 
 				if ( ( mesg_obj == 'fc'   ) or
 				     ( mesg_obj == 'mfi'  ) or
-				     ( mesg_obj == 'spin' )    ) :
+				     ( mesg_obj == 'spin' ) or
+				     ( mesg_obj == 'pl'   )    ) :				
 					self.prnt_htm( 'Retrieving '    + 
 					               mesg_obj.upper() +
 					               ' data.'           )
@@ -274,7 +275,8 @@ class widget_ctrl_info( format_TextEdit ) :
 
 		if ( ( mesg_src == 'fc'   ) or
 		     ( mesg_src == 'mfi'  ) or 
-		     ( mesg_src == 'spin' )    ) :
+		     ( mesg_src == 'spin' ) or
+		     ( mesg_src == 'pl'   )    ) :
 
 			if ( mesg_typ == 'load' ) :
 				self.prnt_tab( 1 )

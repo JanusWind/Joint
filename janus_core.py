@@ -714,7 +714,7 @@ class core( QObject ) :
 		# Message the user that a new Wind/FC ion spectrum has been
 		# loaded.
 
-#		self.emit( SIGNAL('janus_mesg'), 'core', 'end', 'fc' )
+		self.emit( SIGNAL('janus_mesg'), 'core', 'end', 'fc' )
 
 		# Emit a signal that indicates that a new Wind/FC ion spectrum
 		# has now been loaded.
@@ -726,6 +726,11 @@ class core( QObject ) :
 
 		self.load_spin( )
 
+		# Message the user that a new Wind/PESA-L ion spectrum is about
+		# to be loaded.
+
+		self.emit( SIGNAL('janus_mesg'), 'core', 'begin', 'pl' )
+
 		# Load the associated Wind/PESA-L data associated with this
 		# spectrum.
 
@@ -736,15 +741,11 @@ class core( QObject ) :
 
 		self.emit( SIGNAL( 'janus_chng_pl_spc' ) )
 
-		# Message the user that a new Wind/FC ion spectrum has been
+		# Message the user that a new Wind/PESA ion spectrum has been
 		# loaded.
 
-		self.emit( SIGNAL('janus_mesg'), 'core', 'end', 'fc' )
+		self.emit( SIGNAL('janus_mesg'), 'core', 'end', 'pl' )
 
-		# Emit a signal that indicates that a new Wind/PESA ion spectrum
-		# has now been loaded.
-
-#		self.emit( SIGNAL('janus_chng_pl_spec') )
 
 		# Load the associated Wind/MFI magnetic field data associated
 		# with this spectrum.
@@ -919,10 +920,9 @@ class core( QObject ) :
 
 		self.fc_spec.set_mag( self.mfi_t, self.mfi_b_x,
 		                                  self.mfi_b_y, self.mfi_b_z )
-		if self.pl_spec_arr is not None :
-			for spec in self.pl_spec_arr :
-				spec.set_mag( self.mfi_t, self.mfi_b_x,
-		        	                    self.mfi_b_y, self.mfi_b_z )
+		for spec in self.pl_spec_arr :
+			spec.set_mag( self.mfi_t, self.mfi_b_x,
+		       	                    self.mfi_b_y, self.mfi_b_z )
 
 		# Message the user that new Wind/MFI data have been loaded.
 

@@ -28,7 +28,7 @@
 # Load the modules necessary for the graphical interface.
 
 from PyQt4.QtCore import Qt, QPointF, SIGNAL
-from PyQt4.QtGui import QGridLayout, QWidget
+from PyQt4.QtGui import QGridLayout, QWidget, QLabel
 
 # Load the modules necessary for plotting.
 
@@ -49,6 +49,10 @@ from numpy import amax, amin, array, ceil, floor, log10, sqrt, tile, where
 
 from threading import Thread
 from janus_thread import n_thread, thread_chng_mom_sel, thread_chng_nln_sel
+
+# Load the modules necessary handling dates and times.
+
+from datetime import datetime, timedelta
 
 # Load the module for TESTING joint
 
@@ -94,6 +98,10 @@ class widget_pl_grid( QWidget ) :
 
 		self.core = core
 		self.n = n
+		self.t = []
+		self.delta_t = []
+		self.time_label = QLabel( )
+		self.time_label.setAlignment( Qt.AlignCenter )
 
 		# Prepare to respond to signals received from the Janus core.
 
@@ -162,6 +170,7 @@ class widget_pl_grid( QWidget ) :
 
 		self.grd = GraphicsLayoutWidget( )
 		self.grd.setBackground( 'w' )
+		self.layout( ).addWidget( self.time_label )
 		self.layout( ).addWidget( self.grd )
 
 		self.layout().setContentsMargins( 0, 0, 0, 0 )
@@ -334,6 +343,17 @@ class widget_pl_grid( QWidget ) :
 
 		if ( self.core.pl_spec_arr is None ) : return
 
+		# Generate the timestamp label
+
+		self.t = self.t + [self.core.pl_spec_arr[self.n]['time'][0]]
+
+		self.t_0 = self.core.fc_spec['time']
+
+		self.delta_t = self.delta_t + [(self.t[-1]-self.t_0).total_seconds( )]
+
+		self.time_label.setText( str(self.t[-1]) + '        ' + u'\u0394t = {}'.format(
+		                                            self.delta_t[-1] ) )
+
 		# Use the spectral data to compute new axis-limits.
 
 		self.make_lim( )
@@ -449,6 +469,10 @@ class widget_pl_grid( QWidget ) :
 
 	def rset_hst( self, rset_lbl=False ) :
 
+		self.time_label.clear( )
+		self.t = []
+		self.delta_t = []
+
 		# For each plot that exists in the grid, remove and delete it's
 		# histogram.  Likewise, if requested, empty it's label (but
 		# still leave the label itself intact).
@@ -498,4 +522,4 @@ class widget_pl_grid( QWidget ) :
 
 		self.rset_hst( )
 
-		self.make_hst( )
+		#self.make_hst( )

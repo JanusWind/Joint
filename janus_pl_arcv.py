@@ -127,7 +127,7 @@ class pl_arcv( object ) :
 
 		if ( ( get_prev ) and ( get_next ) ) :
 			self.mesg_txt( 'none' )
-			return None
+			return []
 
 		# Convert/standardize the requested time.
 
@@ -167,12 +167,12 @@ class pl_arcv( object ) :
 
 		if ( len( self.arr_tag ) == 0 ) :
 			self.mesg_txt( 'none' )
-			return None
+			return []
 
 		# Locate the spectrum whose timestamp is closest to the
 		# one requested.
 
-		dt  = [ datetime(1970, 1, 1) + timedelta( seconds=tag.epoch ) - time_req_epc for tag in self.arr_tag ]
+		dt  = [ datetime(1970, 1, 1) + timedelta( seconds=tag.epoch ) - self.core.fc_spec['time'] for tag in self.arr_tag ]
 
 		adt = [ abs( del_t ) for del_t in dt ]
 
@@ -182,20 +182,22 @@ class pl_arcv( object ) :
 
 		tk = [ a for a in range( len( adt ) ) if adt[a] == adt_min ][0]
 
-		if ( get_prev ) :
-			tk -= 1
-		if ( get_next ) :
-			tk +=1
+#		if ( get_prev ) :
+#			tk -= 1
+#		if ( get_next ) :
+#			tk +=1
 
 		if( ( tk <  0                   ) or
 		    ( tk >= len( self.arr_tag ) )    ) :
 			self.mesg_txt( 'none' )
-			return None
+			return []
 
 		# Determine how many more PESA-L spectra exist within the next
 		# 30 rotations
 
-		num_spec = len( where([( del_t >= dt_min and del_t <= dt_min+timedelta(seconds=30.*3.05) ) for del_t in dt])[0] )
+		num_spec = len( where([( del_t >= timedelta(seconds=-3.05) and del_t <= timedelta(seconds=31.*3.05) ) for del_t in dt])[0] )
+
+		#num_spec = len( where([( del_t >= dt_min and del_t <= timedelta(seconds=31.*3.05) - adt_min ) for del_t in dt])[0] )
 
 		# If the selected spectrum is not within the the request
 		# tolerence, abort.
@@ -203,7 +205,7 @@ class pl_arcv( object ) :
 		if ( ( adt[tk] ).total_seconds() > self.tol ) :# In case of long
 		                                               # Data gap  
 			self.mesg_txt( 'none' )
-			return None
+			return []
 
 		# Get the PESA-L spectra that lie within this time
 
@@ -211,10 +213,12 @@ class pl_arcv( object ) :
 
 		for n in range( num_spec ) :
 
+			self.mesg_txt( 'load', 'spectrum {}'.format(n+1) )
+
 			# Extract the spectrum to be returned.
 
-			cdf = self.arr_cdf[self.arr_tag[tk].c]
-			s   = self.arr_tag[ tk ].s
+			cdf = self.arr_cdf[self.arr_tag[tk+n].c]
+			s   = self.arr_tag[ tk+n ].s
 
 			# Assigning all retrieved data to parameter values
 
@@ -241,7 +245,7 @@ class pl_arcv( object ) :
 			                   azim_cen=azim_cen, phi_del=phi_del,
 			                   volt_cen=volt_cen, volt_del=volt_del,
 			                   psd=psd                           ) ]
-			tk += 1
+
 
 		# Request a cleanup of the data loaded into this archive.
 
