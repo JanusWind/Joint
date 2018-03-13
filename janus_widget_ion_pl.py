@@ -31,7 +31,7 @@ from PyQt4.QtCore import SIGNAL
 
 # Load the modules necessary for the graphical interface.
 
-from PyQt4.QtGui import QTabWidget
+from PyQt4.QtGui import QTabWidget, QWidget
 
 from janus_widget_ion_pl_grid import widget_pl_grid
 
@@ -73,9 +73,6 @@ class widget_pl( QTabWidget ) :
 		for wdg in self.wdg_arr :
 			wdg.destroy( )
 
-		if ( len( self.wdg_arr ) > 0 ) :
-			self.wdg_arr[0].show( )
-
 		self.wdg_arr = [ ]
 
 	def resp_rset( self ) :
@@ -88,8 +85,8 @@ class widget_pl( QTabWidget ) :
 
 		self.clear_tabs( )
 
-			# Create each instance of "widget_pl_grid" and each
-			# instance of "widget_pl_cont" and add each as a tab.
+		# Create each instance of "widget_pl_grid" and each
+		# instance of "widget_pl_cont" and add each as a tab.
 
 		for n in range( len( self.core.pl_spec_arr ) ) :
 
