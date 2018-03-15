@@ -28,7 +28,7 @@
 # Load the modules necessary for the graphical interface.
 
 from PyQt4.QtCore import Qt, QPointF, SIGNAL
-from PyQt4.QtGui import QGridLayout, QWidget, QLabel
+from PyQt4.QtGui import QGridLayout, QWidget, QLabel, QFont
 
 # Load the modules necessary for plotting.
 
@@ -102,6 +102,9 @@ class widget_pl_grid( QWidget ) :
 		self.delta_t = []
 		self.time_label = QLabel( )
 		self.time_label.setAlignment( Qt.AlignCenter )
+		font = QFont( )
+		font.setBold(True)
+		self.time_label.setFont( font )
 
 		# Prepare to respond to signals received from the Janus core.
 
@@ -351,8 +354,9 @@ class widget_pl_grid( QWidget ) :
 
 		self.delta_t = self.delta_t + [(self.t[-1]-self.t_0).total_seconds( )]
 
-		self.time_label.setText( str(self.t[-1]) + '        ' + u'\u0394t = {}'.format(
-		                                            self.delta_t[-1] ) )
+		self.time_label.setText( str(self.t[-1])[0:-7] + '        ' +
+		                         u'\u0394t = {}'.format(
+		                         round( self.delta_t[-1], 0) ) + 's'  )
 
 		# Use the spectral data to compute new axis-limits.
 

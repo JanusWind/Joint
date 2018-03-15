@@ -211,9 +211,14 @@ class pl_arcv( object ) :
 
 		spec = []
 
-		for n in range( num_spec ) :
+		if num_spec == 1 :
+			plur = 'spectrum'
+		else :
+			plur = 'spectra'
 
-			self.mesg_txt( 'load', 'spectrum {}'.format(n+1) )
+		self.mesg_txt( 'load', (str(num_spec) + ' ' + plur + ' found') )
+
+		for n in range( num_spec ) :
 
 			# Extract the spectrum to be returned.
 
