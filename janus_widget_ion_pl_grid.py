@@ -102,6 +102,7 @@ class widget_pl_grid( QWidget ) :
 		self.delta_t = []
 		self.time_label = QLabel( )
 		self.time_label.setAlignment( Qt.AlignCenter )
+		self.time_label.setContentsMargins( 0,5,0,0 )
 		font = QFont( )
 		font.setBold(True)
 		self.time_label.setFont( font )
