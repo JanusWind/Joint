@@ -35,6 +35,8 @@ from PyQt4.QtGui import QTextCursor, QScrollBar
 from janus_format_TextEdit import format_TextEdit
 from PyQt4.QtGui import QTextEdit
 
+from janus_widget_mom_res import widget_mom_res
+
 
 ################################################################################
 ## DEFINE THE "widget_mom_res" CLASS TO CUSTOMIZE "format_TextEdit".
@@ -93,119 +95,18 @@ class widget_mom_res_table( format_TextEdit ) :
 		if ( self.core.mom_res is None ) :
 			return
 
+		self.fc_text = None
+		self.fc_text = widget_mom_res( self.core )
+		self.fc_string = self.fc_text.toPlainText( )
+		print self.fc_string
+
 		# Generate the table for displaying FC and PL data
 
-		self.insertHtml('<table style="width:100%"><tr><th>FC</th><th>PL</th></tr><tr><td>{}</td><td>{}</td></tr></table>'.format(self.write_FC(), 'data') )
-
-
-
-		# Print the results of the FC moments analysis.
-
-		if ( self.core.opt['res_n'] ) :
-
-			self.prnt_htm( '<i>n<sub>p</sub></i> = ' )
-			self.prnt_dcm( self.core.mom_res['n_p_c'],
-		                             2, 'cm<sup>-3</sup>'        )
-			self.prnt_brk( )
-
-			self.prnt_brk( )
-
-		if ( self.core.opt['res_v'] ) :
-
-			self.prnt_htm( '<i>v<sub>p</sub></i> = ' )
-			self.prnt_dcm( self.core.mom_res['v_p_c'], 0, 'km/s' )
-			self.prnt_brk( )
-
-			v_vec = self.core.mom_res['v_vec_p_c']
-	
-			self.prnt_tab( 1 )
-			self.prnt_htm( '<i>v<sub>xp</sub></i> = ' )
-			self.prnt_dcm( v_vec[0], 0, 'km/s' )
-			self.prnt_brk( )
-	
-			self.prnt_tab( 1 )
-			self.prnt_htm( '<i>v<sub>yp</sub></i> = ' )
-			self.prnt_dcm( v_vec[1], 0, 'km/s' )
-			self.prnt_brk( )
-	
-			self.prnt_tab( 1 )
-			self.prnt_htm( '<i>v<sub>zp</sub></i> = ' )
-			self.prnt_dcm( v_vec[2], 0, 'km/s' )
-			self.prnt_brk( )
-	
-			self.prnt_brk( )
-
-		if ( ( self.core.opt['res_dw'] ) and
-		     ( self.core.opt['res_w'] )    ) :
-
-			self.prnt_htm( '<i>w<sub>p</sub></i> = ' )
-			self.prnt_dcm( self.core.mom_res['w_p_c'], 0, 'km/s' )
-			self.prnt_brk( )
-
-			self.prnt_brk( )
-
-		if ( ( self.core.opt['res_dt'] ) and
-		     ( self.core.opt['res_w'] )    ) :
-
-			self.prnt_htm( '<i>T<sub>p</sub></i> = ' )
-			self.prnt_dcm( self.core.mom_res['T_p_c'], 1, 'kK' )
+		self.insertHtml('<table style="width:100%"><tr><th>FC</th><th>PL</th></tr><tr><td>{}</td><td>{}</td></tr></table>'.format(self.fc_string, 'data') )
 
 		# Scroll to the top of the text area.
 
 		self.moveCursor( QTextCursor.Start )
-
-	def write_FC( self ) :
-
-		# Print the results of the FC moments analysis.
-
-		if ( self.core.opt['res_n'] ) :
-
-			self.prnt_htm( '<i>n<sub>p</sub></i> = ' )
-			self.prnt_dcm( self.core.mom_res['n_p_c'],
-		                             2, 'cm<sup>-3</sup>'        )
-			self.prnt_brk( )
-
-			self.prnt_brk( )
-
-		if ( self.core.opt['res_v'] ) :
-
-			self.prnt_htm( '<i>v<sub>p</sub></i> = ' )
-			self.prnt_dcm( self.core.mom_res['v_p_c'], 0, 'km/s' )
-			self.prnt_brk( )
-
-			v_vec = self.core.mom_res['v_vec_p_c']
-	
-			self.prnt_tab( 1 )
-			self.prnt_htm( '<i>v<sub>xp</sub></i> = ' )
-			self.prnt_dcm( v_vec[0], 0, 'km/s' )
-			self.prnt_brk( )
-	
-			self.prnt_tab( 1 )
-			self.prnt_htm( '<i>v<sub>yp</sub></i> = ' )
-			self.prnt_dcm( v_vec[1], 0, 'km/s' )
-			self.prnt_brk( )
-	
-			self.prnt_tab( 1 )
-			self.prnt_htm( '<i>v<sub>zp</sub></i> = ' )
-			self.prnt_dcm( v_vec[2], 0, 'km/s' )
-			self.prnt_brk( )
-	
-			self.prnt_brk( )
-
-		if ( ( self.core.opt['res_dw'] ) and
-		     ( self.core.opt['res_w'] )    ) :
-
-			self.prnt_htm( '<i>w<sub>p</sub></i> = ' )
-			self.prnt_dcm( self.core.mom_res['w_p_c'], 0, 'km/s' )
-			self.prnt_brk( )
-
-			self.prnt_brk( )
-
-		if ( ( self.core.opt['res_dt'] ) and
-		     ( self.core.opt['res_w'] )    ) :
-
-			self.prnt_htm( '<i>T<sub>p</sub></i> = ' )
-			self.prnt_dcm( self.core.mom_res['T_p_c'], 1, 'kK' )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RESPONDING TO THE "rset" SIGNAL.
