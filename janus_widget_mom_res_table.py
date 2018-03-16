@@ -92,6 +92,8 @@ class widget_mom_res_table( format_TextEdit ) :
 		# If the moments analysis has failed or has not been performed,
 		# return.
 
+		"""
+
 		if ( self.core.mom_res is None ) :
 			return
 
@@ -100,9 +102,36 @@ class widget_mom_res_table( format_TextEdit ) :
 		self.fc_string = self.fc_text.toPlainText( )
 		print self.fc_string
 
+		"""
+
 		# Generate the table for displaying FC and PL data
 
-		self.insertHtml('<table style="width:100%"><tr><th>FC</th><th>PL</th></tr><tr><td>{}</td><td>{}</td></tr></table>'.format(self.fc_string, 'data') )
+		txt = '<table>'
+
+		txt += '<tr>'
+		txt += '<th></th>'
+		txt += '<th>n [cm^-3]</th>'
+		txt += '<th>vx [km/s]</th>'
+		txt += '<th>vy [km/s]</th>'
+		txt += '<th>vz [km/s]</th>'
+		txt += '<th>w [km/s]</th>'
+		txt += '</tr>'
+
+		if ( self.core.mom_res is not None ) :
+
+			txt += '<tr>'
+
+			txt += '<th>FC</th>'
+
+			txt += '<td>{:.2f}</td>'.format( self.core.mom_res['n_p_c'] )
+
+			txt += '</tr>'
+
+
+
+		txt += '</table>'
+
+		self.insertHtml( txt )
 
 		# Scroll to the top of the text area.
 
