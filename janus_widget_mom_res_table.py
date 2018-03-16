@@ -35,8 +35,6 @@ from PyQt4.QtGui import QTextCursor, QScrollBar
 from janus_format_TextEdit import format_TextEdit
 from PyQt4.QtGui import QTextEdit
 
-from janus_widget_mom_res import widget_mom_res
-
 
 ################################################################################
 ## DEFINE THE "widget_mom_res" CLASS TO CUSTOMIZE "format_TextEdit".
@@ -68,7 +66,8 @@ class widget_mom_res_table( format_TextEdit ) :
 		self.connect( self.core, SIGNAL('janus_chng_mom_res'),
 		                                        self.resp_chng_mom_res )
 
-		# Set this text editor as read only (for the user).
+		# Set this text editor as read only (for the user) and disable
+		# line wrap.
 
 		self.setReadOnly( True )
 		self.setLineWrapMode( 0 )
@@ -89,45 +88,125 @@ class widget_mom_res_table( format_TextEdit ) :
 
 		self.clear( )
 
-		# If the moments analysis has failed or has not been performed,
-		# return.
-
-		"""
-
-		if ( self.core.mom_res is None ) :
-			return
-
-		self.fc_text = None
-		self.fc_text = widget_mom_res( self.core )
-		self.fc_string = self.fc_text.toPlainText( )
-		print self.fc_string
-
-		"""
-
 		# Generate the table for displaying FC and PL data
 
-		txt = '<table>'
+		txt = '<table cellspacing="10">'
+
+		# Write the column headers
 
 		txt += '<tr>'
+
 		txt += '<th></th>'
-		txt += '<th>n [cm^-3]</th>'
-		txt += '<th>vx [km/s]</th>'
-		txt += '<th>vy [km/s]</th>'
-		txt += '<th>vz [km/s]</th>'
-		txt += '<th>w [km/s]</th>'
+
+		if ( self.core.opt['res_n'] ) :
+
+			txt += '<th><i>n<sub>p</sub></i><br>'
+			txt += '<font size="1">[cm<sup>-3</sup>]</font></th>'
+
+		if ( self.core.opt['res_v'] ) :
+
+			txt += '<th><i>v<sub>p</sub></i><br>'
+			txt += '<font size="1">[km/s]</font></th>'
+
+			txt += '<th><i>v<sub>xp</sub></i><br>'
+			txt += '<font size="1">[km/s]</font></th>'
+
+			txt += '<th><i>v<sub>yp</sub></i><br>'
+			txt += '<font size="1">[km/s]</font></th>'
+
+			txt += '<th><i>v<sub>zp</sub></i><br>'
+			txt += '<font size="1">[km/s]</font></th>'
+
+		if ( ( self.core.opt['res_dw'] ) and
+		     ( self.core.opt['res_w'] )    ) :
+
+			txt += '<th><i>w<sub>p</sub></i><br>'
+			txt += '<font size="1">[km/s]</font></th>'
+
+		if ( ( self.core.opt['res_dt'] ) and
+		     ( self.core.opt['res_w'] )    ) :
+
+			txt += '<th><i>T<sub>p</sub></i><br>'
+			txt += '<font size="1">[kK]</font></th>'
+
 		txt += '</tr>'
 
-		if ( self.core.mom_res is not None ) :
+		# End of column headers
+
+		# If the moments analysis has not been performed, finish
+		# the table and return
+
+		if ( self.core.mom_res is None ) :
+
+			txt += '</table>'
+			self.insertHtml( txt )
+			# Scroll to the top of the text area.
+			self.moveCursor( QTextCursor.Start )
+			return
+
+		# Write the FC data to the table
+
+		txt += '<tr>'
+
+		txt += '<th>FC</th>'
+
+		if ( self.core.opt['res_n'] ) :
+
+			txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_res['n_p_c'] )
+
+		if ( self.core.opt['res_v'] ) :
+
+			txt += '<td align="right">{:.0f}</td>'.format( self.core.mom_res['v_p_c'] )
+
+			v_vec = self.core.mom_res['v_vec_p_c']
+			txt += '<td align="right">{:.0f}</td>'.format( v_vec[0] )
+			txt += '<td align="right">{:.0f}</td>'.format( v_vec[1] )
+			txt += '<td align="right">{:.0f}</td>'.format( v_vec[2] )
+
+		if ( ( self.core.opt['res_dw'] ) and
+		     ( self.core.opt['res_w'] )    ) :
+
+			txt += '<td align="right">{:.0f}</td>'.format( self.core.mom_res['w_p_c'] )
+			txt += '<td align="right">{:.1f}</td>'.format( self.core.mom_res['T_p_c'] )
+
+		txt += '<th>FC</th>'
+
+		# End of FC data
+
+		# Write the PL data to the table
+
+		for n in range( len( self.core.pl_spec_arr ) ) :
 
 			txt += '<tr>'
 
-			txt += '<th>FC</th>'
+			txt += '<th>PL{}</th>'.format( n+1 )
 
-			txt += '<td>{:.2f}</td>'.format( self.core.mom_res['n_p_c'] )
+			if ( self.core.opt['res_n'] ) :
+
+				txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_res['n_p_c'] )
+
+			if ( self.core.opt['res_v'] ) :
+
+				txt += '<td align="right">{:.0f}</td>'.format( self.core.mom_res['v_p_c'] )
+
+				v_vec = self.core.mom_res['v_vec_p_c']
+				txt += '<td align="right">{:.0f}</td>'.format( v_vec[0] )
+				txt += '<td align="right">{:.0f}</td>'.format( v_vec[1] )
+				txt += '<td align="right">{:.0f}</td>'.format( v_vec[2] )
+
+			if ( ( self.core.opt['res_dw'] ) and
+			     ( self.core.opt['res_w'] )    ) :
+
+				txt += '<td align="right">{:.0f}</td>'.format( self.core.mom_res['w_p_c'] )
+				txt += '<td align="right">{:.1f}</td>'.format( self.core.mom_res['T_p_c'] )
+
+			txt += '<th>PL{}</th>'.format( n+1 )
 
 			txt += '</tr>'
 
+		# End of PL data
 
+		txt += '</tr>'
 
 		txt += '</table>'
 

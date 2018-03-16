@@ -739,6 +739,9 @@ class core( QObject ) :
 		                                       get_prev=get_prev,
 		                                       get_next=get_next )
 
+		# Emit a signal that indicates that a new Wind/PESA-L ion
+		# spectrum has now been loaded.
+
 		self.emit( SIGNAL( 'janus_chng_pl_spc' ) )
 
 		# Message the user that a new Wind/PESA ion spectrum has been

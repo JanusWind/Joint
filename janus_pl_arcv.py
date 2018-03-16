@@ -55,7 +55,7 @@ from ftplib import FTP
 
 
 ################################################################################
-## DEFINE THE CLASS fc_tag TO HAVE SPECTRA FOR PARTICULAR TIME STAMP
+## DEFINE THE CLASS pl_tag TO HAVE SPECTRA FOR PARTICULAR TIME STAMP
 ################################################################################
 
 class pl_tag() :
@@ -72,7 +72,7 @@ class pl_tag() :
 
 
 ################################################################################
-## DEFINE THE "fc_arcv" CLASS FOR ACCESSING THE ARCHIVE OF Wind/FC SPECTRA.
+## DEFINE THE "pl_arcv" CLASS FOR ACCESSING THE ARCHIVE OF Wind/PL SPECTRA.
 ################################################################################
 
 class pl_arcv( object ) :
@@ -172,13 +172,15 @@ class pl_arcv( object ) :
 		# Locate the spectrum whose timestamp is closest to the
 		# one requested.
 
-		dt  = [ datetime(1970, 1, 1) + timedelta( seconds=tag.epoch ) - self.core.fc_spec['time'] for tag in self.arr_tag ]
+		dt  = [ datetime(1970, 1, 1) + timedelta( seconds=tag.epoch ) -
+		        self.core.fc_spec['time'] for tag in self.arr_tag      ]
 
 		adt = [ abs( del_t ) for del_t in dt ]
 
 		adt_min = min( adt )
 
-		dt_min = dt[ where( [ del_t == adt_min  for del_t in adt ] )[0][0] ]
+		dt_min = dt[ where( [ del_t == adt_min
+		                      for del_t in adt ] )[0][0] ]
 
 		tk = [ a for a in range( len( adt ) ) if adt[a] == adt_min ][0]
 
@@ -195,9 +197,9 @@ class pl_arcv( object ) :
 		# Determine how many more PESA-L spectra exist within the next
 		# 30 rotations
 
-		num_spec = len( where([( del_t >= timedelta(seconds=-3.05) and del_t <= timedelta(seconds=31.*3.05) ) for del_t in dt])[0] )
-
-		#num_spec = len( where([( del_t >= dt_min and del_t <= timedelta(seconds=31.*3.05) - adt_min ) for del_t in dt])[0] )
+		num_spec = len( where( [( del_t >= timedelta(seconds=-3.05) and
+		                          del_t <= timedelta(seconds=31.*3.05) )
+		                         for del_t in dt ] )[0] )
 
 		# If the selected spectrum is not within the the request
 		# tolerence, abort.
@@ -207,7 +209,7 @@ class pl_arcv( object ) :
 			self.mesg_txt( 'none' )
 			return []
 
-		# Get the PESA-L spectra that lie within this time
+		# Get the PL spectra that lie within this time
 
 		spec = []
 
@@ -258,7 +260,6 @@ class pl_arcv( object ) :
 
 		return spec
 
-		#fc_arcv().load_spec(1224246301)
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR LOADING ALL SPECTRA FROM DATE-SPECIFIED FILE.
 	#-----------------------------------------------------------------------

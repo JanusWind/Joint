@@ -57,15 +57,23 @@ class widget_pl( QTabWidget ) :
 
 		self.core = core
 
-		self.wdg_arr = []
+		# Prepare to respond to signals received from the Janus core.
 
 		self.connect( self.core, SIGNAL('janus_reset'), self.resp_rset )
 		self.connect( self.core, SIGNAL('janus_chng_pl_spc'),
 		                                         self.resp_chng_pl_spc )
 
+		# Initialize the widget array
+
+		self.wdg_arr = []
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR REMOVING THE TABS.
+	#-----------------------------------------------------------------------
+
 	def clear_tabs( self ) :
 
-		# Removes all instances of widget_arr and the corresponding
+		# Remove all instances of widget_arr and the corresponding
 		# tabs from the GUI
 
 		self.clear( )
@@ -75,9 +83,19 @@ class widget_pl( QTabWidget ) :
 
 		self.wdg_arr = [ ]
 
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR RESPONDING TO THE "rset" SIGNAL.
+	#-----------------------------------------------------------------------
+
 	def resp_rset( self ) :
 
+		# Clear any current tab widgets
+
 		self.clear_tabs( )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_pl_spec" SIGNAL.
+	#-----------------------------------------------------------------------
 
 	def resp_chng_pl_spc( self ) :
 

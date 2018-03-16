@@ -183,7 +183,8 @@ class widget_pl_grid( QWidget ) :
 		# create the labels themselves and add them to the grid.
 
 		self.txt_axs_x = 'Projected Proton Inflow Velocity [km/s]'
-		self.txt_axs_y = u'Phase-space Density [cm\u00AF\u00B3/(km/s)\u00B3]'
+		self.txt_axs_y = 'Phase-space Density' +\
+		                                u'[cm\u00AF\u00B3/(km/s)\u00B3]'
 
 		if ( self.core.app.res_lo ) :
 			size =  '8pt'
@@ -353,7 +354,8 @@ class widget_pl_grid( QWidget ) :
 
 		self.t_0 = self.core.fc_spec['time']
 
-		self.delta_t = self.delta_t + [(self.t[-1]-self.t_0).total_seconds( )]
+		self.delta_t = self.delta_t + [( self.t[-1]-
+		                                 self.t_0    ).total_seconds( )]
 
 		self.time_label.setText( str(self.t[-1])[0:-7] + '        ' +
 		                         u'\u0394t = {}'.format(

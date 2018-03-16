@@ -58,7 +58,6 @@ class widget_mom( QTabWidget ) :
 		self.wdg_ctrl = widget_mom_ctrl( self.core )
 		self.wdg_res  = widget_mom_res(  self.core )
 
-
 		self.addTab( self.wdg_ctrl, 'Moment'  )
 		self.addTab( self.wdg_res , 'Results' )
 

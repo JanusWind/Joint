@@ -73,8 +73,8 @@ class pl_dat( ) :
 
 		self._vel_del   = (  self['vel_strt']-self['vel_stop']      )
 
-		#TODO It is currently assumed that the given values of theta and
-		#     phi are the proper look directions. Confirmation needed.
+		# TODO It is currently assumed that the given values of theta
+		#      and phi are the proper look directions. Need to confirm.
 
 		# TODO: Confirm these two formulae
 

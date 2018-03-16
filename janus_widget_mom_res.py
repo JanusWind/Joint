@@ -69,7 +69,6 @@ class widget_mom_res( format_TextEdit ) :
 		# Set this text editor as read only (for the user).
 
 		self.setReadOnly( True )
-		self.setLineWrapMode( 0 )
 
 		# Populate this text editor with general information about this
 		# spectrum's MFI data.
