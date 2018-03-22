@@ -102,6 +102,7 @@ class core( QObject ) :
 	# | mesg              | mesg_src, mesg_typ, mesg_obj |
 	# | rset              |                              |
 	# | chng_spc          |                              |
+	# | chng_pl_spc       |                              |
 	# | chng_mfi          |                              |
 	# | chng_spin         |                              |
 	# | chng_mom_win      |                              |
@@ -212,14 +213,18 @@ class core( QObject ) :
 		# and the settings, data selections, and results from all
 		# analyses.
 
-		self.rset_var( var_swe     = True, var_spin    = True,
-		               var_pl      = True, var_mfi     = True,
-		               var_mom_win = True, var_mom_sel = True,
-		               var_mom_res = True, var_nln_ion = True,
-		               var_nln_set = True, var_nln_gss = True,
-		               var_nln_sel = True, var_nln_res = True,
-		               var_dsp     = True, var_dyn     = True,
-		               var_opt     = True                      )
+		self.rset_var( var_swe     = True, var_pl         = True,
+		               var_spin    = True, var_mfi        = True,
+		               var_mom_win = True,
+		               var_mom_sel = True, var_mom_sel_pl = True,
+		               var_mom_res = True, var_mom_res_pl = True,
+		               var_nln_ion = True,
+		               var_nln_set = True,
+		               var_nln_gss = True, 
+		               var_nln_sel = True,
+		               var_nln_res = True,
+		               var_dsp     = True, var_dyn        = True,
+		               var_opt     = True                         )
 		
 		# Initialize the value of the indicator variable of whether the
 		# automatic analysis should be aborted.
@@ -239,14 +244,18 @@ class core( QObject ) :
 	#-----------------------------------------------------------------------
 
 	def rset_var( self,
-	              var_swe     = False, var_spin    = False,
-	              var_pl      = False, var_mfi     = False,
-	              var_mom_win = False, var_mom_sel = False,
-	              var_mom_res = False, var_nln_ion = False,
-	              var_nln_set = False, var_nln_gss = False,
-	              var_nln_sel = False, var_nln_res = False,
-	              var_dsp     = False, var_dyn     = False,
-	              var_opt     = False                       ) :
+	              var_swe     = False, var_pl         = False,
+	              var_spin    = False, var_mfi        = False,
+	              var_mom_win = False,
+		      var_mom_sel = False, var_pl_mom_sel = False,
+	              var_mom_res = False, var_pl_mom_res = False,
+	              var_nln_ion = False,
+	              var_nln_set = False,
+		      var_nln_gss = False,
+	              var_nln_sel = False,
+		      var_nln_res = False,
+	              var_dsp     = False, var_dyn        = False,
+	              var_opt     = False                          ) :
 
 		# If requested, (re-)initialize the variables associated with
 		# the ion spectrum's data.
@@ -336,6 +345,27 @@ class core( QObject ) :
 			self.mom_res  = None
 
 			self.mom_curr = None
+
+		# If requested, (re-)initialize the variables associated with
+		# the data seleciton for the PL moments analysis.
+
+		if ( var_pl_mom_sel ) :
+
+			self.pl_mom_min_sel_dir =  5
+			self.pl_mom_min_sel_bin =  3
+
+			self.pl_mom_max_sel_dir = 25
+
+			self.pl_mom_sel_dir     = None
+			self.pl_mom_sel_bin     = None
+
+		# If requested, (re-)initialize and store the variables
+		# associated with the results of the PL moments analysis.
+
+		if ( var_pl_mom_res ) :
+
+			self.pl_mom_res  = None
+
 
 		# If requested, (re-)initialize the variables associated with
 		# the ion species and populations for the non-linear analysis.
@@ -1221,7 +1251,7 @@ class core( QObject ) :
 						      c, d )
 
 	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR RUNNING THE MOMENTS ANALYSIS.
+	# DEFINE THE FUNCTION FOR RUNNING THE MOMENTS ANALYSIS ON FC DATA.
 	#-----------------------------------------------------------------------
 
 	def anls_mom( self ) :
@@ -1266,7 +1296,7 @@ class core( QObject ) :
 
 		# Initialize the "eta_*" arrays.
 
-		# Note.  Only some of these arrays will ultimate be saved.
+		# Note.  Only some of these arrays will ultimately be saved.
 
 		# Note.  The arrays "eta_?" define the density, inflow speed,
 		#        thermal speed, and temperature derived for each of the
@@ -1445,6 +1475,226 @@ class core( QObject ) :
 			self.auto_nln_gss( )
 		else :
 			self.chng_dsp( 'mom' )
+######################################################################################################################################################
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR RUNNING THE MOMENTS ANALYSIS ON PESA-L DATA.
+	#-----------------------------------------------------------------------
+
+	def anls_pl_mom( self ) :
+
+		# Re-initialize and the output of the moments analysis.
+
+		self.rset_var( var_pl_mom_res=True )
+
+		# If the point-selection arrays have not been populated, run
+		# the automatic point selection.
+
+		if ( ( self.pl_mom_sel_dir is None ) or
+		     ( self.pl_mom_sel_bin is None )    ) :
+
+			self.auto_pl_mom_sel( )
+
+		# Message the user that the moments analysis has begun.
+
+		self.emit( SIGNAL('janus_mesg'), 'core', 'begin', 'mom' )
+
+		for n in range( len( self.pl_spec_arr ) ) :
+
+			# If any of the following conditions are met, emit a
+			# signal that indicates that the results of the moments
+			#analysis have changed, and then abort.
+			#   -- No (valid) ion spectrum has been requested.
+			#   -- Insufficient data have been selected.
+
+			if ( ( self.pl_spec_arr[n] is None  ) or
+			     ( self.pl_mom_n_sel_dir <
+			       self.pl_mom_min_sel_dir      ) or
+			     ( self.pl_mom_n_sel_dir >
+			       self.pl_spec_arr[n]['n_dir'] )    ) :
+
+				self.emit( SIGNAL('janus_mesg'),
+				                  'core', 'norun', 'mom' )
+
+				self.emit( SIGNAL('janus_chng_mom_res') )
+
+				continue
+
+			# Extract the "t"- and "p"-indices of each selected
+			# pointing direction.
+
+			( tk_t, tk_p ) = where( self.pl_mom_sel_dir )
+
+			# Initialize the "eta_*" arrays.
+
+			# Note.  Only some of these arrays will ultimately be
+			# saved.
+
+			# Note.  The arrays "eta_?" define the density,
+			#        inflow speed, inflow velocity, thermal speed,
+			#        and temperature derived for each of the
+			#        analyzed look directions.
+
+			n_eta = self.pl_mom_n_sel_dir
+
+			eta_dlk = tile( 0., [ n_eta, 3 ] )     # Cartesian look
+                                                               # direction
+
+			eta_n     = tile( 0., n_eta )          # number density
+			eta_v     = tile( 0., n_eta )          # inflow speed
+			eta_v_vec = tile( 0., [ n_eta, 3 ] )   # inflow velocity
+			eta_w     = tile( 0., n_eta )          # thermal speed
+			eta_t     = tile( 0., n_eta )          # temperature
+
+			# For each of the selected look directions, identify the
+			# selected data therefrom and calculate the estimator of
+			# the projected inflow speed along that direction.
+
+			for k in range( n_eta ) :
+
+				# Extract the "t"- and "p"-values for this
+				# direction.
+
+				t = tk_t[k]
+				p = tk_p[k]
+
+				# Calculate the look direction using "t"- and
+				# "p"-values
+
+				eta_dlk[k] = self.pl_spec_arr[n][t][p][0]['dir']
+
+				# Extract the "b" values of the selected data
+				# from this look direction.
+
+	                        b = [i for i, x in enumerate(
+				                    self.pl_mom_sel_bin[t][p])
+	                                                          if x==True   ]
+
+				# Define the variables for this calculation
+
+				this_spec = self.pl_spec_arr[n][t][p]
+
+				f_u     = [ this_spec[i]['psd']     for i in b ]
+
+				u       = [ this_spec[i]['vel_cen'] for i in b ]
+
+				u_vec   = [ this_spec[i]['dir']     for i in b ]
+
+				d_u     = [ this_spec[i]['vel_del'] for i in b ]
+
+				theta   = [ deg2rad( this_spec[i]['the_cen'] )
+				                                    for i in b ]
+				d_theta = [ deg2rad( this_spec[i]['the_del']
+				                                    for i in b ]
+
+				d_phi   = [ deg2rad( this_spec[i]['phi_del']
+				                                    for i in b ]
+
+				d_omega = [ sin( theta[i] ) * d_theta[i] *
+				            d_phi[i] for i in b            ]
+
+				# Compute the number density for this spectrum.
+
+				eta_n[k] = sum( [ f_u[i] * u[i]**2 * d_u[i] *
+				                  d_omega[i] for i in b ]     )
+
+				# Compute the bulk velocity.
+
+				eta_v_vec[k] = [ sum([f_u[i] * u_vec[i][j] *
+				                      u[i]**2 * d_u[i] *
+				                      d_omega[i] for i in b ])/
+				                 eta_n[k] for j in range(3)    ]
+
+				# Compute the bulk speed.
+
+				eta_v[k] = sqrt( sum( [ eta_v_vec[k][j]**2
+				                         for j in range(3) ] )
+
+				# Compute the thermal speed.
+
+				eta_w[k] = sqrt( ( sum( [ f_u[i] * u[i]**4 *
+				                          d_u[i] * d_omega[i]
+				                            for i in b ]     )/
+				                 eta_n[k] - eta_v[k]**2 ) / 3. )
+
+				# Compute the effective temperature.
+
+				eta_t = ( 1.E-3 / const['k_b'] ) * \
+			        	const['m_p'] * ( ( 1.E3  * eta_w )**2 )
+
+			# Calculate a net estimators of the number density and
+			# thermal speed.
+
+			# Note.  The total signal for a look direction is roughly
+			#        proportional to its effective collecting area.  Thus,
+			#        the reciprical of the effective collecting area can be
+			#        thought of a crude indicator of the uncertainty in the
+			#        number-density estimators from the corresponding look
+			#        direction.
+
+			# TODO what should the weighting be (if any)?
+			mom_n = average( eta_n, weights=eta_eca**2 )
+
+			mom_w = mean( eta_w )
+
+			# Save the results of the moments analysis in a plas object.
+
+			self.mom_res = plas( )
+
+			self.mom_res['v0_vec'] = mom_v_vec
+
+			self.mom_res.add_spec( name='Proton', sym='p', m=1., q=1. )
+
+			self.mom_res.add_pop( 'p',
+			                      drift=False, aniso=False,
+			                      name='Core', sym='c',
+			                      n=mom_n,     w=mom_w          )
+
+			# Calculate the expected currents based on the results of the
+			# (linear) moments analysis.
+
+			self.mom_curr = self.fc_spec.calc_curr(
+			                                    self.mom_res['m_p'],
+			                                    self.mom_res['q_p'],
+			                                    self.mom_res['v0_vec'],
+			                                    self.mom_res['n_p_c'], 0.,
+			                                    self.mom_res['w_p_c']      )
+
+		# Message the user that the moments analysis has completed.
+
+		self.emit( SIGNAL('janus_mesg'), 'core', 'end', 'mom' )
+
+		# Emit a signal that indicates that the results of the moments
+		# analysis have changed.
+
+		self.emit( SIGNAL('janus_chng_mom_res') )
+
+		# Update the initial guess for the non-linear analysis if
+		# dynamic updating has been requested.  If it wasn't, make sure
+		# that the new results of the moments analysis are being
+		# displayed.
+
+		# Note.  No call to "self.auto_nln_sel" is required here.  If
+		#        "self.dyn_gss" is "True", then "self.auto_nln_gss"
+		#        will call "self.auto_nln_sel" iff "self.dyn_sel" is
+		#        also "True".  If "self.dyn_gss" is "False", then
+		#        calling "self.auto_nln_sel" is completely unnecessary
+		#        as its output would be no different than that from its
+		#        last run (since no changes to the initial guess would
+		#        have been made since then.
+		#
+		#        Likewise, no call is needed here to "self.anls_nln"
+		#        since "self.suto_nln_gss" will handle this if
+		#        necessary.  Again, if "self.dyn_gss" is "False", then
+		#        calling "self.anls_nln" is completely unnecessary as
+		#        its output would be no different than that from its
+		#        last run (since no changes to the inital guess or to
+		#        the point selection would have been made since then).
+
+		if ( self.dyn_gss ) :
+			self.auto_nln_gss( )
+		else :
+			self.chng_dsp( 'mom' )
+##############################################################################################################################################
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR CHANGING A NLN SPECIES.

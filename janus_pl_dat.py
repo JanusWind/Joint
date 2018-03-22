@@ -203,4 +203,4 @@ class pl_dat( ) :
 		self._u_per_y = self['vel_cen'] * self['dir_y'] - self._u_par_y
 		self._u_per_z = self['vel_cen'] * self['dir_z'] - self._u_par_z
 		self._u_per   = sqrt( self._u_per_x**2 + self._u_per_y**2 +
-		                                         self._u_per_z **2  )
+		                                         self._u_per_z**2  )

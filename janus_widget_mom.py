@@ -31,7 +31,6 @@ from PyQt4.QtGui import QTabWidget
 
 from janus_widget_mom_ctrl import widget_mom_ctrl
 from janus_widget_mom_res import widget_mom_res
-from janus_widget_mom_res_table import widget_mom_res_table
 
 ################################################################################
 ## DEFINE THE "widget_mom" CLASS TO CUSTOMIZE "QTabWidget" FOR MOMENTS ANALYSIS.
@@ -56,10 +55,7 @@ class widget_mom( QTabWidget ) :
 		# Intialize this widget's sub-widgets and add them as tabs.
 
 		self.wdg_ctrl = widget_mom_ctrl( self.core )
-		self.wdg_res  = widget_mom_res(  self.core )
+		self.wdg_res = widget_mom_res( self.core )
 
 		self.addTab( self.wdg_ctrl, 'Moment'  )
-		self.addTab( self.wdg_res , 'Results' )
-
-		self.wdg_res_table = widget_mom_res_table( self.core )
-		self.addTab( self.wdg_res_table, 'Table' )
+		self.addTab( self.wdg_res, 'Results' )
