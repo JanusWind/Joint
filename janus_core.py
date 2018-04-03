@@ -316,7 +316,7 @@ class core( QObject ) :
 		#/TODO
 
 		# If requested, (re-)initialize the varaibles for the windows
-		# associated with automatic data selection for the moments
+		# associated with automatic data selection for the FC moments
 		# analysis.
 
 		if ( var_mom_win ) :
@@ -325,7 +325,7 @@ class core( QObject ) :
 			self.mom_win_bin = 7
 
 		# If requested, (re-)initialize the variables associated with
-		# the data seleciton for the moments analysis.
+		# the data seleciton for the FC moments analysis.
 
 		if ( var_mom_sel ) :
 
@@ -338,13 +338,22 @@ class core( QObject ) :
 			self.mom_sel_bin     = None
 
 		# If requested, (re-)initialize and store the variables
-		# associated with the results of the moments analysis.
+		# associated with the results of the FC moments analysis.
 
 		if ( var_mom_res ) :
 
 			self.mom_res  = None
 
 			self.mom_curr = None
+
+		# If requested, (re-)initialize the varaibles for the windows
+		# associated with automatic data selection for the PL moments
+		# analysis.
+
+		if ( var_pl_mom_win ) :
+
+			self.pl_mom_win_dir = 7
+			self.pl_mom_win_bin = 7
 
 		# If requested, (re-)initialize the variables associated with
 		# the data seleciton for the PL moments analysis.
@@ -365,7 +374,6 @@ class core( QObject ) :
 		if ( var_pl_mom_res ) :
 
 			self.pl_mom_res  = None
-
 
 		# If requested, (re-)initialize the variables associated with
 		# the ion species and populations for the non-linear analysis.
@@ -1035,7 +1043,7 @@ class core( QObject ) :
 		self.auto_mom_sel( )
 
 	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR AUTOMATIC DATA SELECTION FOR THE MOMENTS ANLS.
+	# DEFINE THE FUNCTION FOR AUTOMATIC DATA SELECTION FOR THE FC MOM. ANLS.
 	#-----------------------------------------------------------------------
 
 	def auto_mom_sel( self ) :
@@ -1068,6 +1076,110 @@ class core( QObject ) :
 		     ( self.mom_win_bin is None )    ) :
 
 			self.vldt_mom_sel( emit_all=True )
+
+			self.anls_mom( )
+
+			return
+
+		# Find the maximum current window (of "self.mom_win_bin" bins)
+		# for each direction
+		dir_max_ind  = [ [ self.fc_spec.find_max_curr( c, d,
+		                             win=self.mom_win_bin              )
+		                        for d in range(self.fc_spec['n_dir'] ) ]
+		                        for c in range(self.fc_spec['n_cup'] ) ]
+
+		dir_max_curr = [ [ self.fc_spec.calc_tot_curr( c, d,
+		                             dir_max_ind[c][d],
+		                             win=self.mom_win_bin              )
+		                        for d in range(self.fc_spec['n_dir'] ) ]
+		                        for c in range(self.fc_spec['n_cup'] ) ]
+
+		# Compute "cup_max_ind" (two element list)
+		# List of indices with maximum current for each cup
+
+		cup_max_ind  = [ 0 for c in range( self.fc_spec['n_cup'] ) ]
+
+		for c in range( self.fc_spec['n_cup'] ) :
+
+			curr_sum_max = 0.
+
+			for d in range( self.fc_spec['n_dir'] ) :
+
+				curr_sum = sum( [ dir_max_curr[c][
+				                  (d+i)%self.fc_spec['n_dir']  ]
+				                  for i in range(
+				                           self.mom_win_dir) ] )
+
+				if ( curr_sum > curr_sum_max ) :
+					cup_max_ind[c] = d
+					curr_sum_max   = curr_sum
+
+		# Populate "self.mom_sel_bin" and "self.mom_sel_dir"
+		# appropriately.
+
+		for c in range( self.fc_spec['n_cup'] ) :
+
+			for pd in range( cup_max_ind[c],
+			                 cup_max_ind[c] + self.mom_win_dir ) :
+
+				# Compute the actual direction-index (versus the
+				# pseudo-direction-index).
+
+				d = pd % self.fc_spec['n_dir'   ]
+                                self.mom_sel_dir[c][d] = True
+
+				# Select the bins in this look direction's
+				# maximal window
+
+				for b in range( dir_max_ind[c][d],
+				                dir_max_ind[c][d]
+				                          + self.mom_win_bin ) :
+					self.mom_sel_bin[c][d][b] = True
+
+                # Validate the new data selection (which includes populating
+		# the "self.mom_sel_dir" array).
+
+		self.vldt_mom_sel( emit_all=True )
+
+		# Run the moments analysis (and then, if the non-linear analysis
+		# is set to be dynamically updated, run that analysis as well).
+
+		self.anls_mom( )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR AUTOMATIC DATA SELECTION FOR THE PL MOM. ANLS.
+	#-----------------------------------------------------------------------
+
+	def auto_pl_mom_sel( self ) :
+
+		# Re-initialize the data-selection variables for the moments
+		# analysis.
+
+		self.rset_var( var_pl_mom_sel=True )
+
+		# If no spectrum has been loaded, abort.
+
+		if ( self.pl_spec_arr == [] ) :
+
+			return
+
+		# Initially, deselect all look directions and bins.
+
+		self.pl_mom_sel_dir = [ [ False 
+		                       for p in range(self.pl_spec['n_phi']) ]
+		                       for t in range(self.pl_spec['n_the']) ]
+
+		self.pl_mom_sel_bin = [ [ [ False 
+		                         for b in range(self.pl_spec['n_bin']) ]
+                                         for p in range(self.pl_spec['n_phi']) ]
+		                         for t in range(self.pl_spec['n_the']) ]
+
+		# If the "mom_win_???" variables are invalid, abort.
+
+		if ( ( self.pl_mom_win_dir is None ) or
+		     ( self.pl_mom_win_bin is None )    ) :
+
+			self.vldt_pl_mom_sel( emit_all=True )
 
 			self.anls_mom( )
 
@@ -1173,7 +1285,85 @@ class core( QObject ) :
 		self.anls_mom( )
 
 	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR VALIDATING THE DATA SELECTION.
+	# DEFINE THE FUNCTION FOR VALIDATING THE FC DATA SELECTION.
+	#-----------------------------------------------------------------------
+
+	def vldt_pl_mom_sel( self, i, emit_all=False ) :
+
+		# Note.  This function ensures that the two "self.pl_mom_sel_???"
+		#        arrays are mutually consistent.  For each set of "t"-
+		#        and "p"-values, "self.pl_mom_sel_dir[t,p]" can only be
+		#        "True" if at least "self.pl_min_sel_bin" of the elements
+		#        in "self.pl_mom_sel_bin[t,p,:]" are "True".  However, if
+		#        fewer than "self.pl_mom_min_sel_dir" sets of "t"- and
+		#        "p"-values satisfy this criterion, all elements of
+		#        "self.pl_mom_sel_dir" are given the value "False".		
+		#
+		#        Additionally, this functions serves to update the
+		#        "self.pl_mom_n_sel_???" counters.
+
+
+		# Save the initial selection of pointing directions.
+
+		old_pl_mom_sel_dir = deepcopy( self.pl_mom_sel_dir[i] )
+
+		# Update the counter "self.pl_mom_n_sel_bin" (i.e., the number of
+		# selected data in each pointing direction).
+
+		self.pl_mom_n_sel_bin[i] = [ [ sum( self.pl_mom_sel_bin[i][t][p] )
+		                       for p in range( self.pl_spec_arr[i]['n_phi'] ) ]
+		                       for t in range( self.pl_spec_arr[i]['n_the'] ) ]
+
+		# Create a new selection of pointing directions based on the
+		# data selection, and then update the counter
+		# "self.mom_n_sel_dir".
+
+		self.pl_mom_sel_dir[i] = [ [
+		              self.pl_mom_n_sel_bin[i][t][p] >= self.mom_min_sel_bin[i]
+		                       for p in range( self.pl_spec_arr[i]['n_phi'] ) ]
+		                       for t in range( self.pl_spec_arr[i]['n_the'] ) ]
+
+		# Determine the total number of selected pointing directions; if
+		# this number is less than the minimum "self.mom_min_sel_dir",
+		# deselect all pointing directions.
+
+		self.pl_mom_n_sel_dir[i] = \
+		               sum( [ sum( sub ) for sub in self.pl_mom_sel_dir[i] ] )
+
+		if ( self.pl_mom_n_sel_dir[i] < self.pl_mom_min_sel_dir ) :
+
+			self.pl_mom_sel_dir = [ [ False
+			               for p in range( self.pl_spec_arr[i]['n_phi'] ) ]
+			               for t in range( self.pl_spec_arr[i]['n_the'] ) ]
+
+			self.pl_mom_n_sel_dir = 0
+
+		# Emit (if necessary) the appropriate update signal(s).
+
+		if ( emit_all ) :
+
+			self.emit( SIGNAL('janus_chng_mom_sel_all') )
+
+		else :
+
+			# Identify differences between the new and old versions
+			# of "self.mom_sel_dir".  For each pointing direction
+			# whose selection status for the moments analysis has
+			# changed, emit a signal indicating this.
+
+			for c in range( self.fc_spec['n_cup'] ) :
+
+				for d in range( self.fc_spec['n_dir'] ) :
+
+					if ( self.mom_sel_dir[c][d]
+					            != old_mom_sel_dir[c][d] ) :
+
+						self.emit( SIGNAL(
+						      'janus_chng_mom_sel_dir'),
+						      c, d )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR VALIDATING THE PL DATA SELECTION.
 	#-----------------------------------------------------------------------
 
 	def vldt_mom_sel( self, emit_all=False ) :
