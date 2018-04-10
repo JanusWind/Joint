@@ -546,62 +546,62 @@ class pl_spec( ) :
 
 			return
 
-		# TODO Change
-		# Find the maximum current window (of "self.mom_win_bin" bins)
+		# Find the maximum psd window (of "self.mom_win_bin" bins)
 		# for each direction
-		dir_max_ind  = [ [ self.fc_spec.find_max_curr( c, d,
+		dir_max_ind  = [ [ self.find_max_psd( t, p,
 		                             win=self.mom_win_bin              )
-		                        for d in range(self.fc_spec['n_dir'] ) ]
-		                        for c in range(self.fc_spec['n_cup'] ) ]
+		                        for p in range(self['n_phi'] ) ]
+		                        for t in range(self['n_the'] ) ]
 
-		dir_max_curr = [ [ self.fc_spec.calc_tot_curr( c, d,
-		                             dir_max_ind[c][d],
+		dir_max_psd = [ [ self.calc_tot_psd( t, p,
+		                             dir_max_ind[t][p],
 		                             win=self.mom_win_bin              )
-		                        for d in range(self.fc_spec['n_dir'] ) ]
-		                        for c in range(self.fc_spec['n_cup'] ) ]
+		                        for p in range(self['n_phi'] ) ]
+		                        for t in range(self['n_the'] ) ]
 
-		# Compute "cup_max_ind" (two element list)
-		# List of indices with maximum current for each cup
+		# Compute the "self.mom_win_dir" window indices with the highest
+		# total PSD
 
-		cup_max_ind  = [ 0 for c in range( self.fc_spec['n_cup'] ) ]
+		win_max_ind = []
 
-		for c in range( self.fc_spec['n_cup'] ) :
+		for t in range( self['n_the'] ) :
 
-			curr_sum_max = 0.
+			for p in range( self['n_phi'] ) :
 
-			for d in range( self.fc_spec['n_dir'] ) :
+				n_big = 0
 
-				curr_sum = sum( [ dir_max_curr[c][
-				                  (d+i)%self.fc_spec['n_dir']  ]
-				                  for i in range(
-				                           self.mom_win_dir) ] )
+				[ n_big+=1 if (dir_max_psd[t][p] <
+				               dir_max_psd[tp//self['n_the']]\
+				                          [tp% self['n_the']] )
+				           for tp in range self['n_dir']       ]
 
-				if ( curr_sum > curr_sum_max ) :
-					cup_max_ind[c] = d
-					curr_sum_max   = curr_sum
+				if ( n_big < self.mom_win_dir ) :
+					win_max_ind += [[t, p]]
+
+				if len( win_max_ind ) = self.mom_win_dir :
+
+					break
+
+			if len( win_max_ind ) = self.mom_win_dir :
+
+					break
 
 		# Populate "self.mom_sel_bin" and "self.mom_sel_dir"
 		# appropriately.
 
-		for c in range( self.fc_spec['n_cup'] ) :
+		for win in win_max_ind :
 
-			for pd in range( cup_max_ind[c],
-			                 cup_max_ind[c] + self.mom_win_dir ) :
+			t = win[0]
+			p = win[1]
 
-				# Compute the actual direction-index (versus the
-				# pseudo-direction-index).
+			self.mom_sel_dir[t][p] = True
 
-				d = pd % self.fc_spec['n_dir'   ]
-                                self.mom_sel_dir[c][d] = True
+			# Select the bins in this look direction's
+			# maximal window
 
-				# Select the bins in this look direction's
-				# maximal window
-
-				for b in range( dir_max_ind[c][d],
-				                dir_max_ind[c][d]
-				                          + self.mom_win_bin ) :
-					self.mom_sel_bin[c][d][b] = True
-		#/TODO
+			for b in range( dir_max_ind[t][p],
+			                dir_max_ind[t][p] + self.mom_win_bin ) :
+				self.mom_sel_bin[t][p][b] = True
 
                 # Validate the new data selection (which includes populating
 		# the "self.mom_sel_dir" array).
@@ -612,6 +612,71 @@ class pl_spec( ) :
 		# is set to be dynamically updated, run that analysis as well).
 
 		self.anls_mom( )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION TO FIND THE INDEX OF WINDOW WITH MAXIMUM PSD
+	#-----------------------------------------------------------------------
+
+	def find_max_psd( self, t, p, win=1 ) :
+
+		# Validate the theta and phi indices.
+
+		if ( ( t < 0 ) or ( t >= self['n_the'] ) ) :
+			raise ValueError( 'Theta index out of range.' )
+
+		if ( ( p < 0 ) or ( p >= self['n_phi'] ) ) :
+			raise ValueError( 'Phi index out of range.' )
+
+		# Validate the window size.
+
+		if ( ( win < 1 ) or ( win > self['n_bin'] ) ) :
+			raise ValueError( 'Window out of range.' ) 
+
+		# Search the specified direction for the "win"-bin range that
+		# contains the maximum total psd.
+
+		b_max   = 0
+		psd_max = 0.
+
+		for b in range( 0, self['n_bin'] - win + 1 ) :
+
+			psd = sum( [ self.arr[t][p][b+w]['psd']
+			                               for w in range( win ) ] )
+
+			if ( psd > psd_max ) :
+				b_max    = b
+				psd_max = psd
+
+		# Return the location of the window with the maximum psd.
+
+		return b_max
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR CALCULATING TOTAL CURRENT IN A GIVEN WINDOW.
+	#-----------------------------------------------------------------------
+
+	def calc_tot_psd( self, t, p, b, win=1 ) :
+
+		# Validate the theta, phi, and bin indices.
+
+		if ( ( t < 0 ) or ( t >= self['n_the'] ) ) :
+			raise ValueError( 'Cup index out of range.' )
+
+		if ( ( p < 0 ) or ( p >= self['n_phi'] ) ) :
+			raise ValueError( 'Direction index out of range.' )
+
+		if ( ( b < 0 ) or ( b >= self['n_bin'] ) ) :
+			raise ValueError( 'Direction index out of range.' )
+
+		# Validate the window size.
+
+		if ( ( win < 1 ) or ( b + win > self['n_bin'] ) ) :
+			raise ValueError( 'Window out of range.' ) 
+
+		# Return the total (valid) current in the specified window.
+
+		return sum( [ self.arr[t][p][b+w]['psd']
+		                                       for w in range( win ) ] )
 
 	#-----------------------------------------------------------------------
 	# RESET THE DATA AND ANALYSIS VARIABLES.
@@ -680,6 +745,7 @@ class pl_spec( ) :
 		#        they are so interconnected by the "self.nln_plas"
 		#        object, which is also handled here.
 
+"""
 		if ( var_nln_ion ) :
 
 			self.nln_n_spc = 4
@@ -831,6 +897,7 @@ class pl_spec( ) :
 		# If requested, (re-)initialize the variables which indicate of
 		# the analyses have their results displayed in widgets which
 		# support output from multiple analyses.
+"""
 
 		if ( var_dsp ) :
 
