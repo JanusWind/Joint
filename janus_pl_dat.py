@@ -144,11 +144,11 @@ class pl_dat( ) :
 		elif ( key == 'elev_cen' ) :
 			return self._elev_cen
 		elif ( key == 'the_cen' ) :
-			return self._the_cen
+			return self._the
 		elif ( key == 'the_del' ) :
 			return self._the_del
 		elif ( key == 'phi_cen' ) :
-			return self._phi_cen
+			return self._phi
 		elif ( key == 'phi_del' ) :
 			return self._phi_del
 		elif ( key == 'dir_x' ) :

@@ -183,13 +183,13 @@ class widget_mom_res( format_TextEdit ) :
 
 			if ( self.core.opt['res_n'] ) :
 
-				txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_res['n_p_c'] )
+				txt += '<td align="right">{:.2f}</td>'.format( self.core.pl_spec_arr[n].mom_res['n_p_c'] )
 
 			if ( self.core.opt['res_v'] ) :
 
-				txt += '<td align="right">{:.0f}</td>'.format( self.core.mom_res['v_p_c'] )
+				txt += '<td align="right">{:.0f}</td>'.format( self.core.pl_spec_arr[n].mom_res['v_p_c'] )
 
-				v_vec = self.core.mom_res['v_vec_p_c']
+				v_vec = self.core.pl_spec_arr[n].mom_res['v_vec_p_c']
 				txt += '<td align="right">{:.0f}</td>'.format( v_vec[0] )
 				txt += '<td align="right">{:.0f}</td>'.format( v_vec[1] )
 				txt += '<td align="right">{:.0f}</td>'.format( v_vec[2] )
@@ -197,8 +197,8 @@ class widget_mom_res( format_TextEdit ) :
 			if ( ( self.core.opt['res_dw'] ) and
 			     ( self.core.opt['res_w'] )    ) :
 
-				txt += '<td align="right">{:.0f}</td>'.format( self.core.mom_res['w_p_c'] )
-				txt += '<td align="right">{:.1f}</td>'.format( self.core.mom_res['T_p_c'] )
+				txt += '<td align="right">{:.0f}</td>'.format( self.core.pl_spec_arr[n].mom_res['w_p_c'] )
+				txt += '<td align="right">{:.1f}</td>'.format( self.core.pl_spec_arr[n].mom_res['T_p_c'] )
 
 			txt += '<th>PL{}</th>'.format( n+1 )
 

@@ -247,8 +247,8 @@ class core( QObject ) :
 	              var_swe     = False, var_pl         = False,
 	              var_spin    = False, var_mfi        = False,
 	              var_mom_win = False,
-		      var_mom_sel = False, var_pl_mom_sel = False,
-	              var_mom_res = False, var_pl_mom_res = False,
+		      var_mom_sel = False, var_mom_sel_pl = False,
+	              var_mom_res = False, var_mom_res_pl = False,
 	              var_nln_ion = False,
 	              var_nln_set = False,
 		      var_nln_gss = False,
@@ -345,35 +345,6 @@ class core( QObject ) :
 			self.mom_res  = None
 
 			self.mom_curr = None
-
-		# If requested, (re-)initialize the varaibles for the windows
-		# associated with automatic data selection for the PL moments
-		# analysis.
-
-		if ( var_pl_mom_win ) :
-
-			self.pl_mom_win_dir = 7
-			self.pl_mom_win_bin = 7
-
-		# If requested, (re-)initialize the variables associated with
-		# the data seleciton for the PL moments analysis.
-
-		if ( var_pl_mom_sel ) :
-
-			self.pl_mom_min_sel_dir =  5
-			self.pl_mom_min_sel_bin =  3
-
-			self.pl_mom_max_sel_dir = 25
-
-			self.pl_mom_sel_dir     = None
-			self.pl_mom_sel_bin     = None
-
-		# If requested, (re-)initialize and store the variables
-		# associated with the results of the PL moments analysis.
-
-		if ( var_pl_mom_res ) :
-
-			self.pl_mom_res  = None
 
 		# If requested, (re-)initialize the variables associated with
 		# the ion species and populations for the non-linear analysis.
@@ -773,6 +744,9 @@ class core( QObject ) :
 		# spectrum.
 
 		self.load_pl( )
+
+		self.rset_var( var_pl = True )
+
 		self.pl_spec_arr = self.pl_arcv.load_spec( self.time_txt,
 		                                       get_prev=get_prev,
 		                                       get_next=get_next )
@@ -1147,110 +1121,6 @@ class core( QObject ) :
 		self.anls_mom( )
 
 	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR AUTOMATIC DATA SELECTION FOR THE PL MOM. ANLS.
-	#-----------------------------------------------------------------------
-
-	def auto_pl_mom_sel( self ) :
-
-		# Re-initialize the data-selection variables for the moments
-		# analysis.
-
-		self.rset_var( var_pl_mom_sel=True )
-
-		# If no spectrum has been loaded, abort.
-
-		if ( self.pl_spec_arr == [] ) :
-
-			return
-
-		# Initially, deselect all look directions and bins.
-
-		self.pl_mom_sel_dir = [ [ False 
-		                       for p in range(self.pl_spec['n_phi']) ]
-		                       for t in range(self.pl_spec['n_the']) ]
-
-		self.pl_mom_sel_bin = [ [ [ False 
-		                         for b in range(self.pl_spec['n_bin']) ]
-                                         for p in range(self.pl_spec['n_phi']) ]
-		                         for t in range(self.pl_spec['n_the']) ]
-
-		# If the "mom_win_???" variables are invalid, abort.
-
-		if ( ( self.pl_mom_win_dir is None ) or
-		     ( self.pl_mom_win_bin is None )    ) :
-
-			self.vldt_pl_mom_sel( emit_all=True )
-
-			self.anls_mom( )
-
-			return
-
-		# Find the maximum current window (of "self.mom_win_bin" bins)
-		# for each direction
-		dir_max_ind  = [ [ self.fc_spec.find_max_curr( c, d,
-		                             win=self.mom_win_bin              )
-		                        for d in range(self.fc_spec['n_dir'] ) ]
-		                        for c in range(self.fc_spec['n_cup'] ) ]
-
-		dir_max_curr = [ [ self.fc_spec.calc_tot_curr( c, d,
-		                             dir_max_ind[c][d],
-		                             win=self.mom_win_bin              )
-		                        for d in range(self.fc_spec['n_dir'] ) ]
-		                        for c in range(self.fc_spec['n_cup'] ) ]
-
-		# Compute "cup_max_ind" (two element list)
-		# List of indices with maximum current for each cup
-
-		cup_max_ind  = [ 0 for c in range( self.fc_spec['n_cup'] ) ]
-
-		for c in range( self.fc_spec['n_cup'] ) :
-
-			curr_sum_max = 0.
-
-			for d in range( self.fc_spec['n_dir'] ) :
-
-				curr_sum = sum( [ dir_max_curr[c][
-				                  (d+i)%self.fc_spec['n_dir']  ]
-				                  for i in range(
-				                           self.mom_win_dir) ] )
-
-				if ( curr_sum > curr_sum_max ) :
-					cup_max_ind[c] = d
-					curr_sum_max   = curr_sum
-
-		# Populate "self.mom_sel_bin" and "self.mom_sel_dir"
-		# appropriately.
-
-		for c in range( self.fc_spec['n_cup'] ) :
-
-			for pd in range( cup_max_ind[c],
-			                 cup_max_ind[c] + self.mom_win_dir ) :
-
-				# Compute the actual direction-index (versus the
-				# pseudo-direction-index).
-
-				d = pd % self.fc_spec['n_dir'   ]
-                                self.mom_sel_dir[c][d] = True
-
-				# Select the bins in this look direction's
-				# maximal window
-
-				for b in range( dir_max_ind[c][d],
-				                dir_max_ind[c][d]
-				                          + self.mom_win_bin ) :
-					self.mom_sel_bin[c][d][b] = True
-
-                # Validate the new data selection (which includes populating
-		# the "self.mom_sel_dir" array).
-
-		self.vldt_mom_sel( emit_all=True )
-
-		# Run the moments analysis (and then, if the non-linear analysis
-		# is set to be dynamically updated, run that analysis as well).
-
-		self.anls_mom( )
-
-	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR CHANGING THE SELECTION OF A SINGLE POINT.
 	#-----------------------------------------------------------------------
 
@@ -1286,84 +1156,6 @@ class core( QObject ) :
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR VALIDATING THE FC DATA SELECTION.
-	#-----------------------------------------------------------------------
-
-	def vldt_pl_mom_sel( self, i, emit_all=False ) :
-
-		# Note.  This function ensures that the two "self.pl_mom_sel_???"
-		#        arrays are mutually consistent.  For each set of "t"-
-		#        and "p"-values, "self.pl_mom_sel_dir[t,p]" can only be
-		#        "True" if at least "self.pl_min_sel_bin" of the elements
-		#        in "self.pl_mom_sel_bin[t,p,:]" are "True".  However, if
-		#        fewer than "self.pl_mom_min_sel_dir" sets of "t"- and
-		#        "p"-values satisfy this criterion, all elements of
-		#        "self.pl_mom_sel_dir" are given the value "False".		
-		#
-		#        Additionally, this functions serves to update the
-		#        "self.pl_mom_n_sel_???" counters.
-
-
-		# Save the initial selection of pointing directions.
-
-		old_pl_mom_sel_dir = deepcopy( self.pl_mom_sel_dir[i] )
-
-		# Update the counter "self.pl_mom_n_sel_bin" (i.e., the number of
-		# selected data in each pointing direction).
-
-		self.pl_mom_n_sel_bin[i] = [ [ sum( self.pl_mom_sel_bin[i][t][p] )
-		                       for p in range( self.pl_spec_arr[i]['n_phi'] ) ]
-		                       for t in range( self.pl_spec_arr[i]['n_the'] ) ]
-
-		# Create a new selection of pointing directions based on the
-		# data selection, and then update the counter
-		# "self.mom_n_sel_dir".
-
-		self.pl_mom_sel_dir[i] = [ [
-		              self.pl_mom_n_sel_bin[i][t][p] >= self.mom_min_sel_bin[i]
-		                       for p in range( self.pl_spec_arr[i]['n_phi'] ) ]
-		                       for t in range( self.pl_spec_arr[i]['n_the'] ) ]
-
-		# Determine the total number of selected pointing directions; if
-		# this number is less than the minimum "self.mom_min_sel_dir",
-		# deselect all pointing directions.
-
-		self.pl_mom_n_sel_dir[i] = \
-		               sum( [ sum( sub ) for sub in self.pl_mom_sel_dir[i] ] )
-
-		if ( self.pl_mom_n_sel_dir[i] < self.pl_mom_min_sel_dir ) :
-
-			self.pl_mom_sel_dir = [ [ False
-			               for p in range( self.pl_spec_arr[i]['n_phi'] ) ]
-			               for t in range( self.pl_spec_arr[i]['n_the'] ) ]
-
-			self.pl_mom_n_sel_dir = 0
-
-		# Emit (if necessary) the appropriate update signal(s).
-
-		if ( emit_all ) :
-
-			self.emit( SIGNAL('janus_chng_mom_sel_all') )
-
-		else :
-
-			# Identify differences between the new and old versions
-			# of "self.mom_sel_dir".  For each pointing direction
-			# whose selection status for the moments analysis has
-			# changed, emit a signal indicating this.
-
-			for c in range( self.fc_spec['n_cup'] ) :
-
-				for d in range( self.fc_spec['n_dir'] ) :
-
-					if ( self.mom_sel_dir[c][d]
-					            != old_mom_sel_dir[c][d] ) :
-
-						self.emit( SIGNAL(
-						      'janus_chng_mom_sel_dir'),
-						      c, d )
-
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR VALIDATING THE PL DATA SELECTION.
 	#-----------------------------------------------------------------------
 
 	def vldt_mom_sel( self, emit_all=False ) :
@@ -1530,7 +1322,7 @@ class core( QObject ) :
 			# look direction.
 
                         b = [i for i, x in enumerate( self.mom_sel_bin[c][d] )
-                                                                  if x==True    ]
+                                                                  if x==True   ]
 
 			eta_v[k] = - sum( [ self.fc_spec['curr'][c][d][i] 
                                                 for i in b] ) / \
@@ -1607,7 +1399,7 @@ class core( QObject ) :
 
 		mom_w = mean( eta_w )
 
-		# Save the results of the moments analysis in a plas object.
+		# Save the results of the FC moments analysis in a plas object.
 
 		self.mom_res = plas( )
 
@@ -1630,224 +1422,14 @@ class core( QObject ) :
 		                                    self.mom_res['n_p_c'], 0.,
 		                                    self.mom_res['w_p_c']      )
 
-		# Message the user that the moments analysis has completed.
+		# Perform the linear moments analysis on the PL data and save
+		# the results as a series of plas objects.
 
-		self.emit( SIGNAL('janus_mesg'), 'core', 'end', 'mom' )
+		self.mom_pl_res = series( )
 
-		# Emit a signal that indicates that the results of the moments
-		# analysis have changed.
+		[ self.mom_pl_res.add_spec( self.pl_spec_arr[i].anls_mom( ) )
+		                                  for i in range( len( self.pl_spec_arr ) ) ]
 
-		self.emit( SIGNAL('janus_chng_mom_res') )
-
-		# Update the initial guess for the non-linear analysis if
-		# dynamic updating has been requested.  If it wasn't, make sure
-		# that the new results of the moments analysis are being
-		# displayed.
-
-		# Note.  No call to "self.auto_nln_sel" is required here.  If
-		#        "self.dyn_gss" is "True", then "self.auto_nln_gss"
-		#        will call "self.auto_nln_sel" iff "self.dyn_sel" is
-		#        also "True".  If "self.dyn_gss" is "False", then
-		#        calling "self.auto_nln_sel" is completely unnecessary
-		#        as its output would be no different than that from its
-		#        last run (since no changes to the initial guess would
-		#        have been made since then.
-		#
-		#        Likewise, no call is needed here to "self.anls_nln"
-		#        since "self.suto_nln_gss" will handle this if
-		#        necessary.  Again, if "self.dyn_gss" is "False", then
-		#        calling "self.anls_nln" is completely unnecessary as
-		#        its output would be no different than that from its
-		#        last run (since no changes to the inital guess or to
-		#        the point selection would have been made since then).
-
-		if ( self.dyn_gss ) :
-			self.auto_nln_gss( )
-		else :
-			self.chng_dsp( 'mom' )
-######################################################################################################################################################
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR RUNNING THE MOMENTS ANALYSIS ON PESA-L DATA.
-	#-----------------------------------------------------------------------
-
-	def anls_pl_mom( self ) :
-
-		# Re-initialize and the output of the moments analysis.
-
-		self.rset_var( var_pl_mom_res=True )
-
-		# If the point-selection arrays have not been populated, run
-		# the automatic point selection.
-
-		if ( ( self.pl_mom_sel_dir is None ) or
-		     ( self.pl_mom_sel_bin is None )    ) :
-
-			self.auto_pl_mom_sel( )
-
-		# Message the user that the moments analysis has begun.
-
-		self.emit( SIGNAL('janus_mesg'), 'core', 'begin', 'mom' )
-
-		for n in range( len( self.pl_spec_arr ) ) :
-
-			# If any of the following conditions are met, emit a
-			# signal that indicates that the results of the moments
-			#analysis have changed, and then abort.
-			#   -- No (valid) ion spectrum has been requested.
-			#   -- Insufficient data have been selected.
-
-			if ( ( self.pl_spec_arr[n] is None  ) or
-			     ( self.pl_mom_n_sel_dir <
-			       self.pl_mom_min_sel_dir      ) or
-			     ( self.pl_mom_n_sel_dir >
-			       self.pl_spec_arr[n]['n_dir'] )    ) :
-
-				self.emit( SIGNAL('janus_mesg'),
-				                  'core', 'norun', 'mom' )
-
-				self.emit( SIGNAL('janus_chng_mom_res') )
-
-				continue
-
-			# Extract the "t"- and "p"-indices of each selected
-			# pointing direction.
-
-			( tk_t, tk_p ) = where( self.pl_mom_sel_dir )
-
-			# Initialize the "eta_*" arrays.
-
-			# Note.  Only some of these arrays will ultimately be
-			# saved.
-
-			# Note.  The arrays "eta_?" define the density,
-			#        inflow speed, inflow velocity, thermal speed,
-			#        and temperature derived for each of the
-			#        analyzed look directions.
-
-			n_eta = self.pl_mom_n_sel_dir
-
-			eta_dlk = tile( 0., [ n_eta, 3 ] )     # Cartesian look
-                                                               # direction
-
-			eta_n     = tile( 0., n_eta )          # number density
-			eta_v     = tile( 0., n_eta )          # inflow speed
-			eta_v_vec = tile( 0., [ n_eta, 3 ] )   # inflow velocity
-			eta_w     = tile( 0., n_eta )          # thermal speed
-			eta_t     = tile( 0., n_eta )          # temperature
-
-			# For each of the selected look directions, identify the
-			# selected data therefrom and calculate the estimator of
-			# the projected inflow speed along that direction.
-
-			for k in range( n_eta ) :
-
-				# Extract the "t"- and "p"-values for this
-				# direction.
-
-				t = tk_t[k]
-				p = tk_p[k]
-
-				# Calculate the look direction using "t"- and
-				# "p"-values
-
-				eta_dlk[k] = self.pl_spec_arr[n][t][p][0]['dir']
-
-				# Extract the "b" values of the selected data
-				# from this look direction.
-
-	                        b = [i for i, x in enumerate(
-				                    self.pl_mom_sel_bin[t][p])
-	                                                          if x==True   ]
-
-				# Define the variables for this calculation
-
-				this_spec = self.pl_spec_arr[n][t][p]
-
-				f_u     = [ this_spec[i]['psd']     for i in b ]
-
-				u       = [ this_spec[i]['vel_cen'] for i in b ]
-
-				u_vec   = [ this_spec[i]['dir']     for i in b ]
-
-				d_u     = [ this_spec[i]['vel_del'] for i in b ]
-
-				theta   = [ deg2rad( this_spec[i]['the_cen'] )
-				                                    for i in b ]
-				d_theta = [ deg2rad( this_spec[i]['the_del']
-				                                    for i in b ]
-
-				d_phi   = [ deg2rad( this_spec[i]['phi_del']
-				                                    for i in b ]
-
-				d_omega = [ sin( theta[i] ) * d_theta[i] *
-				            d_phi[i] for i in b            ]
-
-				# Compute the number density for this spectrum.
-
-				eta_n[k] = sum( [ f_u[i] * u[i]**2 * d_u[i] *
-				                  d_omega[i] for i in b ]     )
-
-				# Compute the bulk velocity.
-
-				eta_v_vec[k] = [ sum([f_u[i] * u_vec[i][j] *
-				                      u[i]**2 * d_u[i] *
-				                      d_omega[i] for i in b ])/
-				                 eta_n[k] for j in range(3)    ]
-
-				# Compute the bulk speed.
-
-				eta_v[k] = sqrt( sum( [ eta_v_vec[k][j]**2
-				                         for j in range(3) ] )
-
-				# Compute the thermal speed.
-
-				eta_w[k] = sqrt( ( sum( [ f_u[i] * u[i]**4 *
-				                          d_u[i] * d_omega[i]
-				                            for i in b ]     )/
-				                 eta_n[k] - eta_v[k]**2 ) / 3. )
-
-				# Compute the effective temperature.
-
-				eta_t = ( 1.E-3 / const['k_b'] ) * \
-			        	const['m_p'] * ( ( 1.E3  * eta_w )**2 )
-
-			# Calculate a net estimators of the number density and
-			# thermal speed.
-
-			# Note.  The total signal for a look direction is roughly
-			#        proportional to its effective collecting area.  Thus,
-			#        the reciprical of the effective collecting area can be
-			#        thought of a crude indicator of the uncertainty in the
-			#        number-density estimators from the corresponding look
-			#        direction.
-
-			# TODO what should the weighting be (if any)?
-			mom_n = average( eta_n, weights=eta_eca**2 )
-
-			mom_w = mean( eta_w )
-
-			# Save the results of the moments analysis in a plas object.
-
-			self.mom_res = plas( )
-
-			self.mom_res['v0_vec'] = mom_v_vec
-
-			self.mom_res.add_spec( name='Proton', sym='p', m=1., q=1. )
-
-			self.mom_res.add_pop( 'p',
-			                      drift=False, aniso=False,
-			                      name='Core', sym='c',
-			                      n=mom_n,     w=mom_w          )
-
-			# Calculate the expected currents based on the results of the
-			# (linear) moments analysis.
-
-			self.mom_curr = self.fc_spec.calc_curr(
-			                                    self.mom_res['m_p'],
-			                                    self.mom_res['q_p'],
-			                                    self.mom_res['v0_vec'],
-			                                    self.mom_res['n_p_c'], 0.,
-			                                    self.mom_res['w_p_c']      )
 
 		# Message the user that the moments analysis has completed.
 
@@ -1884,7 +1466,6 @@ class core( QObject ) :
 			self.auto_nln_gss( )
 		else :
 			self.chng_dsp( 'mom' )
-##############################################################################################################################################
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR CHANGING A NLN SPECIES.

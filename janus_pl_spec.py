@@ -28,7 +28,33 @@
 from janus_pl_dat import pl_dat
 from datetime import timedelta
 from scipy.interpolate import interp1d
-from numpy import shape
+from numpy import amax, amin, append, arccos, arctan2, arange, argsort, array, \
+                    average, cos, deg2rad, diag, dot, exp, indices, interp, \
+                    mean, pi, polyfit, rad2deg, reshape, shape, sign, sin, sum,\
+                    sqrt, std, tile, transpose, where, zeros
+
+# Load the modules necessary for signaling the graphical interface.
+
+from PyQt4.QtCore import QObject, SIGNAL, QThread
+
+# Load the dictionary of physical constants.
+
+from janus_const import const
+
+# Load the necessary array modules and mathematical functions.
+
+from numpy import amax, amin, append, arccos, arctan2, arange, argsort, array, \
+                    average, cos, deg2rad, diag, dot, exp, indices, interp, \
+                    mean, pi, polyfit, rad2deg, reshape, sign, sin, sum, sqrt, \
+                    std, tile, transpose, where, zeros
+
+# Load the "pyon" module.
+
+from janus_pyon import plas, series
+
+# Load the modules necessary for copying.
+
+from copy import deepcopy
 
 ################################################################################
 ## DEFINE THE "pl_spec" CLASS.
@@ -128,18 +154,17 @@ class pl_spec( ) :
 		# Initialize the variables that will contain the settings,
 		# data selections, and results from all analyses.
 
-		self.rset_var( var_pl      = True,
-		               var_mom_win = True,
-		               var_mom_sel = True,
-		               var_mom_res = True,
-		               var_nln_ion = True,
-		               var_nln_set = True,
-		               var_nln_gss = True, 
-		               var_nln_sel = True,
-		               var_nln_res = True,
-		               var_dsp     = True,
-		               var_dyn     = True,
-		               var_opt     = True  )
+		self.rset_spec( var_spec    = False,
+		                var_mom_win = True,
+		                var_mom_sel = True,
+		                var_mom_res = True,
+		                var_nln_ion = True,
+		                var_nln_set = True,
+		                var_nln_gss = True, 
+		                var_nln_sel = True,
+		                var_nln_res = True,
+		                var_dsp     = True,
+		                var_dyn     = True  )
 		
 		# Initialize the value of the indicator variable of whether the
 		# automatic analysis should be aborted.
@@ -289,8 +314,6 @@ class pl_spec( ) :
                                                 self.arr[t][p][b].set_mag( (
 						avg_b_x, avg_b_y, avg_b_z ) )
 
-	##########################################################################################################################################################
-
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RUNNING THE MOMENTS ANALYSIS ON THIS SPECTRUM.
 	#-----------------------------------------------------------------------
@@ -299,7 +322,7 @@ class pl_spec( ) :
 
 		# Re-initialize and the output of the moments analysis.
 
-		self.rset_var( var_mom_res=True )
+		self.rset_spec( var_mom_res=True )
 
 		# If the point-selection arrays have not been populated, run
 		# the automatic point selection.
@@ -308,10 +331,6 @@ class pl_spec( ) :
 		     ( self.mom_sel_bin is None )    ) :
 
 			self.auto_mom_sel( )
-
-		# Message the user that the moments analysis has begun.
-
-		self.emit( SIGNAL('janus_mesg'), 'core', 'begin', 'mom' )
 
 		# If any of the following conditions are met, emit a
 		# signal that indicates that the results of the moments
@@ -329,7 +348,7 @@ class pl_spec( ) :
 
 			self.emit( SIGNAL('janus_chng_mom_res') )
 
-			continue
+			return
 
 		# Extract the "t"- and "p"-indices of each selected
 		# pointing direction.
@@ -382,50 +401,50 @@ class pl_spec( ) :
 
 			# Define the variables for this calculation
 
-			this_spec = self.arr[t][p][:]
+			this_win = self.arr[t][p]
 
-			f_u     = [ this_spec[i]['psd']     for i in b ]
+			f_u     = [ this_win[i]['psd']     for i in b ]
 
-			u       = [ this_spec[i]['vel_cen'] for i in b ]
+			u       = [ this_win[i]['vel_cen'] for i in b ]
 
-			u_vec   = [ this_spec[i]['dir']     for i in b ]
+			u_vec   = [ this_win[i]['dir']     for i in b ]
 
-			d_u     = [ this_spec[i]['vel_del'] for i in b ]
+			d_u     = [ this_win[i]['vel_del'] for i in b ]
 
-			theta   = [ deg2rad( this_spec[i]['the_cen'] )
+			theta   = [ deg2rad( this_win[i]['the_cen'] )
 			                                    for i in b ]
 
-			d_theta = [ deg2rad( this_spec[i]['the_del'] )
+			d_theta = [ deg2rad( this_win[i]['the_del'] )
 			                                    for i in b ]
 
-			d_phi   = [ deg2rad( this_spec[i]['phi_del'] )
+			d_phi   = [ deg2rad( this_win[i]['phi_del'] )
 			                                    for i in b ]
 
 			d_omega = [ sin( theta[i] ) * d_theta[i] *
-			            d_phi[i] for i in b            ]
+			            d_phi[i] for i in range(len(b))         ]
 
 			# Compute the number density for this spectrum.
 
 			eta_n[k] = sum( [ f_u[i] * u[i]**2 * d_u[i] *
-			                  d_omega[i] for i in b ]     )
+			                  d_omega[i] for i in range(len(b)) ]     )
 
 			# Compute the bulk velocity.
 
 			eta_v_vec[k] = [ sum([f_u[i] * u_vec[i][j] *
 			                      u[i]**2 * d_u[i] *
-			                      d_omega[i] for i in b ])/
+			                      d_omega[i] for i in range(len(b)) ])/
 			                 eta_n[k] for j in range(3)    ]
 
 			# Compute the bulk speed.
 
 			eta_v[k] = sqrt( sum( [ eta_v_vec[k][j]**2
-			                         for j in range(3) ] )
+			                         for j in range(3) ] ) )
 
 			# Compute the thermal speed.
 
 			eta_w[k] = sqrt( ( sum( [ f_u[i] * u[i]**4 *
 			                          d_u[i] * d_omega[i]
-			                            for i in b ]     )/
+			                            for i in range(len(b)) ]     )/
 			                 eta_n[k] - eta_v[k]**2 ) / 3. )
 
 			# Compute the effective temperature.
@@ -436,17 +455,11 @@ class pl_spec( ) :
 		# Calculate a net estimators of the number density and
 		# thermal speed.
 
-		# Note.  The total signal for a look direction is roughly
-		#        proportional to its effective collecting area.  Thus,
-		#        the reciprical of the effective collecting area can be
-		#        thought of a crude indicator of the uncertainty in the
-		#        number-density estimators from the corresponding look
-		#        direction.
-
-		# TODO what should the weighting be (if any)?
 		mom_n = mean( eta_n )
 
 		mom_w = mean( eta_w )
+
+		mom_v_vec = [ mean( eta_v_vec[j] ) for j in range(3) ]
 
 		# Save the results of the moments analysis in a plas object.
 
@@ -461,51 +474,14 @@ class pl_spec( ) :
 		                      name='Core', sym='c',
 		                      n=mom_n,     w=mom_w          )
 
-		# Calculate the expected currents based on the results of the
+		# Calculate the expected PSDs based on the results of the
 		# (linear) moments analysis.
 
-		self.mom_curr = self.fc_spec.calc_curr(
-		                                    self.mom_res['m_p'],
-		                                    self.mom_res['q_p'],
-		                                    self.mom_res['v0_vec'],
-		                                    self.mom_res['n_p_c'], 0.,
-		                                    self.mom_res['w_p_c']      )
+		# TODO
 
-		# Message the user that the moments analysis has completed.
+		return self.mom_res
 
-		self.emit( SIGNAL('janus_mesg'), 'core', 'end', 'mom' )
-
-		# Emit a signal that indicates that the results of the moments
-		# analysis have changed.
-
-		self.emit( SIGNAL('janus_chng_mom_res') )
-
-		# Update the initial guess for the non-linear analysis if
-		# dynamic updating has been requested.  If it wasn't, make sure
-		# that the new results of the moments analysis are being
-		# displayed.
-
-		# Note.  No call to "self.auto_nln_sel" is required here.  If
-		#        "self.dyn_gss" is "True", then "self.auto_nln_gss"
-		#        will call "self.auto_nln_sel" iff "self.dyn_sel" is
-		#        also "True".  If "self.dyn_gss" is "False", then
-		#        calling "self.auto_nln_sel" is completely unnecessary
-		#        as its output would be no different than that from its
-		#        last run (since no changes to the initial guess would
-		#        have been made since then.
-		#
-		#        Likewise, no call is needed here to "self.anls_nln"
-		#        since "self.suto_nln_gss" will handle this if
-		#        necessary.  Again, if "self.dyn_gss" is "False", then
-		#        calling "self.anls_nln" is completely unnecessary as
-		#        its output would be no different than that from its
-		#        last run (since no changes to the inital guess or to
-		#        the point selection would have been made since then).
-
-		if ( self.dyn_gss ) :
-			self.auto_nln_gss( )
-		else :
-			self.chng_dsp( 'mom' )
+###########################################################################################################
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR AUTOMATIC DATA SELECTION FOR THE MOMENTS ANLS.
@@ -516,7 +492,7 @@ class pl_spec( ) :
 		# Re-initialize the data-selection variables for the moments
 		# analysis.
 
-		self.rset_var( var_mom_sel=True )
+		self.rset_spec( var_mom_sel=True )
 
 		# If no spectrum has been loaded, abort.
 
@@ -570,21 +546,21 @@ class pl_spec( ) :
 
 				n_big = 0
 
-				[ n_big+=1 if (dir_max_psd[t][p] <
-				               dir_max_psd[tp//self['n_the']]\
-				                          [tp% self['n_the']] )
-				           for tp in range self['n_dir']       ]
+				for tp in range( self['n_dir'] ) :
+
+					if ( dir_max_psd[t][p] < dir_max_psd[ tp//self['n_the'] ][ tp % self['n_the'] ] ) :
+						n_big += 1
 
 				if ( n_big < self.mom_win_dir ) :
 					win_max_ind += [[t, p]]
 
-				if len( win_max_ind ) = self.mom_win_dir :
+				if len( win_max_ind ) == self.mom_win_dir :
 
 					break
 
-			if len( win_max_ind ) = self.mom_win_dir :
+			if len( win_max_ind ) == self.mom_win_dir :
 
-					break
+				break
 
 		# Populate "self.mom_sel_bin" and "self.mom_sel_dir"
 		# appropriately.
@@ -660,13 +636,13 @@ class pl_spec( ) :
 		# Validate the theta, phi, and bin indices.
 
 		if ( ( t < 0 ) or ( t >= self['n_the'] ) ) :
-			raise ValueError( 'Cup index out of range.' )
+			raise ValueError( 'Theta index out of range.' )
 
 		if ( ( p < 0 ) or ( p >= self['n_phi'] ) ) :
-			raise ValueError( 'Direction index out of range.' )
+			raise ValueError( 'Phi index out of range.' )
 
 		if ( ( b < 0 ) or ( b >= self['n_bin'] ) ) :
-			raise ValueError( 'Direction index out of range.' )
+			raise ValueError( 'Velocity index out of range.' )
 
 		# Validate the window size.
 
@@ -677,6 +653,82 @@ class pl_spec( ) :
 
 		return sum( [ self.arr[t][p][b+w]['psd']
 		                                       for w in range( win ) ] )
+
+	def vldt_mom_sel( self, emit_all=False ) :
+
+		# Note.  This function ensures that the two "self.mom_sel_???"
+		#        arrays are mutually consistent.  For each set of "c"-
+		#        and "d"-values, "self.mom_sel_dir[c,d]" can only be
+		#        "True" if at least "self.min_sel_bin" of the elements
+		#        in "self.mom_sel_bin[c,d,:]" are "True".  However, if
+		#        fewer than "self.mom_min_sel_dir" sets of "c"- and
+		#        "d"-values satisfy this criterion, all elements of
+		#        "self.mom_sel_dir" are given the value "False".		
+		#
+		#        Additionally, this functions serves to update the
+		#        "self.mom_n_sel_???" counters.
+
+
+		# Save the initial selection of pointing directions.
+
+		old_mom_sel_dir = deepcopy( self.mom_sel_dir )
+
+		# Update the counter "self.mom_n_sel_bin" (i.e., the number of
+		# selected data in each pointing direction).
+
+		self.mom_n_sel_bin = [ [ sum( self.mom_sel_bin[t][p] )
+		                       for p in range( self['n_phi'] ) ]
+		                       for t in range( self['n_the'] ) ]
+
+		# Create a new selection of pointing directions based on the
+		# data selection, and then update the counter
+		# "self.mom_n_sel_dir".
+
+		self.mom_sel_dir = [ [
+		              self.mom_n_sel_bin[t][p] >= self.mom_min_sel_bin
+		                       for p in range( self['n_phi'] ) ]
+		                       for t in range( self['n_the'] ) ]
+
+		# Determine the total number of selected pointing directions; if
+		# this number is less than the minimum "self.mom_min_sel_dir",
+		# deselect all pointing directions.
+
+		self.mom_n_sel_dir = \
+		               sum( [ sum( sub ) for sub in self.mom_sel_dir ] )
+
+		if ( self.mom_n_sel_dir < self.mom_min_sel_dir ) :
+
+			self.mom_sel_dir = [ [ False
+			               for p in range( self['n_dir'] ) ]
+			               for t in range( self['n_cup'] ) ]
+
+			self.mom_n_sel_dir = 0
+
+		"""
+		# Emit (if necessary) the appropriate update signal(s).
+
+		if ( emit_all ) :
+
+			self.emit( SIGNAL('janus_chng_mom_sel_all') )
+
+		else :
+
+			# Identify differences between the new and old versions
+			# of "self.mom_sel_dir".  For each pointing direction
+			# whose selection status for the moments analysis has
+			# changed, emit a signal indicating this.
+
+			for t in range( self['n_cup'] ) :
+
+				for p in range( self['n_dir'] ) :
+
+					if ( self.mom_sel_dir[t][p]
+					            != old_mom_sel_dir[t][p] ) :
+
+						self.emit( SIGNAL(
+						      'janus_chng_mom_sel_dir'),
+						      t, p )
+		"""
 
 	#-----------------------------------------------------------------------
 	# RESET THE DATA AND ANALYSIS VARIABLES.
@@ -693,7 +745,7 @@ class pl_spec( ) :
 	              var_nln_sel = False,
 		      var_nln_res = False,
 	              var_dsp     = False,
-	              var_dyn     = False, ) :
+	              var_dyn     = False  ) :
 
 		# If requested, (re-)initialize the varaibles for the Wind/PESA
 		# data associated with this spectrum.
@@ -745,7 +797,7 @@ class pl_spec( ) :
 		#        they are so interconnected by the "self.nln_plas"
 		#        object, which is also handled here.
 
-"""
+		"""
 		if ( var_nln_ion ) :
 
 			self.nln_n_spc = 4
@@ -894,10 +946,11 @@ class pl_spec( ) :
 			self.nln_res_curr_tot = None
 			self.nln_res_curr_ion = None
 
+		"""
 		# If requested, (re-)initialize the variables which indicate of
 		# the analyses have their results displayed in widgets which
 		# support output from multiple analyses.
-"""
+
 
 		if ( var_dsp ) :
 
