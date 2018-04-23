@@ -43,7 +43,7 @@ class pl_dat( ) :
 	def __init__( self, spec=None,
 	              t_strt=None, t_stop=None, azim_cen=None, phi_del=None,
 	              elev_cen=None, the_del=None, volt_cen=None, volt_del=None,
-	              psd=None, valid=False ) :
+	              psd=None, valid=False, mom_sel = False ) :
 
 		self._spec      = spec
 		self._azim_cen  = azim_cen
@@ -54,6 +54,7 @@ class pl_dat( ) :
 		self._volt_del  = volt_del
 		self._psd       = psd
 		self._valid     = valid
+		self.mom_sel    = mom_sel
 
 		self._time = ( datetime( 1970, 1, 1 ) + 
 		               timedelta( seconds = (t_strt +
@@ -76,14 +77,14 @@ class pl_dat( ) :
 		# TODO It is currently assumed that the given values of theta
 		#      and phi are the proper look directions. Need to confirm.
 
-		# TODO: Confirm these two formulae
+		# TODO: Confirm these formulae
 
-		self._the       = ( 90 - self._elev_cen ) * pi/180
-		self._phi       = ( 180- self._azim_cen ) * pi/180
+		self._the       =( 90 + self._elev_cen ) * pi/180 # ( 90 -
+		self._phi       =( 180 + self._azim_cen) * pi/180
 
-		self._dir_x     = sin( self._the ) * cos( self._phi )
-		self._dir_y     = sin( self._the ) * sin( self._phi )
-		self._dir_z     = cos( self._the )
+		self._dir_x     = - sin( self._the ) * cos( self._phi )
+		self._dir_y     = - sin( self._the ) * sin( self._phi )
+		self._dir_z     = - cos( self._the )
 		#/TODO
 
 		self._norm_b_x  = None
@@ -98,6 +99,18 @@ class pl_dat( ) :
 			self._valid = False
 		else :
 			self._valid = True
+
+		# Define the variables for use in the moments analysis
+
+		self._mom0  = self['psd']*self['vel_cen']**2*\
+		              sin( self['the_cen'] )*self['vel_del']*\
+		              deg2rad( self['the_del'] )*\
+		              deg2rad( self['phi_del'] )
+		self._mom1x = self._mom0*self['vel_cen']*self._dir_x
+		self._mom1y = self._mom0*self['vel_cen']*self._dir_y
+		self._mom1z = self._mom0*self['vel_cen']*self._dir_z
+		self._mom2  = self._mom0*self['vel_cen']**2
+
 	# ----------------------------------------------------------------------
 	# DEFINE THE KEYS FOR THIS CLASS.
 	# ----------------------------------------------------------------------
@@ -167,6 +180,49 @@ class pl_dat( ) :
 			return self._norm_b_z
 		elif ( key == 'norm_b' ) :
 			return ( self._norm_b_x,self._norm_b_y,self._norm_b_z )
+		elif ( key == 'mom_sel' ) :
+			return ( self.mom_sel )
+		elif ( key == 'mom0' ) :
+			return ( self._mom0 )
+		elif ( key == 'mom1x' ) :
+			return ( self._mom1x )
+		elif ( key == 'mom1y' ) :
+			return ( self._mom1y )
+		elif ( key == 'mom1z' ) :
+			return ( self._mom1z )
+		elif ( key == 'mom2' ) :
+			return ( self._mom2 )
+		elif ( key == 'mom0_sel' ) :
+			if self.mom_sel :
+				return self['mom0']
+			else :
+				return 0
+		elif ( key == 'mom1x_sel' ) :
+			if self.mom_sel :
+				return self['mom1x']
+			else :
+				return 0
+		elif ( key == 'mom1y_sel' ) :
+			if self.mom_sel :
+				return self['mom1y']
+			else :
+				return 0
+		elif ( key == 'mom1z_sel' ) :
+			if self.mom_sel :
+				return self['mom1z']
+			else :
+				return 0
+		elif ( key == 'mom1_sel' ) :
+			if self.mom_sel :
+				return [ self['mom1x'], self['mom1y'],
+				                self['mom1z']          ]
+			else :
+				return [ 0, 0, 0 ]
+		elif ( key == 'mom2_sel' ) :
+			if self.mom_sel :
+				return self['mom2']
+			else :
+				return 0
 		else :
 			raise KeyError( 'Invalid key for "pl_dat".' )
 
@@ -204,3 +260,11 @@ class pl_dat( ) :
 		self._u_per_z = self['vel_cen'] * self['dir_z'] - self._u_par_z
 		self._u_per   = sqrt( self._u_per_x**2 + self._u_per_y**2 +
 		                                         self._u_per_z**2  )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR SETTING THE MOMENTS SELECTION BOOLEAN.
+	#-----------------------------------------------------------------------
+
+	def set_mom_sel( self, sel ) :
+
+		self.mom_sel = sel

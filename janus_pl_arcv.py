@@ -253,7 +253,6 @@ class pl_arcv( object ) :
 			                   volt_cen=volt_cen, volt_del=volt_del,
 			                   psd=psd                           ) ]
 
-
 		# Request a cleanup of the data loaded into this archive.
 
 		self.cleanup_date( )	

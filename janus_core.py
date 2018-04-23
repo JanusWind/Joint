@@ -1430,7 +1430,6 @@ class core( QObject ) :
 		[ self.mom_pl_res.add_spec( self.pl_spec_arr[i].anls_mom( ) )
 		                                  for i in range( len( self.pl_spec_arr ) ) ]
 
-
 		# Message the user that the moments analysis has completed.
 
 		self.emit( SIGNAL('janus_mesg'), 'core', 'end', 'mom' )

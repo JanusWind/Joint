@@ -146,7 +146,7 @@ class pl_spec( ) :
 
 #		self.validate( )
 
-		# List of shape [[[n_bin] n_the] n_phi] where
+		# List of shape [[[n_bin] n_phi] n_the] where
 		# 'bin' is the voltage sweep number,
 		# 'the' specifies theta of the look direction, and
 		# 'phi' specifies phi of the look direction
@@ -154,17 +154,9 @@ class pl_spec( ) :
 		# Initialize the variables that will contain the settings,
 		# data selections, and results from all analyses.
 
-		self.rset_spec( var_spec    = False,
-		                var_mom_win = True,
-		                var_mom_sel = True,
-		                var_mom_res = True,
-		                var_nln_ion = True,
-		                var_nln_set = True,
-		                var_nln_gss = True, 
-		                var_nln_sel = True,
-		                var_nln_res = True,
-		                var_dsp     = True,
-		                var_dyn     = True  )
+		var_mom_win = True
+		var_mom_sel = True
+		var_mom_res = True
 		
 		# Initialize the value of the indicator variable of whether the
 		# automatic analysis should be aborted.
@@ -248,18 +240,18 @@ class pl_spec( ) :
 		elif ( key == 'psd' ) :
 			return [ [ [ self.arr[t][p][b]['psd']
 			             for b in range( self._n_bin ) ]
-			             for t in range( self._n_phi ) ]
-			             for p in range( self._n_the ) ]
+			             for p in range( self._n_phi ) ]
+			             for t in range( self._n_the ) ]
 		elif ( key == 'psd_valid' ) :
 			return [ [ [ self.arr[t][p][b]['psd']
 			             for b in range( self._n_bin ) ]
-			             for t in range( self._n_phi ) ]
-			             for p in range( self._n_the ) ]
+			             for p in range( self._n_phi ) ]
+			             for t in range( self._n_the ) ]
 		elif ( key == 'psd_flat' ) :
 			return [ self.arr[t][p][b]['psd']
 			         for b in range( self._n_bin )
-			         for t in range( self._n_phi )
-			         for p in range( self._n_the ) ]
+			         for p in range( self._n_phi )
+			         for t in range( self._n_the ) ]
 		elif ( key == 'rot' ) :
 			return self._rot
 		else :
@@ -322,7 +314,27 @@ class pl_spec( ) :
 
 		# Re-initialize and the output of the moments analysis.
 
-		self.rset_spec( var_mom_res=True )
+		# Re-initialize the varaibles for the windows associated with
+		# automatic data selection for the PL moments analysis.
+
+		self.mom_win_dir = 7
+		self.mom_win_bin = 7
+
+		# Re-initialize the variables associated with the data selection
+		# for the PL moments analysis.
+
+		self.mom_min_sel_dir =  5
+		self.mom_min_sel_bin =  3
+
+		self.mom_max_sel_dir = 25
+
+		self.mom_sel_dir     = None
+		self.mom_sel_bin     = None
+
+		# Re-initialize and store the variables associated with the
+		# results of the PL moments analysis.
+
+		self.mom_res  = None
 
 		# If the point-selection arrays have not been populated, run
 		# the automatic point selection.
@@ -334,7 +346,7 @@ class pl_spec( ) :
 
 		# If any of the following conditions are met, emit a
 		# signal that indicates that the results of the moments
-		#analysis have changed, and then abort.
+		# analysis have changed, and then abort.
 		#   -- No (valid) ion spectrum has been requested.
 		#   -- Insufficient data have been selected.
 
@@ -399,41 +411,17 @@ class pl_spec( ) :
 			                    self.mom_sel_bin[t][p])
                                                           if x==True   ]
 
-			# Define the variables for this calculation
+			[ self.arr[t][p][i].set_mom_sel( True ) for i in b ]
 
-			this_win = self.arr[t][p]
+			# Compute the number density for this window.
 
-			f_u     = [ this_win[i]['psd']     for i in b ]
-
-			u       = [ this_win[i]['vel_cen'] for i in b ]
-
-			u_vec   = [ this_win[i]['dir']     for i in b ]
-
-			d_u     = [ this_win[i]['vel_del'] for i in b ]
-
-			theta   = [ deg2rad( this_win[i]['the_cen'] )
-			                                    for i in b ]
-
-			d_theta = [ deg2rad( this_win[i]['the_del'] )
-			                                    for i in b ]
-
-			d_phi   = [ deg2rad( this_win[i]['phi_del'] )
-			                                    for i in b ]
-
-			d_omega = [ sin( theta[i] ) * d_theta[i] *
-			            d_phi[i] for i in range(len(b))         ]
-
-			# Compute the number density for this spectrum.
-
-			eta_n[k] = sum( [ f_u[i] * u[i]**2 * d_u[i] *
-			                  d_omega[i] for i in range(len(b)) ]     )
+			eta_n[k] = sum( [ self.arr[t][p][i]['mom0_sel']
+			                          for i in range ( self['n_bin'] ) ] )
 
 			# Compute the bulk velocity.
 
-			eta_v_vec[k] = [ sum([f_u[i] * u_vec[i][j] *
-			                      u[i]**2 * d_u[i] *
-			                      d_omega[i] for i in range(len(b)) ])/
-			                 eta_n[k] for j in range(3)    ]
+			for j in range(3) :
+				eta_v_vec[k][j] = sum( [ self.arr[t][p][i]['mom1_sel'][j] for i in range ( self['n_bin'] ) ] ) / eta_n[k]
 
 			# Compute the bulk speed.
 
@@ -442,24 +430,21 @@ class pl_spec( ) :
 
 			# Compute the thermal speed.
 
-			eta_w[k] = sqrt( ( sum( [ f_u[i] * u[i]**4 *
-			                          d_u[i] * d_omega[i]
-			                            for i in range(len(b)) ]     )/
-			                 eta_n[k] - eta_v[k]**2 ) / 3. )
+			eta_w[k] = sqrt( ( ( sum( [ self.arr[t][p][i]['mom2_sel'] for i in range( self['n_bin'] ) ] ) / eta_n[k] ) - eta_v[k]**2 ) / 3. )
 
 			# Compute the effective temperature.
 
 			eta_t = ( 1.E-3 / const['k_b'] ) * \
-		        	const['m_p'] * ( ( 1.E3  * eta_w )**2 )
+		        	const['m_p'] * ( ( 1.E3  * eta_w[k] )**2 )
 
 		# Calculate a net estimators of the number density and
 		# thermal speed.
 
-		mom_n = mean( eta_n )
+		mom_n = sum( eta_n )
 
 		mom_w = mean( eta_w )
 
-		mom_v_vec = [ mean( eta_v_vec[j] ) for j in range(3) ]
+		mom_v_vec = [ mean( mean( [ eta_v_vec[k][:][j] for k in range( n_eta ) ] ) ) for j in range(3) ]
 
 		# Save the results of the moments analysis in a plas object.
 
@@ -488,11 +473,6 @@ class pl_spec( ) :
 	#-----------------------------------------------------------------------
 
 	def auto_mom_sel( self ) :
-
-		# Re-initialize the data-selection variables for the moments
-		# analysis.
-
-		self.rset_spec( var_mom_sel=True )
 
 		# If no spectrum has been loaded, abort.
 
@@ -548,7 +528,7 @@ class pl_spec( ) :
 
 				for tp in range( self['n_dir'] ) :
 
-					if ( dir_max_psd[t][p] < dir_max_psd[ tp//self['n_the'] ][ tp % self['n_the'] ] ) :
+					if ( dir_max_psd[t][p] < dir_max_psd[ tp // self['n_phi'] ][ tp % self['n_the'] ] ) :
 						n_big += 1
 
 				if ( n_big < self.mom_win_dir ) :
@@ -570,7 +550,7 @@ class pl_spec( ) :
 			t = win[0]
 			p = win[1]
 
-			self.mom_sel_dir[t][p] = True
+			self.mom_sel_dir[t][p] = True####################################################################################
 
 			# Select the bins in this look direction's
 			# maximal window
@@ -583,11 +563,6 @@ class pl_spec( ) :
 		# the "self.mom_sel_dir" array).
 
 		self.vldt_mom_sel( emit_all=True )
-
-		# Run the moments analysis (and then, if the non-linear analysis
-		# is set to be dynamically updated, run that analysis as well).
-
-		self.anls_mom( )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION TO FIND THE INDEX OF WINDOW WITH MAXIMUM PSD
@@ -699,8 +674,8 @@ class pl_spec( ) :
 		if ( self.mom_n_sel_dir < self.mom_min_sel_dir ) :
 
 			self.mom_sel_dir = [ [ False
-			               for p in range( self['n_dir'] ) ]
-			               for t in range( self['n_cup'] ) ]
+			               for p in range( self['n_phi'] ) ]
+			               for t in range( self['n_the'] ) ]
 
 			self.mom_n_sel_dir = 0
 
@@ -729,240 +704,3 @@ class pl_spec( ) :
 						      'janus_chng_mom_sel_dir'),
 						      t, p )
 		"""
-
-	#-----------------------------------------------------------------------
-	# RESET THE DATA AND ANALYSIS VARIABLES.
-	#-----------------------------------------------------------------------
-
-	def rset_spec( self,
-	              var_spec    = False,
-	              var_mom_win = False,
-		      var_mom_sel = False,
-	              var_mom_res = False,
-	              var_nln_ion = False,
-	              var_nln_set = False,
-		      var_nln_gss = False,
-	              var_nln_sel = False,
-		      var_nln_res = False,
-	              var_dsp     = False,
-	              var_dyn     = False  ) :
-
-		# If requested, (re-)initialize the varaibles for the Wind/PESA
-		# data associated with this spectrum.
-
-		if ( var_spec ) :
-
-			self._n_bin  = 14 #TODO Confirm
-			self._n_the  = 5
-			self._n_phi  = 5  #TODO Confirm this
-			self._t_strt = None
-			self._t_stop = None
-			self._rot    = None
-			self.arr     = None
-
-		# If requested, (re-)initialize the varaibles for the windows
-		# associated with automatic data selection for the PL moments
-		# analysis.
-
-		if ( var_mom_win ) :
-
-			self.mom_win_dir = 7
-			self.mom_win_bin = 7
-
-		# If requested, (re-)initialize the variables associated with
-		# the data seleciton for the PL moments analysis.
-
-		if ( var_mom_sel ) :
-
-			self.mom_min_sel_dir =  5
-			self.mom_min_sel_bin =  3
-
-			self.mom_max_sel_dir = 25
-
-			self.mom_sel_dir     = None
-			self.mom_sel_bin     = None
-
-		# If requested, (re-)initialize and store the variables
-		# associated with the results of the PL moments analysis.
-
-		if ( var_mom_res ) :
-
-			self.mom_res  = None
-
-		# If requested, (re-)initialize the variables associated with
-		# the ion species and populations for the non-linear analysis.
-
-		# Note.  This includes both the "self.nln_spc_?" and
-		#        "self.nln_pop_?" arrays.  These are done together since
-		#        they are so interconnected by the "self.nln_plas"
-		#        object, which is also handled here.
-
-		"""
-		if ( var_nln_ion ) :
-
-			self.nln_n_spc = 4
-			self.nln_n_pop = 5
-
-			self.nln_plas = plas( enforce=True )
-
-			self.nln_pop_use = tile( False, self.nln_n_pop )
-			self.nln_pop_vld = tile( False, self.nln_n_pop )
-
-			for s in range ( self.nln_n_spc ) :
-
-				if ( s == 0 ) :
-					self.nln_plas.add_spec( name='Proton',
-					                   sym='p', m=1., q=1. )
-				elif ( s == 1 ) :
-					self.nln_plas.add_spec( name='Alpha' ,
-					                   sym='a', m=4., q=2. )
-				else :
-					self.nln_plas.add_spec( )
-
-			for p in range ( self.nln_n_pop ) :
-
-				if ( p == 0 ) :
-					self.nln_pop_use[p] = True
-					self.nln_pop_vld[p] = True
-					self.nln_plas.add_pop(
-					        'p', name='Core', sym='c',
-					        drift=False, aniso=True    )
-				elif ( p == 1 ) :
-					self.nln_pop_use[p] = False
-					self.nln_pop_vld[p] = True
-					self.nln_plas.add_pop(
-					        'p', name='Beam', sym='b',
-					        drift=True , aniso=False   )
-				elif ( p == 2 ) :
-					self.nln_pop_use[p] = True
-					self.nln_pop_vld[p] = True
-					self.nln_plas.add_pop(
-					        'a', name='Core', sym='c',
-					        drift=True , aniso=True    )
-				elif ( p == 3 ) :
-					self.nln_pop_use[p] = False
-					self.nln_pop_vld[p] = True
-					self.nln_plas.add_pop(
-					        'a', name='Beam', sym='b',
-					        drift=True , aniso=False   )
-				else :
-					self.nln_pop_use[p] = False
-					self.nln_pop_vld[p] = False
-					self.nln_plas.add_pop( None )
-
-		# If requested, (re-)initialize the variables associated with
-		# the settings for the automatic initial guess generation and
-		# the automatic point selection.
-
-		if ( var_nln_set ) :
-
-			self.nln_set_gss_n   = tile( None , self.nln_n_pop )
-			self.nln_set_gss_d   = tile( None , self.nln_n_pop )
-			self.nln_set_gss_w   = tile( None , self.nln_n_pop )
-			self.nln_set_gss_vld = tile( False, self.nln_n_pop )
-
-			self.nln_set_sel_a   = tile( None , self.nln_n_pop )
-			self.nln_set_sel_b   = tile( None , self.nln_n_pop )
-			self.nln_set_sel_vld = tile( False, self.nln_n_pop )
-
-			self.nln_set_gss_n[0]   =  1.00
-			self.nln_set_gss_n[1]   =  0.20
-			self.nln_set_gss_n[2]   =  0.02
-			self.nln_set_gss_n[3]   =  0.01
-
-			self.nln_set_gss_d[1]   =  0.03
-			self.nln_set_gss_d[2]   =  0.01
-			self.nln_set_gss_d[3]   =  0.05
-
-			self.nln_set_gss_w[0]   =  1.00
-			self.nln_set_gss_w[1]   =  1.25
-			self.nln_set_gss_w[2]   =  1.00
-			self.nln_set_gss_w[3]   =  1.25
-
-			self.nln_set_gss_vld[0] = True
-			self.nln_set_gss_vld[1] = True
-			self.nln_set_gss_vld[2] = True
-			self.nln_set_gss_vld[3] = True
-
-			self.nln_set_sel_a[0]   = -3.00
-			self.nln_set_sel_a[1]   = -3.00
-			self.nln_set_sel_a[2]   = -3.00
-			self.nln_set_sel_a[3]   = -3.00
-			self.nln_set_sel_a[4]   = -3.00
-
-			self.nln_set_sel_b[0]   =  3.00
-			self.nln_set_sel_b[1]   =  3.00
-			self.nln_set_sel_b[2]   =  3.00
-			self.nln_set_sel_b[3]   =  3.00
-			self.nln_set_sel_b[4]   =  3.00
-
-			self.nln_set_sel_vld[0] = True
-			self.nln_set_sel_vld[1] = True
-			self.nln_set_sel_vld[2] = True
-			self.nln_set_sel_vld[3] = True
-			self.nln_set_sel_vld[4] = True
-
-		# If requested, (re-)initialize the variables associated with
-		# the initial guesses for the non-linear analysis.
-
-		if ( var_nln_gss ) :
-
-			for p in range( self.nln_n_pop ) :
-				self.nln_plas.arr_pop[p]['n']     = None
-				self.nln_plas.arr_pop[p]['dv']    = None
-				self.nln_plas.arr_pop[p]['w']     = None
-				self.nln_plas.arr_pop[p]['w_per'] = None
-				self.nln_plas.arr_pop[p]['w_par'] = None
-
-			self.nln_gss_vld = tile( False, self.nln_n_pop )
-
-			self.nln_gss_pop      = [ ]
-			self.nln_gss_prm      = [ ]
-
-			self.nln_gss_curr_tot = None
-			self.nln_gss_curr_ion = None
-
-		# If requested, (re-)initialize the variables associated with
-		# the data selection for the non-linear analysis.
-
-		if ( var_nln_sel ) :
-
-			self.nln_sel     = None
-
-			self.nln_n_sel   = 0
-			self.nln_min_sel = 30
-
-		# If requested, (re-)initialize the variables associated with
-		# the results of the non-linear analysis.
-
-		if ( var_nln_res ) :
-
-			self.nln_res_runtime  = 0.
-
-			self.nln_res_plas     = None
-
-			self.nln_res_sel      = None
-
-			self.nln_res_curr_tot = None
-			self.nln_res_curr_ion = None
-
-		"""
-		# If requested, (re-)initialize the variables which indicate of
-		# the analyses have their results displayed in widgets which
-		# support output from multiple analyses.
-
-
-		if ( var_dsp ) :
-
-			self.dsp = 'mom'
-
-		# If requested, (re-)initialize the variables which indicate
-		# which analyses are updated automatically when a change is
-		# made to their settings.
-
-		if ( var_dyn ) :
-
-			self.dyn_mom = True
-			self.dyn_gss = True
-			self.dyn_sel = True
-			self.dyn_nln = False

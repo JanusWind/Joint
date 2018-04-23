@@ -96,6 +96,10 @@ class widget_pl_grid( QWidget ) :
 		self.n_painted     = 0
 		self.n_painted_max = 3
 
+		# Disable user events
+
+		self.setDisabled( True )
+
 		self.core = core
 		self.n = n
 		self.t = []
@@ -112,6 +116,7 @@ class widget_pl_grid( QWidget ) :
 		self.connect( self.core, SIGNAL('janus_rset'), self.resp_rset )
 		self.connect( self.core, SIGNAL('janus_chng_pl_spc'),
 		                                            self.resp_chng_pl_spc )
+		self.connect( self.core, SIGNAL('janus_chng_mom_res'), self.make_pnt )
 		#TODO add more signals
 
 		# Assign (if not done so already) and store the shape of the
@@ -153,6 +158,7 @@ class widget_pl_grid( QWidget ) :
 		# selection points, and the fit curves.
 
 		self.make_hst( )
+		self.make_pnt( )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR INITIALIZING THE WIDGET AND ITS PLOTS.
@@ -212,6 +218,9 @@ class widget_pl_grid( QWidget ) :
 
 		self.hst = tile( None, [ self.n_plt_y, self.n_plt_x ] )
 		self.lbl = tile( None, [ self.n_plt_y, self.n_plt_x ] )
+
+		self.pnt = tile( None, [ self.n_plt_y, self.n_plt_x, 
+		                         self.n_k                    ] )
 
 		# Initialize the scale-type for each axis, then generate the
 		# (default) axis-limits and adjusted axis-limits.
@@ -320,6 +329,7 @@ class widget_pl_grid( QWidget ) :
 			# Note: psd values are less than 1
 
 			if ( self.log_y ) :
+				self.range[0] = self.range[0] ** 1.05
 				self.range[1] = self.range[1] ** 0.9
 			else :
 				self.range[1] += 0.1 * ( self.range[1] -
@@ -359,7 +369,7 @@ class widget_pl_grid( QWidget ) :
 
 		self.time_label.setText( str(self.t[-1])[0:-7] + '        ' +
 		                         u'\u0394t = {}'.format(
-		                         round( self.delta_t[-1], 0) ) + 's'  )
+		                         round( self.delta_t[-1], 0) ) + 's' )
 
 		# Use the spectral data to compute new axis-limits.
 
@@ -374,9 +384,9 @@ class widget_pl_grid( QWidget ) :
 		# Histograms are broken down by phi horizontally and
 		# theta vertically
 
-		for p in range( self.core.pl_spec_arr[self.n]['n_phi'] ):
+		for t in range( self.core.pl_spec_arr[self.n]['n_the'] ):
 
-			for t in range ( self.core.pl_spec_arr[self.n]['n_the'] ):
+			for p in range ( self.core.pl_spec_arr[self.n]['n_phi'] ):
 
 				# If this plot does not exist, move onto
 				# the next one.
@@ -441,10 +451,6 @@ class widget_pl_grid( QWidget ) :
 				# Adjust this plot's limits and then move it's
 				# label in response.
 
-				self.plt[t,p].setRange( xRange=self.x_lim,
-				                        yRange=self.y_lim,
-				                        padding=0.         )
-
 				self.lbl[t,p].setPos( self.x_lim[1],
 				                      self.y_lim[1]  )
 
@@ -469,6 +475,151 @@ class widget_pl_grid( QWidget ) :
 				                              pen=self.pen_hst )
 
 				self.plt[t,p].addItem( self.hst[t,p] )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR CREATING THE PLOTS' SELECTION POINTS.
+	#-----------------------------------------------------------------------
+
+	def make_pnt( self ) :
+
+		# Add selection points to each plot.
+
+		if ( self.core.pl_spec_arr is None ) :
+
+			return
+
+		# Add selection points to each plot.
+
+		for d in range( min( self.core.pl_spec_arr[self.n]['n_dir'], self.n_plt ) ) :
+
+			# Determine the location of this plot within the grid
+			# layout.
+
+			t = d // self.n_plt_x
+			p = d %  self.n_plt_y
+
+			# If this plot does not exist, move onto the next one.
+
+			if ( self.plt[t,p] is None ) :
+				continue
+
+			# Add the selection points to this plot.
+
+			for b in range( self.core.pl_spec_arr[self.n]['n_bin'] ) :
+
+				sel_bin = False
+				sel_dir = True
+				sel_alt = None
+
+#				if ( self.core.dsp == 'mom'          ) :# and 
+#				     ( self.core.pl_spec_arr[self.n].mom_sel_bin
+#						           is not None ) and
+#				     ( self.core.pl_spec_arr[self.n].mom_sel_dir
+#					                   is not None )     ) :
+
+				sel_bin = \
+				       self.core.pl_spec_arr[self.n].arr[t][p][b]['mom_sel']
+
+				"""
+				elif ( ( self.core.dsp == 'gsl'        ) and 
+				       ( self.core.pl_spec_arr[self.n].nln_sel is not None )     ) :
+
+					sel_bin = self.core.pl_spec_arr[self.n].nln_sel[t][p][b]
+
+				elif ( ( self.core.dsp == 'nln'        ) and 
+				       ( self.core.pl_spec_arr[self.n].nln_res_sel
+					                   is not None )     ) :
+
+					sel_bin = \
+					       self.core.pl_spec_arr[self.n].nln_res_sel[t][p][b]
+
+					if ( self.core.pl_spec_arr[self.n].nln_sel is None ) :
+						sel_alt = None
+					else :
+						sel_alt = \
+						   self.core.pl_spec_arr[self.n].nln_sel[t][p][b]
+				"""
+				self.chng_pnt( t, p, b, sel_bin,
+					       sel_alt=sel_alt   )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR CHANGING THE VISIBILITY OF A DATUM'S POINTS.
+	#-----------------------------------------------------------------------
+
+	def chng_pnt( self, t, p, b, sel_bin, sel_alt=None ) :
+
+		# If this point already exists, remove it from its plot and
+		# delete it.
+
+		if ( self.pnt[t,p,b] is not None ) :
+			self.plt[t,p].removeItem( self.pnt[t,p,b] )
+			self.pnt[t,p,b] = None
+
+		# If this point was not selected (based on both its primary and
+		# secondary states), return (since there's nothing more to be
+		# done).
+
+		if ( not sel_bin or self.core.pl_spec_arr[self.n]['psd'][t][p][b] == 0) :
+			return
+
+		# Determine the "d" index corresponding to this look direction.
+
+		d = p + ( t * self.n_plt_x )
+
+		# Computed the adjusted point location in the "ViewBox".
+
+		if ( self.log_x ) :
+			ax = log10( self.core.pl_spec_arr[self.n]['vel_cen'][b] )
+		else :
+			ax = self.core.pl_spec_arr[self.n]['vel_cen'][b]
+		if ( self.log_y ) :
+			ay = log10( self.core.pl_spec_arr[self.n]['psd'][t][p][b] )
+		else :
+			ay = self.core.pl_spec_arr[self.n]['psd'][t][p][b]
+
+		# Select the color for the point (i.e., the brush and pen used
+		# to render it) based on whether or not this datum's look
+		# direction has been selected and whether or not the primary and
+		# secondary selection states match.
+
+#		if ( sel_bin == sel_alt ) :
+		pen   = self.pen_pnt_c
+		brush = self.bsh_pnt_c
+#		else :
+#			pen   = self.pen_pnt_y
+#			brush = self.bsh_pnt_y
+#		else :
+#			pen   = self.pen_pnt_r
+#			brush = self.bsh_pnt_r
+
+		# Select the symbol based on the values of the primary and
+		# secondary selection states.
+
+		# Note.  At this point in the code, at least one of these two
+		#        states must be "True" since this -- when both states
+		#        are "False", this function returns before it reaches
+		#        this point.
+
+		if ( sel_bin ) :
+			symbol = 'o'
+		else :
+			symbol = 't'
+
+		# Create, store, and add this selection point to the plot.
+
+		if ( self.core.app.res_lo ) :
+			size = 3
+		else :
+			size = 6
+
+		self.pnt[t,p,b] = PlotDataItem( [ax], [ay],
+		                                symbol=symbol,
+		                                symbolSize=size,
+		                                symbolPen=pen,
+		                                symbolBrush=brush )
+
+		self.plt[t,p].addItem( self.pnt[t,p,b] )
+
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RESETTING THE PLOTS' HISTOGRAMS (AND LABELS).
@@ -510,6 +661,34 @@ class widget_pl_grid( QWidget ) :
 					                       color=(0,0,0) )
 
 	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR RESETTING THE PLOTS' SELECTION POINTS.
+	#-----------------------------------------------------------------------
+
+	def rset_pnt( self ) :
+
+		# For each plot that exists in the grid, hide and remove its
+		# selection points.
+
+		for t in range( self.n_plt_y ) :
+
+			for p in range( self.n_plt_x ) :
+
+				# If the plot does not exist, move onto the the
+				# next grid element.
+
+				if ( self.plt[t,p] is None ) :
+					continue
+
+				# Remove and then delete each of this plot's
+				# selection points.
+
+				for b in range( self.n_k ) :
+					if ( self.pnt[t,p,b] is not None ) :
+						self.plt[t,p].removeItem(
+						               self.pnt[t,p,b] )
+						self.pnt[t,p,b] = None
+
+	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RESPONDING TO THE "rset" SIGNAL.
 	#-----------------------------------------------------------------------
 
@@ -518,6 +697,7 @@ class widget_pl_grid( QWidget ) :
 		# Clear the plots of all their elements.
 
 		self.rset_hst( )
+		self.rset_pnt( )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_pl_spc" SIGNAL.
@@ -528,5 +708,6 @@ class widget_pl_grid( QWidget ) :
 		# Clear the plots of all their elements and regenerate them.
 
 		self.rset_hst( )
+		self.rset_pnt( )
 
 		#self.make_hst( )
