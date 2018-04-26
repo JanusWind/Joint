@@ -197,6 +197,9 @@ class pl_arcv( object ) :
 		# Determine how many more PESA-L spectra exist within the next
 		# 30 rotations
 
+		#FIXME
+
+
 		num_spec = len( where( [( del_t >= timedelta(seconds=-3.05) and
 		                          del_t <= timedelta(seconds=31.*3.05) )
 		                         for del_t in dt ] )[0] )

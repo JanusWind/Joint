@@ -745,12 +745,6 @@ class core( QObject ) :
 
 		self.load_pl( )
 
-		self.rset_var( var_pl = True )
-
-		self.pl_spec_arr = self.pl_arcv.load_spec( self.time_txt,
-		                                       get_prev=get_prev,
-		                                       get_next=get_next )
-
 		# Emit a signal that indicates that a new Wind/PESA-L ion
 		# spectrum has now been loaded.
 
@@ -828,6 +822,16 @@ class core( QObject ) :
 		# Reset the spin variables.
 
 		self.rset_var( var_pl=True )
+
+		# Load the PESA-L spectra.
+
+		# FIXME
+
+		### self.pl_spec_arr = self.pl_arcv.load_spec( self.fc_spec['time'], self.fc_spec['dur'] )
+
+		self.pl_spec_arr = self.pl_arcv.load_spec( self.time_txt,
+		                                       get_prev=get_prev,
+		                                       get_next=get_next )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR LOADING THE Wind/MFI MAGNETIC FIELD DATA.
