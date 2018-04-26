@@ -1430,6 +1430,39 @@ class core( QObject ) :
 		[ self.mom_pl_res.add_spec( self.pl_spec_arr[i].anls_mom( ) )
 		                                  for i in range( len( self.pl_spec_arr ) ) ]
 
+		# Compute the mean values and standard deviations for the PL
+		# moments analysis results
+
+		self.mom_pl_avg = plas( )
+
+		self.mom_pl_avg_n = mean( self.mom_pl_res['n_p_c'] )
+
+		self.mom_pl_avg['v0_vec'] = [ mean( [ self.mom_pl_res['v0_vec'][i][j] for i in range( len( self.pl_spec_arr ) ) ] ) for j in range(3) ]
+
+		self.mom_pl_avg_w = mean( self.mom_pl_res['w_p_c'] )
+
+		self.mom_pl_avg.add_spec( name='Proton', sym='p', m=1., q=1. )
+
+		self.mom_pl_avg.add_pop( 'p',
+		                      drift=False, aniso=False,
+		                      name='Core', sym='c',
+		                      n=self.mom_pl_avg_n,     w=self.mom_pl_avg_w  )
+
+		self.mom_pl_std = plas( )
+
+		self.mom_pl_std_n = std( self.mom_pl_res['n_p_c'] )
+
+		self.mom_pl_std['v0_vec'] = [ std( [ self.mom_pl_res['v0_vec'][i][j] for i in range( len( self.pl_spec_arr ) ) ] ) for j in range(3) ]
+
+		self.mom_pl_std_w = std( self.mom_pl_res['w_p_c'] )
+
+		self.mom_pl_std.add_spec( name='Proton', sym='p', m=1., q=1. )
+
+		self.mom_pl_std.add_pop( 'p',
+		                      drift=False, aniso=False,
+		                      name='Core', sym='c',
+		                      n=self.mom_pl_std_n,     w=self.mom_pl_std_w  )
+
 		# Message the user that the moments analysis has completed.
 
 		self.emit( SIGNAL('janus_mesg'), 'core', 'end', 'mom' )

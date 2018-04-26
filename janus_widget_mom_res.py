@@ -175,6 +175,52 @@ class widget_mom_res( format_TextEdit ) :
 
 		# Write the PL data to the table
 
+		# mean values
+
+		txt += '<tr>'
+
+		txt += '<th>&lt;PL&gt;</th>'
+
+		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_avg['n_p_c'] )
+
+		txt += '<td align="right">{:.0f}</td>'.format( self.core.mom_pl_avg['v_p_c'] )
+
+		a_v_vec = self.core.mom_pl_avg['v_vec_p_c']
+
+		txt += '<td align="right">{:.0f}</td>'.format( a_v_vec[0] )
+		txt += '<td align="right">{:.0f}</td>'.format( a_v_vec[1] )
+		txt += '<td align="right">{:.0f}</td>'.format( a_v_vec[2] )
+
+		txt += '<td align="right">{:.0f}</td>'.format( self.core.mom_pl_avg['w_p_c'] )
+		txt += '<td align="right">{:.1f}</td>'.format( self.core.mom_pl_avg['T_p_c'] )
+
+		txt += '<th>&lt;PL&gt;</th>'
+
+		txt += '</tr>'
+
+		# standard deviation values
+
+		txt += '<tr>'
+
+		txt += '<th><i>&sigma;<sub>PL</sub></i></th>'
+
+		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_std['n_p_c'] )
+
+		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_std['v_p_c'] )
+
+		a_v_vec = self.core.mom_pl_std['v_vec_p_c']
+
+		txt += '<td align="right">{:.2f}</td>'.format( a_v_vec[0] )
+		txt += '<td align="right">{:.2f}</td>'.format( a_v_vec[1] )
+		txt += '<td align="right">{:.2f}</td>'.format( a_v_vec[2] )
+
+		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_std['w_p_c'] )
+		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_std['T_p_c'] )
+
+		txt += '<th><i>&sigma;<sub>PL</sub></i></th>'
+
+		txt += '</tr>'
+
 		for n in range( len( self.core.pl_spec_arr ) ) :
 
 			txt += '<tr>'
