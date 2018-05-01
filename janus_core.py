@@ -1062,7 +1062,7 @@ class core( QObject ) :
 				self.mom_win_dir_pl = int( val )
 
 				if ( self.mom_win_dir_pl < self.mom_min_sel_dir_pl ) :
-					self.mom_win_dir = None
+					self.mom_win_dir_pl = None
 
 				if ( self.mom_win_dir_pl > self.mom_max_sel_dir_pl ) :
 					self.mom_win_dir_pl = None
@@ -1598,10 +1598,10 @@ class core( QObject ) :
 		#        last run (since no changes to the inital guess or to
 		#        the point selection would have been made since then).
 
-		if ( self.dyn_gss ) :
-			self.auto_nln_gss( )
-		else :
-			self.chng_dsp( 'mom' )
+		###if ( self.dyn_gss ) :
+		###	self.auto_nln_gss( )
+		###else :
+		###	self.chng_dsp( 'mom' )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR CHANGING A NLN SPECIES.

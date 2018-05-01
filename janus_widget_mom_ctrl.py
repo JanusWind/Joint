@@ -131,7 +131,7 @@ class widget_mom_ctrl( QWidget ) :
 
 	def make_txt( self ) :
 
-		# Update the "win_dir" text-box based on the value stored in
+		# Update the "fc_dir" text-box based on the value stored in
 		# "core".
 
 		if ( self.core.mom_win_dir is None ) :
@@ -145,7 +145,7 @@ class widget_mom_ctrl( QWidget ) :
 
 			self.txt_win_dir.setStyleSheet( "color: black;" )
 
-		# Update the "win_bin" text-box based on the value stored in
+		# Update the "fc_bin" text-box based on the value stored in
 		# "core". 
 
 		if ( self.core.mom_win_bin is None ) :
@@ -159,7 +159,7 @@ class widget_mom_ctrl( QWidget ) :
 
 			self.txt_win_bin.setStyleSheet( "color: black;" )
 
-		# Update the "win_dir" text-box based on the value stored in
+		# Update the "pl_dir" text-box based on the value stored in
 		# "core".
 
 		if ( self.core.mom_win_dir_pl is None ) :
@@ -173,7 +173,7 @@ class widget_mom_ctrl( QWidget ) :
 
 			self.txt_win_dir_pl.setStyleSheet( "color: black;" )
 
-		# Update the "win_bin" text-box based on the value stored in
+		# Update the "pl_bin" text-box based on the value stored in
 		# "core". 
 
 		if ( self.core.mom_win_bin_pl is None ) :
