@@ -252,6 +252,10 @@ class pl_spec( ) :
 			         for b in range( self._n_bin )
 			         for p in range( self._n_phi )
 			         for t in range( self._n_the ) ]
+		elif ( key == 'psd_min' ) :
+			return min( self['psd_flat'][i] for i in where( array( self['psd_flat'] ) != 0. )[0] )
+		elif ( key == 'psd_max' ) :
+			return max( self['psd_flat'][i] for i in where( array( self['psd_flat'] ) != 0. )[0] )
 		elif ( key == 'rot' ) :
 			return self._rot
 		else :
@@ -310,20 +314,20 @@ class pl_spec( ) :
 	# DEFINE THE FUNCTION FOR RUNNING THE MOMENTS ANALYSIS ON THIS SPECTRUM.
 	#-----------------------------------------------------------------------
 
-	def anls_mom( self ) :
+	def anls_mom( self, win_dir = 7, win_bin = 5 ) :
 
 		# Re-initialize and the output of the moments analysis.
 
 		# Re-initialize the varaibles for the windows associated with
 		# automatic data selection for the PL moments analysis.
 
-		self.mom_win_dir = 7
-		self.mom_win_bin = 7
+		self.mom_win_dir = win_dir
+		self.mom_win_bin = win_bin
 
 		# Re-initialize the variables associated with the data selection
 		# for the PL moments analysis.
 
-		self.mom_min_sel_dir =  5
+		self.mom_min_sel_dir =  3
 		self.mom_min_sel_bin =  3
 
 		self.mom_max_sel_dir = 25
@@ -498,7 +502,7 @@ class pl_spec( ) :
 
 			self.vldt_mom_sel( emit_all=True )
 
-			self.anls_mom( )
+			self.anls_mom( self.mom_win_dir, self.mom_win_bin)
 
 			return
 
@@ -704,3 +708,18 @@ class pl_spec( ) :
 						      'janus_chng_mom_sel_dir'),
 						      t, p )
 		"""
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR CALC'ING EXPECTED PSD FROM A POPULATION.
+	#-----------------------------------------------------------------------
+
+	def calc_psd( self, m, v0, n, w) :
+
+		# Return a 3-D list with the calculated current for each bin in
+		# the spectrum.
+
+		return [ [ [ self.arr[t][p][b].calc_psd( 
+		                    m, v0, n, w      )
+		                    for b in range( self['n_bin'] ) ]
+		                    for p in range( self['n_phi'] ) ]
+		                    for t in range( self['n_the'] ) ]

@@ -113,10 +113,14 @@ class widget_pl_grid( QWidget ) :
 
 		# Prepare to respond to signals received from the Janus core.
 
-		self.connect( self.core, SIGNAL('janus_rset'), self.resp_rset )
+		self.connect( self.core, SIGNAL('janus_rset'),  self.resp_rset )
 		self.connect( self.core, SIGNAL('janus_chng_pl_spc'),
-		                                            self.resp_chng_pl_spc )
-		self.connect( self.core, SIGNAL('janus_chng_mom_res'), self.make_pnt )
+		                                         self.resp_chng_pl_spc )
+		self.connect( self.core, SIGNAL('janus_chng_mom_win'),
+		                                    self.resp_chng_mom_win )
+		self.connect( self.core, SIGNAL('janus_chng_mom_res'),
+		                                        self.resp_chng_mom_res )
+
 		#TODO add more signals
 
 		# Assign (if not done so already) and store the shape of the
@@ -148,7 +152,7 @@ class widget_pl_grid( QWidget ) :
 		# number of ion species.
 
 		self.n_k   = 14
-		self.n_ion = self.core.nln_n_pop
+		self.n_ion = 1#self.core.nln_n_pop
 
 		# Initialize the widget and it's plot's.
 
@@ -218,6 +222,10 @@ class widget_pl_grid( QWidget ) :
 
 		self.hst = tile( None, [ self.n_plt_y, self.n_plt_x ] )
 		self.lbl = tile( None, [ self.n_plt_y, self.n_plt_x ] )
+
+		self.crv     = tile( None, [ self.n_plt_y, self.n_plt_x ] )
+		self.crv_ion = tile( None, [ self.n_plt_y, self.n_plt_x,
+		                             self.n_ion                  ] )
 
 		self.pnt = tile( None, [ self.n_plt_y, self.n_plt_x, 
 		                         self.n_k                    ] )
@@ -324,7 +332,7 @@ class widget_pl_grid( QWidget ) :
 			          in (where(array(self.core.pl_spec_arr[self.n]['psd_flat'])
 			                                             != 0.)[0])]
 
-			self.range = [ min(arr_psd_flat), max(arr_psd_flat)  ]
+			self.range = [ self.core.mom_psd_min, self.core.mom_psd_max  ]
 
 			# Note: psd values are less than 1
 
@@ -620,6 +628,78 @@ class widget_pl_grid( QWidget ) :
 
 		self.plt[t,p].addItem( self.pnt[t,p,b] )
 
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR CREATING THE PLOTS' FIT CURVES.
+	#-----------------------------------------------------------------------
+
+	def make_crv( self ) :
+
+		# If no "list" of "p" index-values has been provided by the
+		# user, assume that the curves in all plots should be
+		# (re-)rendered.
+
+		if ( self.core.pl_spec_arr == [] or self.core.mom_psd is None ) :
+			return
+
+		# For each plot in the grid, generate and display a fit curve
+		# based on the results of the analysis.
+
+		vel_cen = self.core.pl_spec_arr[self.n]['vel_cen']
+
+		for t in range( self.core.pl_spec_arr[self.n]['n_the'] ) :
+
+			for p in range( self.core.pl_spec_arr[self.n]['n_phi'] ) :
+
+				# If this plot does not exist, move onto the next grid
+				# element.
+
+				if ( self.plt[t,p] is None ) :
+					continue
+
+				# If any curves already exist for this plot, remove and
+				# delete them.
+
+				if ( self.crv[t,p] is not None ) :
+					self.plt[t,p].removeItem( self.crv[t,p] )
+					self.crv[t,p] = None
+
+				for n in range( self.n_ion ) :
+					if ( self.crv_ion[t,p,n] is not None ) :
+						self.plt[t,p].removeItem(
+						                   self.crv_ion[t,p,n] )
+						self.crv_ion[t,p,n] = None
+
+				# Create and add the curve of the individual
+				# contributions to the modeled psd to the plot.
+
+				for n in range( self.n_ion ) :
+
+					# Extract the points for this fit curve.
+
+					x = array( vel_cen )
+					y = array( self.core.mom_psd[self.n][t][p] )
+					for tk in range(len(y)):
+						if y[tk] == 0:
+							y[tk] = 1e-11
+
+					if ( self.log_x ) :
+						ax = log10( x )
+					else :
+						ax = x
+
+					if ( self.log_y ) :
+						ay = log10( y )
+					else :
+						ay = y
+
+					# Create, store, and add to the plot
+					# this fit curve.
+
+					self.crv_ion[t,p,n] = PlotDataItem(
+					            ax, ay, pen=self.pen_crv_g )
+
+					self.plt[t,p].addItem(
+					                   self.crv_ion[t,p,n] )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RESETTING THE PLOTS' HISTOGRAMS (AND LABELS).
@@ -711,3 +791,34 @@ class widget_pl_grid( QWidget ) :
 		self.rset_pnt( )
 
 		#self.make_hst( )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_mom_res" SIGNAL.
+	#-----------------------------------------------------------------------
+
+	def resp_chng_mom_res( self ) :
+
+		# If the results of the moments analysis are being displayed,
+		# reset any existing fit curves and make new ones.
+
+		self.make_crv( )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_mom_win" SIGNAL.
+	#-----------------------------------------------------------------------
+
+	def resp_chng_mom_win( self ) :
+
+		# Update the color and visibility of the plot points
+		# corresponding to each of this look direction's data.
+
+
+		for t in range( self.core.pl_spec_arr[self.n]['n_the'] ) :
+
+			for p in range( self.core.pl_spec_arr[self.n]['n_phi'] ) :
+
+				for b in range( self.core.pl_spec_arr[self.n]['n_bin'] ) :
+
+					self.chng_pnt( t, p, b,
+		           		               self.core.pl_spec_arr[self.n].mom_sel_bin[t][p][b] )
+

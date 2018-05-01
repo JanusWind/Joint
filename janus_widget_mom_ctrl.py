@@ -39,7 +39,8 @@ from janus_event_LineEdit import event_LineEdit
 
 from threading import Thread
 from janus_thread import n_thread, thread_chng_mom_win_dir, \
-                         thread_chng_mom_win_bin
+                         thread_chng_mom_win_bin, thread_chng_mom_win_dir_pl, \
+                         thread_chng_mom_win_bin_pl
 
 
 ################################################################################
@@ -77,10 +78,10 @@ class widget_mom_ctrl( QWidget ) :
 		# Initialize the text areas, buttons, and labels that comprise
 		# this control panel.
 
-		self.txt_win_dir = event_LineEdit( self, 'win_dir' )
-		self.txt_win_bin = event_LineEdit( self, 'win_bin' )
-		self.txt_win_dir_pl = event_LineEdit( self, 'win_dir_pl' )
-		self.txt_win_bin_pl = event_LineEdit( self, 'win_bin_pl' )
+		self.txt_win_dir = event_LineEdit( self, 'fc_dir' )
+		self.txt_win_bin = event_LineEdit( self, 'fc_bin' )
+		self.txt_win_dir_pl = event_LineEdit( self, 'pl_dir' )
+		self.txt_win_bin_pl = event_LineEdit( self, 'pl_bin' )
 
 		self.lab_win_fc = QLabel( 'FC' )
 		self.lab_win_pl = QLabel( 'PL' )
@@ -161,28 +162,28 @@ class widget_mom_ctrl( QWidget ) :
 		# Update the "win_dir" text-box based on the value stored in
 		# "core".
 
-		if ( self.core.mom_win_dir is None ) :
+		if ( self.core.mom_win_dir_pl is None ) :
 
 			self.txt_win_dir_pl.setStyleSheet( "color: red;" )
 
 		else :
 
 			self.txt_win_dir_pl.setTextUpdate(
-			                          str( self.core.mom_win_dir ) )
+			                          str( self.core.mom_win_dir_pl ) )
 
 			self.txt_win_dir_pl.setStyleSheet( "color: black;" )
 
 		# Update the "win_bin" text-box based on the value stored in
 		# "core". 
 
-		if ( self.core.mom_win_bin is None ) :
+		if ( self.core.mom_win_bin_pl is None ) :
 
 			self.txt_win_bin_pl.setStyleSheet( "color: red;" )
 
 		else :
 
 			self.txt_win_bin_pl.setTextUpdate(
-			                          str( self.core.mom_win_bin ) )
+			                          str( self.core.mom_win_bin_pl ) )
 
 			self.txt_win_bin_pl.setStyleSheet( "color: black;" )
 
@@ -207,17 +208,29 @@ class widget_mom_ctrl( QWidget ) :
 		# analysis has been set for "dyanmic" mode (since the user
 		# presumably wants it this way).
 
-		if ( fnc == 'win_dir' ) :
+		if ( fnc == 'fc_dir' ) :
 
 			Thread( target=thread_chng_mom_win_dir,
 				args=( self.core,
 			               self.txt_win_dir.text( ) ) ).start( )
 
-		elif ( fnc == 'win_bin' ) :
+		elif ( fnc == 'fc_bin' ) :
 
 			Thread( target=thread_chng_mom_win_bin,
 				args=( self.core,
 			               self.txt_win_bin.text( ) ) ).start( )
+
+		elif ( fnc == 'pl_dir' ) :
+
+			Thread( target=thread_chng_mom_win_dir_pl,
+				args=( self.core,
+			               self.txt_win_dir_pl.text( ) ) ).start( )
+
+		elif ( fnc == 'pl_bin' ) :
+
+			Thread( target=thread_chng_mom_win_bin_pl,
+				args=( self.core,
+			               self.txt_win_bin_pl.text( ) ) ).start( )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RESPONDING TO THE "rset" SIGNAL.

@@ -171,11 +171,13 @@ class widget_mom_res( format_TextEdit ) :
 
 		txt += '<th>FC</th>'
 
+		txt += '</tr>'
+
 		# End of FC data
 
 		# Write the PL data to the table
 
-		# mean values
+		# Mean values
 
 		txt += '<tr>'
 
@@ -198,7 +200,7 @@ class widget_mom_res( format_TextEdit ) :
 
 		txt += '</tr>'
 
-		# standard deviation values
+		# Standard deviation values
 
 		txt += '<tr>'
 
@@ -220,6 +222,8 @@ class widget_mom_res( format_TextEdit ) :
 		txt += '<th><i>&sigma;<sub>PL</sub></i></th>'
 
 		txt += '</tr>'
+
+		# End of bulk values
 
 		for n in range( len( self.core.pl_spec_arr ) ) :
 
@@ -251,6 +255,43 @@ class widget_mom_res( format_TextEdit ) :
 			txt += '</tr>'
 
 		# End of PL data
+
+		# Write the column headers
+
+		txt += '<tr>'
+
+		txt += '<th></th>'
+
+		if ( self.core.opt['res_n'] ) :
+
+			txt += '<th><i>n<sub>p</sub></i><br>'
+			txt += '<font size="1">[cm<sup>-3</sup>]</font></th>'
+
+		if ( self.core.opt['res_v'] ) :
+
+			txt += '<th><i>v<sub>p</sub></i><br>'
+			txt += '<font size="1">[km/s]</font></th>'
+
+			txt += '<th><i>v<sub>xp</sub></i><br>'
+			txt += '<font size="1">[km/s]</font></th>'
+
+			txt += '<th><i>v<sub>yp</sub></i><br>'
+			txt += '<font size="1">[km/s]</font></th>'
+
+			txt += '<th><i>v<sub>zp</sub></i><br>'
+			txt += '<font size="1">[km/s]</font></th>'
+
+		if ( ( self.core.opt['res_dw'] ) and
+		     ( self.core.opt['res_w'] )    ) :
+
+			txt += '<th><i>w<sub>p</sub></i><br>'
+			txt += '<font size="1">[km/s]</font></th>'
+
+		if ( ( self.core.opt['res_dt'] ) and
+		     ( self.core.opt['res_w'] )    ) :
+
+			txt += '<th><i>T<sub>p</sub></i><br>'
+			txt += '<font size="1">[kK]</font></th>'
 
 		txt += '</tr>'
 

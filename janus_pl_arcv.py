@@ -121,13 +121,7 @@ class pl_arcv( object ) :
 	# DEFINE THE FUNCTION FOR LOADING (AND RETURNING) AN ION SPECTRUM.
 	#-----------------------------------------------------------------------
 
-	def load_spec( self, time, get_prev=False, get_next=False ) :	
-
-		# If both "get_????" keywords are "True", abort.
-
-		if ( ( get_prev ) and ( get_next ) ) :
-			self.mesg_txt( 'none' )
-			return []
+	def load_spec( self, time, dur, fc_bins ) :	
 
 		# Convert/standardize the requested time.
 
@@ -194,14 +188,11 @@ class pl_arcv( object ) :
 			self.mesg_txt( 'none' )
 			return []
 
-		# Determine how many more PESA-L spectra exist within the next
-		# 30 rotations
+		# Determine how many more PESA-L spectra exist within the 
+		# duration of the FC spectrum
 
-		#FIXME
-
-
-		num_spec = len( where( [( del_t >= timedelta(seconds=-3.05) and
-		                          del_t <= timedelta(seconds=31.*3.05) )
+		num_spec = len( where( [( del_t >= timedelta(seconds=-1.*dur/fc_bins) and
+		                          del_t <= timedelta(seconds=dur) )
 		                         for del_t in dt ] )[0] )
 
 		# If the selected spectrum is not within the the request

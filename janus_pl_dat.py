@@ -26,7 +26,7 @@
 ################################################################################
 
 from math import sqrt, acos, pi
-from numpy import interp, sin, cos, deg2rad, exp, array
+from numpy import interp, sin, cos, deg2rad, exp, array, dot
 from scipy.special import erf
 from datetime import datetime, timedelta
 
@@ -268,3 +268,32 @@ class pl_dat( ) :
 	def set_mom_sel( self, sel ) :
 
 		self.mom_sel = sel
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION TO CALCULATE EXPECTED MAXWELLIAN PSD.
+	#-----------------------------------------------------------------------
+
+	def calc_psd( self, m, v0, n, w ) :
+
+		v = sum( [ v0[i]**2 for i in range( len( v0 ) ) ] )
+
+		u_vec = [ self['vel_cen'] * self['dir_x'],
+		          self['vel_cen'] * self['dir_y'],
+		          self['vel_cen'] * self['dir_z'] ]
+
+		# Calculate the exponential term
+
+		ret_exp = exp( - ( self['vel_cen']**2 + v**2 - 2*( dot( u_vec, v0 ) ) ) / (2. * w**2 ) )
+
+		# Calculate the normalization factor
+
+		ret_norm = n / ( (2.*pi)**1.5 * w**3 )
+
+		self.mom_psd = ret_norm * ret_exp
+
+		return self.mom_psd
+
+
+
+
+

@@ -215,7 +215,7 @@ class core( QObject ) :
 
 		self.rset_var( var_swe     = True, var_pl         = True,
 		               var_spin    = True, var_mfi        = True,
-		               var_mom_win = True,
+		               var_mom_win = True, var_mom_win_pl = True,
 		               var_mom_sel = True, var_mom_sel_pl = True,
 		               var_mom_res = True, var_mom_res_pl = True,
 		               var_nln_ion = True,
@@ -246,7 +246,7 @@ class core( QObject ) :
 	def rset_var( self,
 	              var_swe     = False, var_pl         = False,
 	              var_spin    = False, var_mfi        = False,
-	              var_mom_win = False,
+	              var_mom_win = False, var_mom_win_pl = False,
 		      var_mom_sel = False, var_mom_sel_pl = False,
 	              var_mom_res = False, var_mom_res_pl = False,
 	              var_nln_ion = False,
@@ -312,8 +312,29 @@ class core( QObject ) :
 		if ( var_pl ) :
 
 			self.pl_spec_arr = []
+			self.mom_psd_min = 1e-10
+			self.mom_psd_max = 1e-5
 
 		#/TODO
+
+		# If requested, (re-)initialize the varaibles for the windows
+		# associated with automatic data selection for the PL moments
+		# analysis.
+
+		if ( var_mom_win_pl ) :
+
+			self.mom_win_dir_pl = 7
+			self.mom_win_bin_pl = 5
+
+		# If requested, (re-)initialize the variables associated with
+		# the data seleciton for the FC moments analysis.
+
+		if ( var_mom_sel ) :
+
+			self.mom_min_sel_dir_pl =  3
+			self.mom_min_sel_bin_pl =  3
+
+			self.mom_max_sel_dir_pl = 25
 
 		# If requested, (re-)initialize the varaibles for the windows
 		# associated with automatic data selection for the FC moments
@@ -343,8 +364,10 @@ class core( QObject ) :
 		if ( var_mom_res ) :
 
 			self.mom_res  = None
-
 			self.mom_curr = None
+
+			self.mom_pl_res = None
+			self.mom_psd    = None
 
 		# If requested, (re-)initialize the variables associated with
 		# the ion species and populations for the non-linear analysis.
@@ -825,13 +848,12 @@ class core( QObject ) :
 
 		# Load the PESA-L spectra.
 
-		# FIXME
+		self.pl_spec_arr = self.pl_arcv.load_spec( self.fc_spec['time'], self.fc_spec['dur'], self.fc_spec['n_bin'] )
 
-		### self.pl_spec_arr = self.pl_arcv.load_spec( self.fc_spec['time'], self.fc_spec['dur'] )
+		# Find the min and max psd values for plotting PL spectra
 
-		self.pl_spec_arr = self.pl_arcv.load_spec( self.time_txt,
-		                                       get_prev=get_prev,
-		                                       get_next=get_next )
+		self.mom_psd_min = min( [ spec['psd_min'] for spec in self.pl_spec_arr ] )
+		self.mom_psd_max = max( [ spec['psd_max'] for spec in self.pl_spec_arr ] )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR LOADING THE Wind/MFI MAGNETIC FIELD DATA.
@@ -1019,6 +1041,74 @@ class core( QObject ) :
 		# Call the automatic selection of data for the moments analysis.
 
 		self.auto_mom_sel( )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR CHANGING THE MOM. SELCTION DIRECTION WINDOW.
+	#-----------------------------------------------------------------------
+ 
+	def chng_mom_win_dir_pl( self, val ) :
+
+		# Try to convert the "val" argument to an integer and store it.
+		# If this fails, store "None".
+
+		if ( val is None ) :
+
+			self.mom_win_dir_pl = None
+
+		else :
+
+			try :
+
+				self.mom_win_dir_pl = int( val )
+
+				if ( self.mom_win_dir_pl < self.mom_min_sel_dir_pl ) :
+					self.mom_win_dir = None
+
+				if ( self.mom_win_dir_pl > self.mom_max_sel_dir_pl ) :
+					self.mom_win_dir_pl = None
+
+			except :
+
+				self.mom_win_dir_pl = None
+
+		# Call the automatic selection of data for the moments analysis.
+
+		self.auto_mom_sel( )
+
+		# Emit a signal that a change has occured to the moments window
+		# parameters.
+
+		self.emit( SIGNAL('janus_chng_mom_win') )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR CHANGING THE MOMENTS SELCTION BIN WINDOW.
+	#-----------------------------------------------------------------------
+  
+	def chng_mom_win_bin_pl( self, val ) :
+
+		# Try to convert the "val" argument to an integer and store it.
+		# If this fails, store "None".
+
+		if ( val is None ) :
+			self.mom_win_bin_pl = None
+		else :
+			try :
+				self.mom_win_bin_pl = int( val )
+				if( ( self.mom_win_bin_pl < self.mom_min_sel_bin_pl  )
+				or  ( self.mom_win_bin_pl > self.pl_spec_arr[0]['n_bin'] )
+				                                             ) :
+					self.mom_win_bin_pl = None
+			except :
+				self.mom_win_bin_pl = None
+
+		# Call the automatic selection of data for the moments analysis.
+
+		self.auto_mom_sel( )
+
+		# Emit a signal that a change has occured to the moments window
+		# parameters.
+
+		self.emit( SIGNAL('janus_chng_mom_win') )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR AUTOMATIC DATA SELECTION FOR THE FC MOM. ANLS.
@@ -1431,7 +1521,7 @@ class core( QObject ) :
 
 		self.mom_pl_res = series( )
 
-		[ self.mom_pl_res.add_spec( self.pl_spec_arr[i].anls_mom( ) )
+		[ self.mom_pl_res.add_spec( self.pl_spec_arr[i].anls_mom( self.mom_win_dir_pl, self.mom_win_bin_pl ) )
 		                                  for i in range( len( self.pl_spec_arr ) ) ]
 
 		# Compute the mean values and standard deviations for the PL
@@ -1466,6 +1556,16 @@ class core( QObject ) :
 		                      drift=False, aniso=False,
 		                      name='Core', sym='c',
 		                      n=self.mom_pl_std_n,     w=self.mom_pl_std_w  )
+
+		# Calculate the expected psd's based on the results of the
+		# (linear) moments analysis.
+
+		self.mom_psd = [ 0 for i in range( len( self.pl_spec_arr ) ) ]
+
+		self.mom_psd = [ spec.calc_psd( self.mom_pl_res['m_p'][i],
+		                                self.mom_pl_res['v0_vec'][i],
+		                                self.mom_pl_res['n_p_c'][i],
+		                                self.mom_pl_res['w_p_c'][i]     ) for spec in self.pl_spec_arr]
 
 		# Message the user that the moments analysis has completed.
 

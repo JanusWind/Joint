@@ -43,25 +43,27 @@ def n_thread( ) :
 	n = 0
 
 	for thr in ThreadList( ) :
-		if ( ( thr._Thread__target is thread_load_spec        ) or
-		     ( thr._Thread__target is thread_anls_mom         ) or
-		     ( thr._Thread__target is thread_anls_nln         ) or
-		     ( thr._Thread__target is thread_chng_dsp         ) or
-		     ( thr._Thread__target is thread_chng_dyn         ) or
-		     ( thr._Thread__target is thread_chng_opt         ) or
-		     ( thr._Thread__target is thread_rstr_opt         ) or
-		     ( thr._Thread__target is thread_auto_run         ) or
-		     ( thr._Thread__target is thread_save_res         ) or
-		     ( thr._Thread__target is thread_xprt_res         ) or
-		     ( thr._Thread__target is thread_chng_mom_sel     ) or
-                     ( thr._Thread__target is thread_auto_mom_sel     ) or
-		     ( thr._Thread__target is thread_chng_nln_spc     ) or
-		     ( thr._Thread__target is thread_chng_nln_pop     ) or
-		     ( thr._Thread__target is thread_chng_nln_set     ) or
-		     ( thr._Thread__target is thread_chng_nln_gss     ) or
-		     ( thr._Thread__target is thread_chng_nln_sel     ) or
-		     ( thr._Thread__target is thread_chng_mom_win_dir ) or
-		     ( thr._Thread__target is thread_chng_mom_win_bin )   ) :
+		if ( ( thr._Thread__target is thread_load_spec           ) or
+		     ( thr._Thread__target is thread_anls_mom            ) or
+		     ( thr._Thread__target is thread_anls_nln            ) or
+		     ( thr._Thread__target is thread_chng_dsp            ) or
+		     ( thr._Thread__target is thread_chng_dyn            ) or
+		     ( thr._Thread__target is thread_chng_opt            ) or
+		     ( thr._Thread__target is thread_rstr_opt            ) or
+		     ( thr._Thread__target is thread_auto_run            ) or
+		     ( thr._Thread__target is thread_save_res            ) or
+		     ( thr._Thread__target is thread_xprt_res            ) or
+		     ( thr._Thread__target is thread_chng_mom_sel        ) or
+                     ( thr._Thread__target is thread_auto_mom_sel        ) or
+		     ( thr._Thread__target is thread_chng_nln_spc        ) or
+		     ( thr._Thread__target is thread_chng_nln_pop        ) or
+		     ( thr._Thread__target is thread_chng_nln_set        ) or
+		     ( thr._Thread__target is thread_chng_nln_gss        ) or
+		     ( thr._Thread__target is thread_chng_nln_sel        ) or
+		     ( thr._Thread__target is thread_chng_mom_win_dir    ) or
+		     ( thr._Thread__target is thread_chng_mom_win_bin    ) or
+		     ( thr._Thread__target is thread_chng_mom_win_dir_pl ) or
+		     ( thr._Thread__target is thread_chng_mom_win_bin_pl )    ):
 			n += 1
 
 	return n
@@ -332,5 +334,33 @@ def thread_chng_mom_win_bin( core, val ) :
 	core.emit( SIGNAL('janus_busy_beg') )
 
 	core.chng_mom_win_bin( val )
+
+	core.emit( SIGNAL('janus_busy_end') )
+
+
+################################################################################
+## DEFINE THE WRAPPER FOR THE FUNCTION "core.chng_mom_win_dir_pl".
+################################################################################
+
+def thread_chng_mom_win_dir_pl( core, val ) :
+
+	core.emit( SIGNAL('janus_busy_end') )
+	core.emit( SIGNAL('janus_busy_beg') )
+
+	core.chng_mom_win_dir_pl( val )
+
+	core.emit( SIGNAL('janus_busy_end') )
+
+
+################################################################################
+## DEFINE THE WRAPPER FOR THE FUNCTION "core.chng_mom_win_bin_pl".
+################################################################################
+
+def thread_chng_mom_win_bin_pl( core, val ) :
+
+	core.emit( SIGNAL('janus_busy_end') )
+	core.emit( SIGNAL('janus_busy_beg') )
+
+	core.chng_mom_win_bin_pl( val )
 
 	core.emit( SIGNAL('janus_busy_end') )
