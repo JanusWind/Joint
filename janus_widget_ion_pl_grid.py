@@ -641,6 +641,9 @@ class widget_pl_grid( QWidget ) :
 		if ( self.core.pl_spec_arr == [] or self.core.mom_psd is None ) :
 			return
 
+		print self.n
+		print self.core.pl_spec_arr[self.n]
+
 		# For each plot in the grid, generate and display a fit curve
 		# based on the results of the analysis.
 
@@ -812,6 +815,8 @@ class widget_pl_grid( QWidget ) :
 
 		# Update the color and visibility of the plot points
 		# corresponding to each of this look direction's data.
+
+		print self.n
 
 		for t in range( self.core.pl_spec_arr[self.n]['n_the'] ) :
 

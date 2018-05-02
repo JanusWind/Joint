@@ -1078,11 +1078,13 @@ class core( QObject ) :
 
 		# Call the automatic selection of data for the moments analysis.
 
-		[ spec.auto_mom_sel( self.mom_pl_win_bin,
-		                     self.mom_pl_win_dir,
-		                     self.mom_pl_min_sel_bin,
-		                     self.mom_pl_min_sel_dir )
-		  for spec in self.pl_spec_arr                 ]
+		if self.mom_pl_win_dir is not None :
+
+			[ spec.auto_mom_sel( self.mom_pl_win_bin,
+		        	             self.mom_pl_win_dir,
+		        	             self.mom_pl_min_sel_bin,
+		        	             self.mom_pl_min_sel_dir )
+			  for spec in self.pl_spec_arr                 ]
 
 		# Emit a signal that a change has occured to the moments window
 		# parameters.
@@ -1112,11 +1114,13 @@ class core( QObject ) :
 
 		# Call the automatic selection of data for the moments analysis.
 
-		[ spec.auto_mom_sel( self.mom_pl_win_bin,
-		                     self.mom_pl_win_dir,
-		                     self.mom_pl_min_sel_bin,
-		                     self.mom_pl_min_sel_dir )
-		  for spec in self.pl_spec_arr                 ]
+		if self.mom_pl_win_bin is not None :
+
+			[ spec.auto_mom_sel( self.mom_pl_win_bin,
+		        	             self.mom_pl_win_dir,
+		        	             self.mom_pl_min_sel_bin,
+		        	             self.mom_pl_min_sel_dir )
+			  for spec in self.pl_spec_arr                 ]
 
 		# Emit a signal that a change has occured to the moments window
 		# parameters.
@@ -1575,7 +1579,7 @@ class core( QObject ) :
 
 		# Re-initialize and the output of the PL moments analysis.
 
-		self.rset_var( var_mom_res=True )
+		self.rset_var( var_mom_pl_res=True )
 
 		# If the point-selection arrays have not been populated, run
 		# the automatic point selection.
@@ -1595,18 +1599,17 @@ class core( QObject ) :
 
 		# If the point selection is invalid, end the moments analysis
 
-		if self.mom_pl_n_sel_dir == 0:
+#		if self.mom_pl_n_sel_dir == 0:
 
-			# Message the user that the moments analysis has completed.
+#			self.emit( SIGNAL('janus_mesg'),
+#			                  'core', 'norun', 'mom' )
 
-			self.emit( SIGNAL('janus_mesg'), 'core', 'end', 'mom' )
+			# Emit a signal that indicates that the results of the
+			# moments analysis have changed.
 
-			# Emit a signal that indicates that the results of the moments
-			# analysis have changed.
+#			self.emit( SIGNAL('janus_chng_mom_res') )
 
-			self.emit( SIGNAL('janus_chng_mom_res') )
-
-			return
+#			return
 
 		# Perform the linear moments analysis on the PL data and save
 		# the results as a series of plas objects.
@@ -1662,6 +1665,8 @@ class core( QObject ) :
 
 		# Emit a signal that indicates that the results of the moments
 		# analysis have changed.
+
+		print "signal"
 
 		self.emit( SIGNAL('janus_chng_mom_res') )
 
