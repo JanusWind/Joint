@@ -39,8 +39,8 @@ from janus_event_LineEdit import event_LineEdit
 
 from threading import Thread
 from janus_thread import n_thread, thread_chng_mom_win_dir, \
-                         thread_chng_mom_win_bin, thread_chng_mom_win_dir_pl, \
-                         thread_chng_mom_win_bin_pl
+                         thread_chng_mom_win_bin, thread_chng_mom_pl_win_dir, \
+                         thread_chng_mom_pl_win_bin
 
 
 ################################################################################
@@ -162,28 +162,28 @@ class widget_mom_ctrl( QWidget ) :
 		# Update the "pl_dir" text-box based on the value stored in
 		# "core".
 
-		if ( self.core.mom_win_dir_pl is None ) :
+		if ( self.core.mom_pl_win_dir is None ) :
 
 			self.txt_win_dir_pl.setStyleSheet( "color: red;" )
 
 		else :
 
 			self.txt_win_dir_pl.setTextUpdate(
-			                          str( self.core.mom_win_dir_pl ) )
+			                          str( self.core.mom_pl_win_dir ) )
 
 			self.txt_win_dir_pl.setStyleSheet( "color: black;" )
 
 		# Update the "pl_bin" text-box based on the value stored in
 		# "core". 
 
-		if ( self.core.mom_win_bin_pl is None ) :
+		if ( self.core.mom_pl_win_bin is None ) :
 
 			self.txt_win_bin_pl.setStyleSheet( "color: red;" )
 
 		else :
 
 			self.txt_win_bin_pl.setTextUpdate(
-			                          str( self.core.mom_win_bin_pl ) )
+			                          str( self.core.mom_pl_win_bin ) )
 
 			self.txt_win_bin_pl.setStyleSheet( "color: black;" )
 
@@ -222,13 +222,13 @@ class widget_mom_ctrl( QWidget ) :
 
 		elif ( fnc == 'pl_dir' ) :
 
-			Thread( target=thread_chng_mom_win_dir_pl,
+			Thread( target=thread_chng_mom_pl_win_dir,
 				args=( self.core,
 			               self.txt_win_dir_pl.text( ) ) ).start( )
 
 		elif ( fnc == 'pl_bin' ) :
 
-			Thread( target=thread_chng_mom_win_bin_pl,
+			Thread( target=thread_chng_mom_pl_win_bin,
 				args=( self.core,
 			               self.txt_win_bin_pl.text( ) ) ).start( )
 

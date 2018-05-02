@@ -27,11 +27,6 @@
 
 from janus_pl_dat import pl_dat
 from datetime import timedelta
-from scipy.interpolate import interp1d
-from numpy import amax, amin, append, arccos, arctan2, arange, argsort, array, \
-                    average, cos, deg2rad, diag, dot, exp, indices, interp, \
-                    mean, pi, polyfit, rad2deg, reshape, shape, sign, sin, sum,\
-                    sqrt, std, tile, transpose, where, zeros
 
 # Load the modules necessary for signaling the graphical interface.
 
@@ -45,8 +40,9 @@ from janus_const import const
 
 from numpy import amax, amin, append, arccos, arctan2, arange, argsort, array, \
                     average, cos, deg2rad, diag, dot, exp, indices, interp, \
-                    mean, pi, polyfit, rad2deg, reshape, sign, sin, sum, sqrt, \
-                    std, tile, transpose, where, zeros
+                    mean, pi, polyfit, rad2deg, reshape, shape, sign, sin, sum,\
+                    sqrt, std, tile, transpose, where, zeros
+from scipy.interpolate import interp1d
 
 # Load the "pyon" module.
 
@@ -69,11 +65,11 @@ class pl_spec( ) :
 	def __init__( self,
 	              t_strt=None, t_stop=None, elev_cen=None, the_del=None,
 	              azim_cen=None, phi_del=None, volt_cen=None, volt_del=None,
-	              psd=None                                                   ) :
+	              psd=None                                               ) :
 
-		self._n_bin  = 14 #TODO Confirm
+		self._n_bin  = 14
 		self._n_the  = 5
-		self._n_phi  = 5  #TODO Confirm this
+		self._n_phi  = 5
 		self._t_strt = t_strt
 		self._t_stop = t_stop
 		self._rot    = t_stop - t_strt
@@ -253,9 +249,27 @@ class pl_spec( ) :
 			         for p in range( self._n_phi )
 			         for t in range( self._n_the ) ]
 		elif ( key == 'psd_min' ) :
-			return min( self['psd_flat'][i] for i in where( array( self['psd_flat'] ) != 0. )[0] )
+			return min( self['psd_flat'][i] for i in
+			           where( array( self['psd_flat'] ) != 0. )[0] )
 		elif ( key == 'psd_max' ) :
-			return max( self['psd_flat'][i] for i in where( array( self['psd_flat'] ) != 0. )[0] )
+			return max( self['psd_flat'][i] for i in
+			           where( array( self['psd_flat'] ) != 0. )[0] )
+		elif ( key == 'psd_mom' ) :
+			return [ [ [ self.arr[t][p][b].calc_psd_mom( )
+			             for b in range( self._n_bin )     ]
+			             for p in range( self._n_phi )     ]
+			             for t in range( self._n_the )     ]
+		elif ( key == 'n_sel_bin' ) :
+			return [ [ sum( [ self.arr[t][p][b]['mom_sel']
+			                  for b in range( self._n_bin ) ] )
+			           for p in range( self._n_phi )            ]
+			           for t in range( self._n_the )            ]
+		elif ( key == 'n_sel_dir' ) :
+			return sum( [ self['n_sel_bin'][t][p] \
+			              >= self.min_win_bin
+			              for p in range( self._n_phi )
+			              for t in range( self._n_the ) ] )
+
 		elif ( key == 'rot' ) :
 			return self._rot
 		else :
@@ -314,154 +328,58 @@ class pl_spec( ) :
 	# DEFINE THE FUNCTION FOR RUNNING THE MOMENTS ANALYSIS ON THIS SPECTRUM.
 	#-----------------------------------------------------------------------
 
-	def anls_mom( self, win_dir = 7, win_bin = 5 ) :
-
-		# Re-initialize and the output of the moments analysis.
-
-		# Re-initialize the varaibles for the windows associated with
-		# automatic data selection for the PL moments analysis.
-
-		self.mom_win_dir = win_dir
-		self.mom_win_bin = win_bin
-
-		# Re-initialize the variables associated with the data selection
-		# for the PL moments analysis.
-
-		self.mom_min_sel_dir =  3
-		self.mom_min_sel_bin =  3
-
-		self.mom_max_sel_dir = 25
-
-		self.mom_sel_dir     = None
-		self.mom_sel_bin     = None
+	def anls_mom( self ) :
 
 		# Re-initialize and store the variables associated with the
 		# results of the PL moments analysis.
 
 		self.mom_res  = None
 
-		# If the point-selection arrays have not been populated, run
-		# the automatic point selection.
+		# Compute the number density for this spectrum.
 
-		if ( ( self.mom_sel_dir is None ) or
-		     ( self.mom_sel_bin is None )    ) :
+		self.mom_n = sum( [ self.arr[t][p][b]['mom0_sel']
+		                    for b in range( self['n_bin'] )
+		                    for p in range( self['n_phi'] )
+		                    for t in range( self['n_the'] ) ] )
 
-			self.auto_mom_sel( )
+		# Compute the bulk velocity.
 
-		# If any of the following conditions are met, emit a
-		# signal that indicates that the results of the moments
-		# analysis have changed, and then abort.
-		#   -- No (valid) ion spectrum has been requested.
-		#   -- Insufficient data have been selected.
+		self.mom_v_vec = [ sum( [ self.arr[t][p][b]['mom1_sel'][i]
+		                          for b in range( self['n_bin'] )
+		                          for p in range( self['n_phi'] )
+		                          for t in range( self['n_the'] ) ] ) /
+                                   self.mom_n for i in range(3) ]
 
-		if ( ( self.arr is None  ) or
-		     ( self.mom_n_sel_dir < self.mom_min_sel_dir ) or
-		     ( self.mom_n_sel_dir > self['n_dir']        )    ) :
-			# Note:  n_dir is set to the total number of
-			#        (theta, phi) directions
-			self.emit( SIGNAL('janus_mesg'),
-			                  'core', 'norun', 'mom' )
+		# Compute the bulk speed.
 
-			self.emit( SIGNAL('janus_chng_mom_res') )
+		self.mom_v = sqrt( dot( self.mom_v_vec, self.mom_v_vec ) )
 
-			return
+		# Compute the thermal speed.
 
-		# Extract the "t"- and "p"-indices of each selected
-		# pointing direction.
+		self.mom_w = sqrt( ( ( sum( [ self.arr[t][p][b]['mom2_sel']
+		                              for b in range( self['n_bin'] )
+		                              for p in range( self['n_phi'] )
+		                              for t in range( self['n_the'] ) ]
+		                           ) / self.mom_n ) -
+		                       self.mom_v**2 ) / 3. )
 
-		( tk_t, tk_p ) = where( self.mom_sel_dir )
+		# Compute the effective temperature.
 
-		# Initialize the "eta_*" arrays.
-
-		# Note.  Only some of these arrays will ultimately be
-		# saved.
-
-		# Note.  The arrays "eta_?" define the density,
-		#        inflow speed, inflow velocity, thermal speed,
-		#        and temperature derived for each of the
-		#        analyzed look directions.
-
-		n_eta = self.mom_n_sel_dir
-
-		eta_dlk = tile( 0., [ n_eta, 3 ] )     # Cartesian look
-	                                               # direction
-		eta_n     = tile( 0., n_eta )          # number density
-		eta_v     = tile( 0., n_eta )          # inflow speed
-		eta_v_vec = tile( 0., [ n_eta, 3 ] )   # inflow velocity
-		eta_w     = tile( 0., n_eta )          # thermal speed
-		eta_t     = tile( 0., n_eta )          # temperature
-
-		# For each of the selected look directions, identify the
-		# selected data therefrom and calculate the estimator of
-		# the projected inflow speed along that direction.
-
-		for k in range( n_eta ) :
-
-			# Extract the "t"- and "p"-values for this
-			# direction.
-
-			t = tk_t[k]
-			p = tk_p[k]
-
-			# Calculate the look direction using "t"- and
-			# "p"-values
-
-			eta_dlk[k] = self.arr[t][p][0]['dir']
-
-			# Extract the "b" values of the selected data
-			# from this look direction.
-
-                        b = [i for i, x in enumerate(
-			                    self.mom_sel_bin[t][p])
-                                                          if x==True   ]
-
-			[ self.arr[t][p][i].set_mom_sel( True ) for i in b ]
-
-			# Compute the number density for this window.
-
-			eta_n[k] = sum( [ self.arr[t][p][i]['mom0_sel']
-			                          for i in range ( self['n_bin'] ) ] )
-
-			# Compute the bulk velocity.
-
-			for j in range(3) :
-				eta_v_vec[k][j] = sum( [ self.arr[t][p][i]['mom1_sel'][j] for i in range ( self['n_bin'] ) ] ) / eta_n[k]
-
-			# Compute the bulk speed.
-
-			eta_v[k] = sqrt( sum( [ eta_v_vec[k][j]**2
-			                         for j in range(3) ] ) )
-
-			# Compute the thermal speed.
-
-			eta_w[k] = sqrt( ( ( sum( [ self.arr[t][p][i]['mom2_sel'] for i in range( self['n_bin'] ) ] ) / eta_n[k] ) - eta_v[k]**2 ) / 3. )
-
-			# Compute the effective temperature.
-
-			eta_t = ( 1.E-3 / const['k_b'] ) * \
-		        	const['m_p'] * ( ( 1.E3  * eta_w[k] )**2 )
-
-		# Calculate a net estimators of the number density and
-		# thermal speed.
-
-		mom_n = sum( eta_n )
-
-		mom_w = mean( eta_w )
-
-		mom_v_vec = [ mean( mean( [ eta_v_vec[k][:][j] for k in range( n_eta ) ] ) ) for j in range(3) ]
+		mom_t = ( 1.E-3 / const['k_b'] ) * \
+	        	const['m_p'] * ( ( 1.E3  * self.mom_w )**2 )
 
 		# Save the results of the moments analysis in a plas object.
 
 		self.mom_res = plas( )
 
-		self.mom_res['v0_vec'] = mom_v_vec
+		self.mom_res['v0_vec'] = self.mom_v_vec
 
 		self.mom_res.add_spec( name='Proton', sym='p', m=1., q=1. )
 
 		self.mom_res.add_pop( 'p',
 		                      drift=False, aniso=False,
 		                      name='Core', sym='c',
-		                      n=mom_n,     w=mom_w          )
+		                      n=self.mom_n,     w=self.mom_w          )
 
 		# Calculate the expected PSDs based on the results of the
 		# (linear) moments analysis.
@@ -470,13 +388,18 @@ class pl_spec( ) :
 
 		return self.mom_res
 
-###########################################################################################################
-
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR AUTOMATIC DATA SELECTION FOR THE MOMENTS ANLS.
 	#-----------------------------------------------------------------------
 
-	def auto_mom_sel( self ) :
+	def auto_mom_sel( self, win_bin, win_dir, min_bin, min_dir ) :
+
+		# If any of the arguments are None, abort.
+
+		if ( ( win_bin is None ) or ( win_dir is None ) or
+		     ( min_bin is None ) or ( win_dir is None )    ) :
+
+			return
 
 		# If no spectrum has been loaded, abort.
 
@@ -484,38 +407,29 @@ class pl_spec( ) :
 
 			return
 
-		# Initially, deselect all look directions and bins.
+		# Save the varaibles for the windows associated with
+		# automatic data selection for the PL moments analysis.
 
-		self.mom_sel_dir = [ [ False 
-		                       for p in range( self['n_phi'] ) ]
-		                       for t in range( self['n_the'] ) ]
+		self.min_win_bin = min_bin
+		self.min_win_dir = min_dir
 
-		self.mom_sel_bin = [ [ [ False 
-		                         for b in range( self['n_bin'] ) ]
-                                         for p in range( self['n_phi'] ) ]
-		                         for t in range( self['n_the'] ) ]
+		# Initially, assign all data to a selection value of "False".
 
-		# If the "mom_win_???" variables are invalid, abort.
+		[ [ [ self.arr[t][p][b].set_mom_sel( False ) 
+		      for b in range( self['n_bin'] )        ]
+                      for p in range( self['n_phi'] )        ]
+		      for t in range( self['n_the'] )        ]
 
-		if ( ( self.mom_win_dir is None ) or
-		     ( self.mom_win_bin is None )    ) :
-
-			self.vldt_mom_sel( emit_all=True )
-
-			self.anls_mom( self.mom_win_dir, self.mom_win_bin)
-
-			return
-
-		# Find the maximum psd window (of "self.mom_win_bin" bins)
+		# Find the maximum psd window (of "n_win_bin" bins)
 		# for each direction
 		dir_max_ind  = [ [ self.find_max_psd( t, p,
-		                             win=self.mom_win_bin              )
+		                             win=win_bin            )
 		                        for p in range(self['n_phi'] ) ]
 		                        for t in range(self['n_the'] ) ]
 
 		dir_max_psd = [ [ self.calc_tot_psd( t, p,
 		                             dir_max_ind[t][p],
-		                             win=self.mom_win_bin              )
+		                             win=win_bin            )
 		                        for p in range(self['n_phi'] ) ]
 		                        for t in range(self['n_the'] ) ]
 
@@ -532,41 +446,36 @@ class pl_spec( ) :
 
 				for tp in range( self['n_dir'] ) :
 
-					if ( dir_max_psd[t][p] < dir_max_psd[ tp // self['n_phi'] ][ tp % self['n_the'] ] ) :
+					if ( dir_max_psd[t][p] <
+					   dir_max_psd[ tp // self['n_phi'] ]\
+					              [ tp % self['n_the'] ] ) :
 						n_big += 1
 
-				if ( n_big < self.mom_win_dir ) :
+				if ( n_big < win_dir ) :
 					win_max_ind += [[t, p]]
 
-				if len( win_max_ind ) == self.mom_win_dir :
+				if len( win_max_ind ) == win_dir :
 
 					break
 
-			if len( win_max_ind ) == self.mom_win_dir :
+			if len( win_max_ind ) == win_dir :
 
 				break
 
-		# Populate "self.mom_sel_bin" and "self.mom_sel_dir"
-		# appropriately.
+		# Assign a selection value of "True" to the data that were
+		# selected
 
 		for win in win_max_ind :
 
 			t = win[0]
 			p = win[1]
 
-			self.mom_sel_dir[t][p] = True####################################################################################
-
 			# Select the bins in this look direction's
 			# maximal window
 
 			for b in range( dir_max_ind[t][p],
-			                dir_max_ind[t][p] + self.mom_win_bin ) :
-				self.mom_sel_bin[t][p][b] = True
-
-                # Validate the new data selection (which includes populating
-		# the "self.mom_sel_dir" array).
-
-		self.vldt_mom_sel( emit_all=True )
+			                dir_max_ind[t][p] + win_bin ) :
+				self.arr[t][p][b].set_mom_sel( True )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION TO FIND THE INDEX OF WINDOW WITH MAXIMUM PSD
@@ -607,7 +516,7 @@ class pl_spec( ) :
 		return b_max
 
 	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR CALCULATING TOTAL CURRENT IN A GIVEN WINDOW.
+	# DEFINE THE FUNCTION FOR CALCULATING TOTAL PSD IN A GIVEN WINDOW.
 	#-----------------------------------------------------------------------
 
 	def calc_tot_psd( self, t, p, b, win=1 ) :
@@ -632,94 +541,3 @@ class pl_spec( ) :
 
 		return sum( [ self.arr[t][p][b+w]['psd']
 		                                       for w in range( win ) ] )
-
-	def vldt_mom_sel( self, emit_all=False ) :
-
-		# Note.  This function ensures that the two "self.mom_sel_???"
-		#        arrays are mutually consistent.  For each set of "c"-
-		#        and "d"-values, "self.mom_sel_dir[c,d]" can only be
-		#        "True" if at least "self.min_sel_bin" of the elements
-		#        in "self.mom_sel_bin[c,d,:]" are "True".  However, if
-		#        fewer than "self.mom_min_sel_dir" sets of "c"- and
-		#        "d"-values satisfy this criterion, all elements of
-		#        "self.mom_sel_dir" are given the value "False".		
-		#
-		#        Additionally, this functions serves to update the
-		#        "self.mom_n_sel_???" counters.
-
-
-		# Save the initial selection of pointing directions.
-
-		old_mom_sel_dir = deepcopy( self.mom_sel_dir )
-
-		# Update the counter "self.mom_n_sel_bin" (i.e., the number of
-		# selected data in each pointing direction).
-
-		self.mom_n_sel_bin = [ [ sum( self.mom_sel_bin[t][p] )
-		                       for p in range( self['n_phi'] ) ]
-		                       for t in range( self['n_the'] ) ]
-
-		# Create a new selection of pointing directions based on the
-		# data selection, and then update the counter
-		# "self.mom_n_sel_dir".
-
-		self.mom_sel_dir = [ [
-		              self.mom_n_sel_bin[t][p] >= self.mom_min_sel_bin
-		                       for p in range( self['n_phi'] ) ]
-		                       for t in range( self['n_the'] ) ]
-
-		# Determine the total number of selected pointing directions; if
-		# this number is less than the minimum "self.mom_min_sel_dir",
-		# deselect all pointing directions.
-
-		self.mom_n_sel_dir = \
-		               sum( [ sum( sub ) for sub in self.mom_sel_dir ] )
-
-		if ( self.mom_n_sel_dir < self.mom_min_sel_dir ) :
-
-			self.mom_sel_dir = [ [ False
-			               for p in range( self['n_phi'] ) ]
-			               for t in range( self['n_the'] ) ]
-
-			self.mom_n_sel_dir = 0
-
-		"""
-		# Emit (if necessary) the appropriate update signal(s).
-
-		if ( emit_all ) :
-
-			self.emit( SIGNAL('janus_chng_mom_sel_all') )
-
-		else :
-
-			# Identify differences between the new and old versions
-			# of "self.mom_sel_dir".  For each pointing direction
-			# whose selection status for the moments analysis has
-			# changed, emit a signal indicating this.
-
-			for t in range( self['n_cup'] ) :
-
-				for p in range( self['n_dir'] ) :
-
-					if ( self.mom_sel_dir[t][p]
-					            != old_mom_sel_dir[t][p] ) :
-
-						self.emit( SIGNAL(
-						      'janus_chng_mom_sel_dir'),
-						      t, p )
-		"""
-
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR CALC'ING EXPECTED PSD FROM A POPULATION.
-	#-----------------------------------------------------------------------
-
-	def calc_psd( self, m, v0, n, w) :
-
-		# Return a 3-D list with the calculated current for each bin in
-		# the spectrum.
-
-		return [ [ [ self.arr[t][p][b].calc_psd( 
-		                    m, v0, n, w      )
-		                    for b in range( self['n_bin'] ) ]
-		                    for p in range( self['n_phi'] ) ]
-		                    for t in range( self['n_the'] ) ]

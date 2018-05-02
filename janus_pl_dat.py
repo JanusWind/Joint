@@ -273,27 +273,35 @@ class pl_dat( ) :
 	# DEFINE THE FUNCTION TO CALCULATE EXPECTED MAXWELLIAN PSD.
 	#-----------------------------------------------------------------------
 
-	def calc_psd( self, m, v0, n, w ) :
+	def calc_psd_mom( self ) :
 
-		v = sum( [ v0[i]**2 for i in range( len( v0 ) ) ] )
+		if ( ( self._spec.mom_n is None     ) or
+		     ( self._spec.mom_v_vec is None ) or
+		     ( self._spec.mom_w is None     )    ) :
+			return None
+
+		v2 = sum( [ self._spec.mom_v_vec[i]**2 for i in range( 3 ) ] )
 
 		u_vec = [ self['vel_cen'] * self['dir_x'],
 		          self['vel_cen'] * self['dir_y'],
 		          self['vel_cen'] * self['dir_z'] ]
 
+		# Calculate the exponent
+
+		power = - ( abs( self['vel_cen']**2 + v2 -
+		                 2.*( dot( u_vec, self._spec.mom_v_vec ) ) ) /
+		          (2. * self._spec.mom_w**2 ) )
+
 		# Calculate the exponential term
 
-		ret_exp = exp( - ( self['vel_cen']**2 + v**2 - 2*( dot( u_vec, v0 ) ) ) / (2. * w**2 ) )
+		ret_exp = exp( power )
 
 		# Calculate the normalization factor
 
-		ret_norm = n / ( (2.*pi)**1.5 * w**3 )
+		ret_norm = self._spec.mom_n / ( (2.*pi)**1.5 *
+		                                ( self._spec.mom_w)**3 )
 
-		self.mom_psd = ret_norm * ret_exp
+		self.psd_mom = ret_norm * ret_exp
 
-		return self.mom_psd
-
-
-
-
+		return self.psd_mom
 

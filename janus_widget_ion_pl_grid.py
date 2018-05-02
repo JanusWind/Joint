@@ -492,7 +492,7 @@ class widget_pl_grid( QWidget ) :
 
 		# Add selection points to each plot.
 
-		if ( self.core.pl_spec_arr is None ) :
+		if ( self.core.pl_spec_arr == [] ) :
 
 			return
 
@@ -678,6 +678,7 @@ class widget_pl_grid( QWidget ) :
 
 					x = array( vel_cen )
 					y = array( self.core.mom_psd[self.n][t][p] )
+
 					for tk in range(len(y)):
 						if y[tk] == 0:
 							y[tk] = 1e-11
@@ -696,7 +697,7 @@ class widget_pl_grid( QWidget ) :
 					# this fit curve.
 
 					self.crv_ion[t,p,n] = PlotDataItem(
-					            ax, ay, pen=self.pen_crv_g )
+					            ax, ay, pen=self.pen_crv_b )
 
 					self.plt[t,p].addItem(
 					                   self.crv_ion[t,p,n] )
@@ -812,7 +813,6 @@ class widget_pl_grid( QWidget ) :
 		# Update the color and visibility of the plot points
 		# corresponding to each of this look direction's data.
 
-
 		for t in range( self.core.pl_spec_arr[self.n]['n_the'] ) :
 
 			for p in range( self.core.pl_spec_arr[self.n]['n_phi'] ) :
@@ -820,5 +820,5 @@ class widget_pl_grid( QWidget ) :
 				for b in range( self.core.pl_spec_arr[self.n]['n_bin'] ) :
 
 					self.chng_pnt( t, p, b,
-		           		               self.core.pl_spec_arr[self.n].mom_sel_bin[t][p][b] )
+		           		               self.core.pl_spec_arr[self.n].arr[t][p][b]['mom_sel'] )
 

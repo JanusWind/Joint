@@ -215,9 +215,9 @@ class core( QObject ) :
 
 		self.rset_var( var_swe     = True, var_pl         = True,
 		               var_spin    = True, var_mfi        = True,
-		               var_mom_win = True, var_mom_win_pl = True,
-		               var_mom_sel = True, var_mom_sel_pl = True,
-		               var_mom_res = True, var_mom_res_pl = True,
+		               var_mom_win = True, var_mom_pl_win = True,
+		               var_mom_sel = True, var_mom_pl_sel = True,
+		               var_mom_res = True, var_mom_pl_res = True,
 		               var_nln_ion = True,
 		               var_nln_set = True,
 		               var_nln_gss = True, 
@@ -246,9 +246,9 @@ class core( QObject ) :
 	def rset_var( self,
 	              var_swe     = False, var_pl         = False,
 	              var_spin    = False, var_mfi        = False,
-	              var_mom_win = False, var_mom_win_pl = False,
-		      var_mom_sel = False, var_mom_sel_pl = False,
-	              var_mom_res = False, var_mom_res_pl = False,
+	              var_mom_win = False, var_mom_pl_win = False,
+		      var_mom_sel = False, var_mom_pl_sel = False,
+	              var_mom_res = False, var_mom_pl_res = False,
 	              var_nln_ion = False,
 	              var_nln_set = False,
 		      var_nln_gss = False,
@@ -321,20 +321,24 @@ class core( QObject ) :
 		# associated with automatic data selection for the PL moments
 		# analysis.
 
-		if ( var_mom_win_pl ) :
+		if ( var_mom_pl_win ) :
 
-			self.mom_win_dir_pl = 7
-			self.mom_win_bin_pl = 5
+			self.mom_pl_win_dir = 7
+			self.mom_pl_win_bin = 5
 
 		# If requested, (re-)initialize the variables associated with
 		# the data seleciton for the FC moments analysis.
 
-		if ( var_mom_sel ) :
+		if ( var_mom_pl_sel ) :
 
-			self.mom_min_sel_dir_pl =  3
-			self.mom_min_sel_bin_pl =  3
+			self.mom_pl_min_sel_dir = 3
+			self.mom_pl_min_sel_bin = 3
 
-			self.mom_max_sel_dir_pl = 25
+			self.mom_pl_max_sel_dir = 25
+
+			self.mom_pl_sel_dir     = None
+			self.mom_pl_sel_bin     = None
+
 
 		# If requested, (re-)initialize the varaibles for the windows
 		# associated with automatic data selection for the FC moments
@@ -639,7 +643,8 @@ class core( QObject ) :
 
 		self.rset_var( var_swe     = True, var_spin    = True,
 		               var_pl      = True, var_mfi     = True,
-		               var_mom_sel = True, var_mom_res = True,
+		               var_mom_sel = True, var_mom_pl_sel = True, 
+		               var_mom_res = True,
 		               var_nln_gss = True, var_nln_sel = True,
 		               var_nln_res = True                      )
 
@@ -1046,34 +1051,38 @@ class core( QObject ) :
 	# DEFINE THE FUNCTION FOR CHANGING THE MOM. SELCTION DIRECTION WINDOW.
 	#-----------------------------------------------------------------------
  
-	def chng_mom_win_dir_pl( self, val ) :
+	def chng_mom_pl_win_dir( self, val ) :
 
 		# Try to convert the "val" argument to an integer and store it.
 		# If this fails, store "None".
 
 		if ( val is None ) :
 
-			self.mom_win_dir_pl = None
+			self.mom_pl_win_dir = None
 
 		else :
 
 			try :
 
-				self.mom_win_dir_pl = int( val )
+				self.mom_pl_win_dir = int( val )
 
-				if ( self.mom_win_dir_pl < self.mom_min_sel_dir_pl ) :
-					self.mom_win_dir_pl = None
+				if ( self.mom_pl_win_dir < self.mom_pl_min_sel_dir ) :
+					self.mom_pl_win_dir = None
 
-				if ( self.mom_win_dir_pl > self.mom_max_sel_dir_pl ) :
-					self.mom_win_dir_pl = None
+				if ( self.mom_pl_win_dir > self.mom_pl_max_sel_dir ) :
+					self.mom_pl_win_dir = None
 
 			except :
 
-				self.mom_win_dir_pl = None
+				self.mom_pl_win_dirl = None
 
 		# Call the automatic selection of data for the moments analysis.
 
-		self.auto_mom_sel( )
+		[ spec.auto_mom_sel( self.mom_pl_win_bin,
+		                     self.mom_pl_win_dir,
+		                     self.mom_pl_min_sel_bin,
+		                     self.mom_pl_min_sel_dir )
+		  for spec in self.pl_spec_arr                 ]
 
 		# Emit a signal that a change has occured to the moments window
 		# parameters.
@@ -1084,26 +1093,30 @@ class core( QObject ) :
 	# DEFINE THE FUNCTION FOR CHANGING THE MOMENTS SELCTION BIN WINDOW.
 	#-----------------------------------------------------------------------
   
-	def chng_mom_win_bin_pl( self, val ) :
+	def chng_mom_pl_win_bin( self, val ) :
 
 		# Try to convert the "val" argument to an integer and store it.
 		# If this fails, store "None".
 
 		if ( val is None ) :
-			self.mom_win_bin_pl = None
+			self.mom_pl_win_bin = None
 		else :
 			try :
-				self.mom_win_bin_pl = int( val )
-				if( ( self.mom_win_bin_pl < self.mom_min_sel_bin_pl  )
-				or  ( self.mom_win_bin_pl > self.pl_spec_arr[0]['n_bin'] )
+				self.mom_pl_win_bin = int( val )
+				if( ( self.mom_pl_win_bin < self.mom_pl_min_sel_bin  )
+				or  ( self.mom_pl_win_bin > self.pl_spec_arr[0]['n_bin'] )
 				                                             ) :
-					self.mom_win_bin_pl = None
+					self.mom_pl_win_bin = None
 			except :
-				self.mom_win_bin_pl = None
+				self.mom_pl_win_bin = None
 
 		# Call the automatic selection of data for the moments analysis.
 
-		self.auto_mom_sel( )
+		[ spec.auto_mom_sel( self.mom_pl_win_bin,
+		                     self.mom_pl_win_dir,
+		                     self.mom_pl_min_sel_bin,
+		                     self.mom_pl_min_sel_dir )
+		  for spec in self.pl_spec_arr                 ]
 
 		# Emit a signal that a change has occured to the moments window
 		# parameters.
@@ -1120,6 +1133,7 @@ class core( QObject ) :
 		# analysis.
 
 		self.rset_var( var_mom_sel=True )
+		self.rset_var( var_mom_pl_sel=True )
 
 		# If no spectrum has been loaded, abort.
 
@@ -1327,6 +1341,49 @@ class core( QObject ) :
 						      c, d )
 
 	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR VALIDATING THE PL DATA SELECTION.
+	#-----------------------------------------------------------------------
+
+	def pl_vldt_mom_sel( self, emit_all=False ) :
+
+		# Note.  This function ensures that the two "self.mom_sel_???"
+		#        arrays are mutually consistent.  For each set of "t"-
+		#        and "p"-values, "self.mom_sel_dir[t,p]" can only be
+		#        "True" if at least "self.min_sel_bin" of the elements
+		#        in "self.mom_sel_bin[t,p,:]" are "True".  However, if
+		#        fewer than "self.mom_min_sel_dir" sets of "t"- and
+		#        "p"-values satisfy this criterion, all elements of
+		#        "self.mom_sel_dir" are given the value "False".		
+		#
+		#        Additionally, this functions serves to update the
+		#        "self.mom_n_sel_???" counters.
+
+
+		# Save the initial selection of pointing directions.
+
+		old_mom_pl_sel_dir = deepcopy( self.mom_pl_sel_dir )
+
+		self.mom_pl_n_sel_dir = self.pl_spec_arr[0]['n_sel_dir']
+
+		# If the total number of selected pointing directions is less
+		# than the minimum "self.mom_min_sel_dir", deselect all
+		# pointing directions.
+
+		if ( self.pl_spec_arr[0]['n_sel_dir'] < self.mom_pl_min_sel_dir ) :
+
+			for t in range( self.pl_spec_arr[0]['n_the'] ) :
+
+				for p in range( self.pl_spec_arr[0]['n_phi'] ) :
+
+					for b in range(
+					        self.pl_spec_arr[0]['n_bin'] ) :
+
+						[ spec[t][p][b].set_mom_sel( False )
+						  for spec in pl_spec_arr ]
+
+			self.mom_pl_n_sel_dir = 0
+
+	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RUNNING THE MOMENTS ANALYSIS ON FC DATA.
 	#-----------------------------------------------------------------------
 
@@ -1516,13 +1573,48 @@ class core( QObject ) :
 		                                    self.mom_res['n_p_c'], 0.,
 		                                    self.mom_res['w_p_c']      )
 
+		# Re-initialize and the output of the PL moments analysis.
+
+		self.rset_var( var_mom_res=True )
+
+		# If the point-selection arrays have not been populated, run
+		# the automatic point selection.
+
+		if ( ( self.mom_pl_sel_dir is None ) or
+		     ( self.mom_pl_sel_bin is None )    ) :
+
+			[ spec.auto_mom_sel( self.mom_pl_win_bin,
+			                     self.mom_pl_win_dir,
+			                     self.mom_pl_min_sel_bin,
+			                     self.mom_pl_min_sel_dir )
+			  for spec in self.pl_spec_arr                 ]
+
+		# Validate the point selection
+
+		self.pl_vldt_mom_sel( emit_all=True )
+
+		# If the point selection is invalid, end the moments analysis
+
+		if self.mom_pl_n_sel_dir == 0:
+
+			# Message the user that the moments analysis has completed.
+
+			self.emit( SIGNAL('janus_mesg'), 'core', 'end', 'mom' )
+
+			# Emit a signal that indicates that the results of the moments
+			# analysis have changed.
+
+			self.emit( SIGNAL('janus_chng_mom_res') )
+
+			return
+
 		# Perform the linear moments analysis on the PL data and save
 		# the results as a series of plas objects.
 
 		self.mom_pl_res = series( )
 
-		[ self.mom_pl_res.add_spec( self.pl_spec_arr[i].anls_mom( self.mom_win_dir_pl, self.mom_win_bin_pl ) )
-		                                  for i in range( len( self.pl_spec_arr ) ) ]
+		[ self.mom_pl_res.add_spec( spec.anls_mom( ) )
+		                                  for spec in self.pl_spec_arr  ]
 
 		# Compute the mean values and standard deviations for the PL
 		# moments analysis results
@@ -1562,10 +1654,7 @@ class core( QObject ) :
 
 		self.mom_psd = [ 0 for i in range( len( self.pl_spec_arr ) ) ]
 
-		self.mom_psd = [ spec.calc_psd( self.mom_pl_res['m_p'][i],
-		                                self.mom_pl_res['v0_vec'][i],
-		                                self.mom_pl_res['n_p_c'][i],
-		                                self.mom_pl_res['w_p_c'][i]     ) for spec in self.pl_spec_arr]
+		self.mom_psd = [ spec['psd_mom'] for spec in self.pl_spec_arr]
 
 		# Message the user that the moments analysis has completed.
 

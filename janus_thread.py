@@ -62,8 +62,8 @@ def n_thread( ) :
 		     ( thr._Thread__target is thread_chng_nln_sel        ) or
 		     ( thr._Thread__target is thread_chng_mom_win_dir    ) or
 		     ( thr._Thread__target is thread_chng_mom_win_bin    ) or
-		     ( thr._Thread__target is thread_chng_mom_win_dir_pl ) or
-		     ( thr._Thread__target is thread_chng_mom_win_bin_pl )    ):
+		     ( thr._Thread__target is thread_chng_mom_pl_win_dir ) or
+		     ( thr._Thread__target is thread_chng_mom_pl_win_bin )    ):
 			n += 1
 
 	return n
@@ -339,28 +339,28 @@ def thread_chng_mom_win_bin( core, val ) :
 
 
 ################################################################################
-## DEFINE THE WRAPPER FOR THE FUNCTION "core.chng_mom_win_dir_pl".
+## DEFINE THE WRAPPER FOR THE FUNCTION "core.chng_mom_pl_win_dir".
 ################################################################################
 
-def thread_chng_mom_win_dir_pl( core, val ) :
+def thread_chng_mom_pl_win_dir( core, val ) :
 
 	core.emit( SIGNAL('janus_busy_end') )
 	core.emit( SIGNAL('janus_busy_beg') )
 
-	core.chng_mom_win_dir_pl( val )
+	core.chng_mom_pl_win_dir( val )
 
 	core.emit( SIGNAL('janus_busy_end') )
 
 
 ################################################################################
-## DEFINE THE WRAPPER FOR THE FUNCTION "core.chng_mom_win_bin_pl".
+## DEFINE THE WRAPPER FOR THE FUNCTION "core.chng_mom_pl_win_bin".
 ################################################################################
 
-def thread_chng_mom_win_bin_pl( core, val ) :
+def thread_chng_mom_pl_win_bin( core, val ) :
 
 	core.emit( SIGNAL('janus_busy_end') )
 	core.emit( SIGNAL('janus_busy_beg') )
 
-	core.chng_mom_win_bin_pl( val )
+	core.chng_mom_pl_win_bin( val )
 
 	core.emit( SIGNAL('janus_busy_end') )
