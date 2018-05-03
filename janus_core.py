@@ -216,7 +216,7 @@ class core( QObject ) :
 		self.rset_var( var_swe     = True, var_pl         = True,
 		               var_spin    = True, var_mfi        = True,
 		               var_mom_win = True, var_mom_pl_win = True,
-		               var_mom_sel = True, var_mom_pl_sel = True,
+		               var_mom_sel = True,
 		               var_mom_res = True, var_mom_pl_res = True,
 		               var_nln_ion = True,
 		               var_nln_set = True,
@@ -244,12 +244,12 @@ class core( QObject ) :
 	#-----------------------------------------------------------------------
 
 	def rset_var( self,
-	              var_swe     = False, var_pl         = False,
+	              var_swe     = False, var_pl         = False,  # load
 	              var_spin    = False, var_mfi        = False,
-	              var_mom_win = False, var_mom_pl_win = False,
-		      var_mom_sel = False, var_mom_pl_sel = False,
-	              var_mom_res = False, var_mom_pl_res = False,
-	              var_nln_ion = False,
+	              var_mom_win = False, var_mom_sel = False,     # mom_fc
+	              var_mom_res = False, 
+	              var_mom_pl_win = False, var_mom_pl_res = False, # mom_pl
+	              var_nln_ion = False,                            # nln
 	              var_nln_set = False,
 		      var_nln_gss = False,
 	              var_nln_sel = False,
@@ -307,38 +307,29 @@ class core( QObject ) :
 		# If requested, (re-)initialize the varaibles for the Wind/PESA
 		# data associated with this spectrum.
 
-		#TODO
-
 		if ( var_pl ) :
 
 			self.pl_spec_arr = []
-			self.mom_psd_min = 1e-10
-			self.mom_psd_max = 1e-5
 
-		#/TODO
+			self.pl_psd_min = 1e-10
+			self.pl_psd_max = 1e-5
 
-		# If requested, (re-)initialize the varaibles for the windows
-		# associated with automatic data selection for the PL moments
-		# analysis.
+		# FIXME comment
 
 		if ( var_mom_pl_win ) :
 
 			self.mom_pl_win_dir = 7
 			self.mom_pl_win_bin = 5
 
-		# If requested, (re-)initialize the variables associated with
-		# the data seleciton for the FC moments analysis.
+		# FIXME comment
 
-		if ( var_mom_pl_sel ) :
+		if ( var_mom_pl_res ) :
 
-			self.mom_pl_min_sel_dir = 3
-			self.mom_pl_min_sel_bin = 3
+			self.mom_pl_min_dir = 3
+			self.mom_pl_min_bin = 3
 
-			self.mom_pl_max_sel_dir = 25
-
-			self.mom_pl_sel_dir     = None
-			self.mom_pl_sel_bin     = None
-
+			self.mom_pl_res = None
+			self.mom_pl_avg = None
 
 		# If requested, (re-)initialize the varaibles for the windows
 		# associated with automatic data selection for the FC moments
@@ -1577,87 +1568,19 @@ class core( QObject ) :
 		                                    self.mom_res['n_p_c'], 0.,
 		                                    self.mom_res['w_p_c']      )
 
-		# Re-initialize and the output of the PL moments analysis.
 
-		self.rset_var( var_mom_pl_res=True )
 
-		# If the point-selection arrays have not been populated, run
-		# the automatic point selection.
 
-		if ( ( self.mom_pl_sel_dir is None ) or
-		     ( self.mom_pl_sel_bin is None )    ) :
 
-			[ spec.auto_mom_sel( self.mom_pl_win_bin,
-			                     self.mom_pl_win_dir,
-			                     self.mom_pl_min_sel_bin,
-			                     self.mom_pl_min_sel_dir )
-			  for spec in self.pl_spec_arr                 ]
 
-		# Validate the point selection
+		# Run the moments analysis on each PL spectrum.
 
-		self.pl_vldt_mom_sel( emit_all=True )
+		self.anls_mom_pl( )
 
-		# If the point selection is invalid, end the moments analysis
 
-#		if self.mom_pl_n_sel_dir == 0:
 
-#			self.emit( SIGNAL('janus_mesg'),
-#			                  'core', 'norun', 'mom' )
 
-			# Emit a signal that indicates that the results of the
-			# moments analysis have changed.
 
-#			self.emit( SIGNAL('janus_chng_mom_res') )
-
-#			return
-
-		# Perform the linear moments analysis on the PL data and save
-		# the results as a series of plas objects.
-
-		self.mom_pl_res = series( )
-
-		[ self.mom_pl_res.add_spec( spec.anls_mom( ) )
-		                                  for spec in self.pl_spec_arr  ]
-
-		# Compute the mean values and standard deviations for the PL
-		# moments analysis results
-
-		self.mom_pl_avg = plas( )
-
-		self.mom_pl_avg_n = mean( self.mom_pl_res['n_p_c'] )
-
-		self.mom_pl_avg['v0_vec'] = [ mean( [ self.mom_pl_res['v0_vec'][i][j] for i in range( len( self.pl_spec_arr ) ) ] ) for j in range(3) ]
-
-		self.mom_pl_avg_w = mean( self.mom_pl_res['w_p_c'] )
-
-		self.mom_pl_avg.add_spec( name='Proton', sym='p', m=1., q=1. )
-
-		self.mom_pl_avg.add_pop( 'p',
-		                      drift=False, aniso=False,
-		                      name='Core', sym='c',
-		                      n=self.mom_pl_avg_n,     w=self.mom_pl_avg_w  )
-
-		self.mom_pl_std = plas( )
-
-		self.mom_pl_std_n = std( self.mom_pl_res['n_p_c'] )
-
-		self.mom_pl_std['v0_vec'] = [ std( [ self.mom_pl_res['v0_vec'][i][j] for i in range( len( self.pl_spec_arr ) ) ] ) for j in range(3) ]
-
-		self.mom_pl_std_w = std( self.mom_pl_res['w_p_c'] )
-
-		self.mom_pl_std.add_spec( name='Proton', sym='p', m=1., q=1. )
-
-		self.mom_pl_std.add_pop( 'p',
-		                      drift=False, aniso=False,
-		                      name='Core', sym='c',
-		                      n=self.mom_pl_std_n,     w=self.mom_pl_std_w  )
-
-		# Calculate the expected psd's based on the results of the
-		# (linear) moments analysis.
-
-		self.mom_psd = [ 0 for i in range( len( self.pl_spec_arr ) ) ]
-
-		self.mom_psd = [ spec['psd_mom'] for spec in self.pl_spec_arr]
 
 		# Message the user that the moments analysis has completed.
 
@@ -1665,8 +1588,6 @@ class core( QObject ) :
 
 		# Emit a signal that indicates that the results of the moments
 		# analysis have changed.
-
-		print "signal"
 
 		self.emit( SIGNAL('janus_chng_mom_res') )
 
@@ -1696,6 +1617,79 @@ class core( QObject ) :
 		###	self.auto_nln_gss( )
 		###else :
 		###	self.chng_dsp( 'mom' )
+
+
+	def anls_mom_pl( self ) :
+
+		# Re-initialize and the output of the moments analysis.
+
+		self.rset_var( var_mom_pl_res=True )
+
+		# If no PL spectra have been loaded, abort.
+
+		if ( ( self.pl_spec_arr is None     ) or
+		     ( len( self.pl_spec_arr ) == 0 )    ) :
+
+			return
+
+		# Clear the moments results in each PL spectrum.
+
+		for spec in self.pl_spec_arr :
+
+			spec.rset_mom( )
+
+		# If the "win" variables are invalid, send a signal and abort.
+
+		if ( ( self.mom_pl_win_dir is None               ) or
+		     ( self.mom_pl_win_bin is None               ) or
+		     ( self.mom_pl_win_dir < self.mom_pl_min_dir ) or
+		     ( self.mom_pl_win_bin < self.mom_pl_min_bin )    ) :
+
+			self.emit( SIGNAL('janus_chng_mom_pl') )
+
+		# Perform the linear moments analysis on the PL data and save
+		# the results as a series of plas objects.
+
+		self.mom_pl_res = series( )
+
+		for spec in self.pl_spec_arr :
+
+			spec.auto_mom_sel( self.mom_pl_win_bin,
+			                   self.mom_pl_win_dir  ) 
+
+			spec.anls_mom( )
+
+			self.mom_pl_res.add_spec( spec['mom_res'] )
+
+			# FIXME Handling special case where "spec['mom_res']
+			#       is None".
+
+		# Compute the mean values and standard deviations for the PL
+		# moments analysis results
+
+		self.mom_pl_avg = plas( )
+
+		self.mom_pl_avg.add_spec( name='Proton', sym='p', m=1., q=1. )
+
+		self.mom_pl_avg.add_pop( 'p',
+		                          name='Core', sym='c',
+		                          drift=False, aniso=False )
+
+		self.mom_pl_avg['v0_x']  = mean( self.mom_pl_res['v0_x' ] )
+		self.mom_pl_avg['v0_x']  = mean( self.mom_pl_res['v0_y' ] )
+		self.mom_pl_avg['v0_x']  = mean( self.mom_pl_res['v0_z' ] )
+		self.mom_pl_avg['n_p_c'] = mean( self.mom_pl_res['n_p_c'] )
+		self.mom_pl_avg['w_p_c'] = mean( self.mom_pl_res['w_p_c'] )
+
+		self.mom_pl_avg['sigma_v0_x']  = std( self.mom_pl_res['v0_x' ] )
+		self.mom_pl_avg['sigma_v0_y']  = std( self.mom_pl_res['v0_y' ] )
+		self.mom_pl_avg['sigma_v0_z']  = std( self.mom_pl_res['v0_z' ] )
+		self.mom_pl_avg['sigma_n_p_c'] = std( self.mom_pl_res['n_p_c'] )
+		self.mom_pl_avg['sigma_w_p_c'] = std( self.mom_pl_res['w_p_c'] )
+
+		# Emit signal that PL moments-analysis results have changed.
+
+		self.emit( SIGNAL('janus_chng_mom_pl') )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR CHANGING A NLN SPECIES.

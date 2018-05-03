@@ -302,6 +302,3 @@ class pl_dat( ) :
 		                                ( self._spec.mom_w)**3 )
 
 		self.psd_mom = ret_norm * ret_exp
-
-		return self.psd_mom
-

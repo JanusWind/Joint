@@ -74,6 +74,9 @@ class pl_spec( ) :
 		self._t_stop = t_stop
 		self._rot    = t_stop - t_strt
 
+		self._sel_min_bin = 3
+		self._sel_min_dir = 3
+
 		if ( azim_cen is None ) :
 			azim_cen = [ [ [ None for b in range( self._n_bin ) ]
 			                      for p in range( self._n_phi ) ]
@@ -269,7 +272,8 @@ class pl_spec( ) :
 			              >= self.min_win_bin
 			              for p in range( self._n_phi )
 			              for t in range( self._n_the ) ] )
-
+		elif ( key == 'mom_res' ) :
+			return self.mom_res
 		elif ( key == 'rot' ) :
 			return self._rot
 		else :
@@ -325,15 +329,55 @@ class pl_spec( ) :
 						avg_b_x, avg_b_y, avg_b_z ) )
 
 	#-----------------------------------------------------------------------
+	# 
+	#-----------------------------------------------------------------------
+
+	def rset_mom( self ) :
+
+		self.rset_mom_sel( )
+		self.rset_mom_res( )
+
+	#-----------------------------------------------------------------------
+	# 
+	#-----------------------------------------------------------------------
+
+	def rset_mom_sel( self ) :
+
+		return
+
+		# FIXME
+
+		# Clear out moments selection: set each pl_dat to be unselected
+		# for moments analysis
+
+	#-----------------------------------------------------------------------
+	# 
+	#-----------------------------------------------------------------------
+
+	def rset_mom_res( self ) :
+
+		return
+
+		# FIXME
+
+		# Clear our moments results
+
+		# Clear out moments PSD-values: set each pl_dat to have a
+		# predicted PSD value (from moments) of either 0 or None.
+
+	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RUNNING THE MOMENTS ANALYSIS ON THIS SPECTRUM.
 	#-----------------------------------------------------------------------
 
 	def anls_mom( self ) :
 
-		# Re-initialize and store the variables associated with the
-		# results of the PL moments analysis.
+		# Clear any existing moments results.
 
-		self.mom_res  = None
+		self.rset_mom_res( )
+
+		# If not data were selected, abort.
+
+		# FIXME
 
 		# Compute the number density for this spectrum.
 
@@ -363,11 +407,6 @@ class pl_spec( ) :
 		                           ) / self.mom_n ) -
 		                       self.mom_v**2 ) / 3. )
 
-		# Compute the effective temperature.
-
-		mom_t = ( 1.E-3 / const['k_b'] ) * \
-	        	const['m_p'] * ( ( 1.E3  * self.mom_w )**2 )
-
 		# Save the results of the moments analysis in a plas object.
 
 		self.mom_res = plas( )
@@ -379,39 +418,24 @@ class pl_spec( ) :
 		self.mom_res.add_pop( 'p',
 		                      drift=False, aniso=False,
 		                      name='Core', sym='c',
-		                      n=self.mom_n,     w=self.mom_w          )
+		                      n=self.mom_n, w=self.mom_w )
 
 		# Calculate the expected PSDs based on the results of the
 		# (linear) moments analysis.
 
 		# TODO
 
-		return self.mom_res
-
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR AUTOMATIC DATA SELECTION FOR THE MOMENTS ANLS.
 	#-----------------------------------------------------------------------
 
-	def auto_mom_sel( self, win_bin, win_dir, min_bin, min_dir ) :
-
-		# If any of the arguments are None, abort.
-
-		if ( ( win_bin is None ) or ( win_dir is None ) or
-		     ( min_bin is None ) or ( win_dir is None )    ) :
-
-			return
+	def auto_mom_sel( self, win_bin, win_dir ) :
 
 		# If no spectrum has been loaded, abort.
 
 		if ( self.arr is None ) :
 
 			return
-
-		# Save the varaibles for the windows associated with
-		# automatic data selection for the PL moments analysis.
-
-		self.min_win_bin = min_bin
-		self.min_win_dir = min_dir
 
 		# Initially, assign all data to a selection value of "False".
 
@@ -422,6 +446,7 @@ class pl_spec( ) :
 
 		# Find the maximum psd window (of "n_win_bin" bins)
 		# for each direction
+
 		dir_max_ind  = [ [ self.find_max_psd( t, p,
 		                             win=win_bin            )
 		                        for p in range(self['n_phi'] ) ]
@@ -435,6 +460,10 @@ class pl_spec( ) :
 
 		# Compute the "self.mom_win_dir" window indices with the highest
 		# total PSD
+
+		# FIXME Flatten "dir_max_???" lists
+		#            p = i %  self['n_phi']
+		#            t = i // self['n_phi']
 
 		win_max_ind = []
 
