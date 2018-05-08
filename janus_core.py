@@ -200,7 +200,7 @@ class core( QObject ) :
 
 		if ( time is not None ) :
 
-			self.load_spec( time )
+			self.load_time( time )
 
 	#-----------------------------------------------------------------------
 	# INITIALIZE THE THE DATA AND ANALYSIS VARIABLES.
@@ -618,11 +618,10 @@ class core( QObject ) :
 			self.save_opt( )
 
 	#-----------------------------------------------------------------------
-	# LOAD THE REQUESTED WIND/FC SPECTRUM.
+	# DETERMINE THE INPUT TIME AND ITS VALIDITY
 	#-----------------------------------------------------------------------
 
-	def load_spec( self, time_req=None,
-	               get_prev=False, get_next=False ) :
+	def load_time( self, time_req=None, get_prev=False, get_next=False ) : 
 
 		# Reset the variables that contain the Wind/FC ion spectrum's
 		# data, the associated Wind/MFI magnetic field data, and the
@@ -711,6 +710,41 @@ class core( QObject ) :
 
 			return
 
+		self.next_time( time_req=time_req,
+		                get_prev=get_prev,
+		                get_next=get_next  )
+
+	#-----------------------------------------------------------------------
+	#
+	#-----------------------------------------------------------------------
+
+	def next_time( self, time_req=None, get_prev=False, get_next=False ) :
+
+		# Load the Wind/FC ion spectrum with a timestamp closest to that
+		# requested.
+
+		self.load_spec( time_req, get_prev=get_prev, get_next=get_next )
+
+		# Load the associated Wind/SPIN data associated with this
+		# spectrum.
+
+		self.load_spin( )
+
+		# Load the associated Wind/PESA-L data associated with this
+		# spectrum.
+
+		self.load_pl( )
+	
+
+
+	#-----------------------------------------------------------------------
+	# LOAD THE REQUESTED WIND/FC SPECTRUM.
+	#-----------------------------------------------------------------------
+
+	def load_spec( self, time_req=None,
+	               get_prev=False, get_next=False ) :
+
+
 		# Message the user that a new Wind/FC ion spectrum is about to
 		# be loaded.
 
@@ -751,20 +785,12 @@ class core( QObject ) :
 
 		self.emit( SIGNAL('janus_chng_spc') )
 
-		# Load the associated Wind/SPIN data associated with this
-		# spectrum.
-
-		self.load_spin( )
-
 		# Message the user that a new Wind/PESA-L ion spectrum is about
 		# to be loaded.
 
 		self.emit( SIGNAL('janus_mesg'), 'core', 'begin', 'pl' )
 
-		# Load the associated Wind/PESA-L data associated with this
-		# spectrum.
 
-		self.load_pl( )
 
 		# Emit a signal that indicates that a new Wind/PESA-L ion
 		# spectrum has now been loaded.
