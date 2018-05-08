@@ -21,7 +21,7 @@
 ################################################################################
 
 
-#################################################################################
+################################################################################
 ## LOAD THE NECESSARY MODULES.
 ################################################################################
 
@@ -213,18 +213,18 @@ class core( QObject ) :
 		# and the settings, data selections, and results from all
 		# analyses.
 
-		self.rset_var( var_swe     = True, var_pl         = True,
-		               var_spin    = True, var_mfi        = True,
-		               var_mom_win = True, var_mom_pl_win = True,
-		               var_mom_sel = True,
-		               var_mom_res = True, var_mom_pl_res = True,
-		               var_nln_ion = True,
-		               var_nln_set = True,
-		               var_nln_gss = True, 
-		               var_nln_sel = True,
-		               var_nln_res = True,
-		               var_dsp     = True, var_dyn        = True,
-		               var_opt     = True                         )
+		self.rset_var( var_fc         = True, var_pl         = True,
+		               var_spin       = True, var_mfi        = True,
+		               var_mom_fc_win = True, var_mom_pl_win = True,
+		               var_mom_fc_sel = True,
+		               var_mom_fc_res = True, var_mom_pl_res = True,
+		               var_nln_ion    = True,
+		               var_nln_set    = True,
+		               var_nln_gss    = True, 
+		               var_nln_sel    = True,
+		               var_nln_res    = True,
+		               var_dsp        = True, var_dyn        = True,
+		               var_opt        = True                         )
 		
 		# Initialize the value of the indicator variable of whether the
 		# automatic analysis should be aborted.
@@ -244,23 +244,23 @@ class core( QObject ) :
 	#-----------------------------------------------------------------------
 
 	def rset_var( self,
-	              var_swe     = False, var_pl         = False,  # load
-	              var_spin    = False, var_mfi        = False,
-	              var_mom_win = False, var_mom_sel = False,     # mom_fc
-	              var_mom_res = False, 
-	              var_mom_pl_win = False, var_mom_pl_res = False, # mom_pl
-	              var_nln_ion = False,                            # nln
-	              var_nln_set = False,
-		      var_nln_gss = False,
-	              var_nln_sel = False,
-		      var_nln_res = False,
-	              var_dsp     = False, var_dyn        = False,
-	              var_opt     = False                          ) :
+	              var_fc         = False, var_pl         = False,  # load
+	              var_spin       = False, var_mfi        = False,
+	              var_mom_fc_win = False, var_mom_fc_sel = False,  # mom_fc
+	              var_mom_fc_res = False, 
+	              var_mom_pl_win = False, var_mom_pl_res = False,  # mom_pl
+	              var_nln_ion    = False,                          # nln
+	              var_nln_set    = False,
+		      var_nln_gss    = False,
+	              var_nln_sel    = False,
+		      var_nln_res    = False,
+	              var_dsp        = False, var_dyn        = False,
+	              var_opt        = False                          ) :
 
 		# If requested, (re-)initialize the variables associated with
 		# the ion spectrum's data.
 
-		if ( var_swe ) :
+		if ( var_fc ) :
 
 			self.fc_spec  = None
 
@@ -314,14 +314,16 @@ class core( QObject ) :
 			self.pl_psd_min = 1e-10
 			self.pl_psd_max = 1e-5
 
-		# FIXME comment
+		# If requested, (re-)initialize the variables for the Wind/PESA
+		# window direction/bin selection
 
 		if ( var_mom_pl_win ) :
 
 			self.mom_pl_win_dir = 7
 			self.mom_pl_win_bin = 5
 
-		# FIXME comment
+		# If requested, (re-)initialize the varaibles for the Wind/PESA
+		# minimum window directions/bins and moments analysis results
 
 		if ( var_mom_pl_res ) :
 
@@ -335,7 +337,7 @@ class core( QObject ) :
 		# associated with automatic data selection for the FC moments
 		# analysis.
 
-		if ( var_mom_win ) :
+		if ( var_mom_fc_win ) :
 
 			self.mom_win_dir = 7
 			self.mom_win_bin = 7
@@ -343,7 +345,7 @@ class core( QObject ) :
 		# If requested, (re-)initialize the variables associated with
 		# the data seleciton for the FC moments analysis.
 
-		if ( var_mom_sel ) :
+		if ( var_mom_fc_sel ) :
 
 			self.mom_min_sel_dir =  5
 			self.mom_min_sel_bin =  3
@@ -356,7 +358,7 @@ class core( QObject ) :
 		# If requested, (re-)initialize and store the variables
 		# associated with the results of the FC moments analysis.
 
-		if ( var_mom_res ) :
+		if ( var_mom_fc_res ) :
 
 			self.mom_res  = None
 			self.mom_curr = None
@@ -632,12 +634,12 @@ class core( QObject ) :
 
 		self.emit( SIGNAL('janus_rset') )
 
-		self.rset_var( var_swe     = True, var_spin    = True,
-		               var_pl      = True, var_mfi     = True,
-		               var_mom_sel = True, var_mom_pl_sel = True, 
-		               var_mom_res = True,
-		               var_nln_gss = True, var_nln_sel = True,
-		               var_nln_res = True                      )
+		self.rset_var( var_fc         = True, var_spin       = True,
+		               var_pl         = True, var_mfi        = True,
+		               var_mom_fc_sel = True, var_mom_pl_res = True, 
+		               var_mom_fc_res = True,
+		               var_nln_gss    = True, var_nln_sel    = True,
+		               var_nln_res    = True                         )
 
 		# If a special code has been entered, take the specified action.
 
@@ -844,7 +846,9 @@ class core( QObject ) :
 
 		# Load the PESA-L spectra.
 
-		self.pl_spec_arr = self.pl_arcv.load_spec( self.fc_spec['time'], self.fc_spec['dur'], self.fc_spec['n_bin'] )
+		self.pl_spec_arr = self.pl_arcv.load_spec( self.fc_spec['time'],
+		                                           self.fc_spec['dur'],
+		                                           self.fc_spec['n_bin'] )
 
 		# Find the min and max psd values for plotting PL spectra
 
@@ -1127,8 +1131,8 @@ class core( QObject ) :
 		# Re-initialize the data-selection variables for the moments
 		# analysis.
 
-		self.rset_var( var_mom_sel=True )
-		self.rset_var( var_mom_pl_sel=True )
+		self.rset_var( var_mom_fc_sel=True )
+		self.rset_var( var_mom_pl_res=True )
 
 		# If no spectrum has been loaded, abort.
 
@@ -1339,7 +1343,7 @@ class core( QObject ) :
 	# DEFINE THE FUNCTION FOR VALIDATING THE PL DATA SELECTION.
 	#-----------------------------------------------------------------------
 
-	def pl_vldt_mom_sel( self, emit_all=False ) :
+#	def vldt_mom_pl_sel( self, emit_all=False ) :
 
 		# Note.  This function ensures that the two "self.mom_sel_???"
 		#        arrays are mutually consistent.  For each set of "t"-
@@ -1356,27 +1360,27 @@ class core( QObject ) :
 
 		# Save the initial selection of pointing directions.
 
-		old_mom_pl_sel_dir = deepcopy( self.mom_pl_sel_dir )
+#		old_mom_pl_sel_dir = deepcopy( self.mom_pl_sel_dir )
 
-		self.mom_pl_n_sel_dir = self.pl_spec_arr[0]['n_sel_dir']
+#		self.mom_pl_n_sel_dir = self.pl_spec_arr[0]['n_sel_dir']
 
 		# If the total number of selected pointing directions is less
 		# than the minimum "self.mom_min_sel_dir", deselect all
 		# pointing directions.
 
-		if ( self.pl_spec_arr[0]['n_sel_dir'] < self.mom_pl_min_sel_dir ) :
+#		if ( self.pl_spec_arr[0]['n_sel_dir'] < self.mom_pl_min_sel_dir ) :
 
-			for t in range( self.pl_spec_arr[0]['n_the'] ) :
+#			for t in range( self.pl_spec_arr[0]['n_the'] ) :
 
-				for p in range( self.pl_spec_arr[0]['n_phi'] ) :
+#				for p in range( self.pl_spec_arr[0]['n_phi'] ) :
 
-					for b in range(
-					        self.pl_spec_arr[0]['n_bin'] ) :
+#					for b in range(
+#					        self.pl_spec_arr[0]['n_bin'] ) :
 
-						[ spec[t][p][b].set_mom_sel( False )
-						  for spec in pl_spec_arr ]
+#						[ spec[t][p][b].set_mom_sel( False )
+#						  for spec in pl_spec_arr ]
 
-			self.mom_pl_n_sel_dir = 0
+#			self.mom_pl_n_sel_dir = 0
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RUNNING THE MOMENTS ANALYSIS ON FC DATA.
@@ -1386,7 +1390,7 @@ class core( QObject ) :
 
 		# Re-initialize and the output of the moments analysis.
 
-		self.rset_var( var_mom_res=True )
+		self.rset_var( var_mom_fc_res=True )
 
 		# If the point-selection arrays have not been populated, run
 		# the automatic point selection.
@@ -1618,6 +1622,9 @@ class core( QObject ) :
 		###else :
 		###	self.chng_dsp( 'mom' )
 
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR RUNNING THE MOMENTS ANALYSIS ON PESA-L DATA.
+	#-----------------------------------------------------------------------
 
 	def anls_mom_pl( self ) :
 
@@ -1659,10 +1666,16 @@ class core( QObject ) :
 
 			spec.anls_mom( )
 
-			self.mom_pl_res.add_spec( spec['mom_res'] )
+			# If the moments analysis fails for this spectrum,
+			# move on to the next one 
 
-			# FIXME Handling special case where "spec['mom_res']
-			#       is None".
+			if spec['mom_res'] is None:
+
+				continue
+
+			# Add the spectrum to the series
+
+			self.mom_pl_res.add_spec( spec['mom_res'] )
 
 		# Compute the mean values and standard deviations for the PL
 		# moments analysis results

@@ -269,7 +269,7 @@ class pl_spec( ) :
 			           for t in range( self._n_the )            ]
 		elif ( key == 'n_sel_dir' ) :
 			return sum( [ self['n_sel_bin'][t][p] \
-			              >= self.min_win_bin
+			              >= self._sel_min_bin
 			              for p in range( self._n_phi )
 			              for t in range( self._n_the ) ] )
 		elif ( key == 'mom_res' ) :
@@ -329,7 +329,7 @@ class pl_spec( ) :
 						avg_b_x, avg_b_y, avg_b_z ) )
 
 	#-----------------------------------------------------------------------
-	# 
+	# DEFINE THE FUNCTION FOR RESETTING ALL MOMENTS ANALYSIS VARIABLES
 	#-----------------------------------------------------------------------
 
 	def rset_mom( self ) :
@@ -338,32 +338,46 @@ class pl_spec( ) :
 		self.rset_mom_res( )
 
 	#-----------------------------------------------------------------------
-	# 
+	# DEFINE THE FUNCTION FOR DE-SELECTING ALL DATA FOR THE MOMENTS ANALYSIS
 	#-----------------------------------------------------------------------
 
 	def rset_mom_sel( self ) :
 
-		return
-
-		# FIXME
-
 		# Clear out moments selection: set each pl_dat to be unselected
 		# for moments analysis
 
+		for t in range( self['n_the'] ) :
+
+			for p in range( self['n_phi'] ) :
+
+				for b in range( self['n_bin'] ) :
+
+					self.arr[t][p][b].set_mom_sel( False ) 
+
+
 	#-----------------------------------------------------------------------
-	# 
+	# DEFINE THE FUNCTION FOR CLEARING THE MOMENTS ANALYSIS RESULTS AND PSDs
 	#-----------------------------------------------------------------------
 
 	def rset_mom_res( self ) :
 
-		return
+		# Clear out moments results
 
-		# FIXME
+		self.mom_res   = None
+		self.mom_n     = None
+		self.mom_v_vec = None
+		self.mom_v     = None
+		self.mom_w     = None
 
-		# Clear our moments results
+		# Set the predicted PSD values to None
 
-		# Clear out moments PSD-values: set each pl_dat to have a
-		# predicted PSD value (from moments) of either 0 or None.
+		for t in range( self['n_the'] ) :
+
+			for p in range( self['n_phi'] ) :
+
+				for b in range( self['n_bin'] ) :
+
+					self.arr[t][p][b].calc_psd_mom( )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RUNNING THE MOMENTS ANALYSIS ON THIS SPECTRUM.
@@ -375,9 +389,11 @@ class pl_spec( ) :
 
 		self.rset_mom_res( )
 
-		# If not data were selected, abort.
+		# If no data were selected, abort.
 
-		# FIXME
+		if self['n_sel_dir'] == 0 :
+
+			return
 
 		# Compute the number density for this spectrum.
 
@@ -423,7 +439,13 @@ class pl_spec( ) :
 		# Calculate the expected PSDs based on the results of the
 		# (linear) moments analysis.
 
-		# TODO
+		for t in range( self['n_the'] ) :
+
+			for p in range( self['n_phi'] ) :
+
+				for b in range( self['n_bin'] ) :
+
+					self.arr[t][p][b].calc_psd_mom( )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR AUTOMATIC DATA SELECTION FOR THE MOMENTS ANLS.
@@ -447,63 +469,36 @@ class pl_spec( ) :
 		# Find the maximum psd window (of "n_win_bin" bins)
 		# for each direction
 
-		dir_max_ind  = [ [ self.find_max_psd( t, p,
-		                             win=win_bin            )
-		                        for p in range(self['n_phi'] ) ]
-		                        for t in range(self['n_the'] ) ]
+		dir_max_ind = [ self.find_max_psd( t, p, win=win_bin )
+		                for p in range(self['n_phi'] )
+		                for t in range(self['n_the'] ) ]
 
-		dir_max_psd = [ [ self.calc_tot_psd( t, p,
-		                             dir_max_ind[t][p],
-		                             win=win_bin            )
-		                        for p in range(self['n_phi'] ) ]
-		                        for t in range(self['n_the'] ) ]
+		dir_max_psd = [ self.calc_tot_psd( ( i // self['n_phi'] ),
+		                                   ( i %  self['n_phi'] ),
+		                                   dir_max_ind[i],
+		                                   win=win_bin )
+		                for i in range( self['n_dir'] ) ]
 
-		# Compute the "self.mom_win_dir" window indices with the highest
-		# total PSD
-
-		# FIXME Flatten "dir_max_???" lists
-		#            p = i %  self['n_phi']
-		#            t = i // self['n_phi']
+		# Compute the "self._sel_min_dir" window indices with the
+		# highest total PSD
 
 		win_max_ind = []
 
-		for t in range( self['n_the'] ) :
-
-			for p in range( self['n_phi'] ) :
-
-				n_big = 0
-
-				for tp in range( self['n_dir'] ) :
-
-					if ( dir_max_psd[t][p] <
-					   dir_max_psd[ tp // self['n_phi'] ]\
-					              [ tp % self['n_the'] ] ) :
-						n_big += 1
-
-				if ( n_big < win_dir ) :
-					win_max_ind += [[t, p]]
-
-				if len( win_max_ind ) == win_dir :
-
-					break
-
-			if len( win_max_ind ) == win_dir :
-
-				break
+		win_max_ind = argsort( dir_max_psd )[-self._sel_min_dir:]
 
 		# Assign a selection value of "True" to the data that were
-		# selected
+		# identified as having the highest PSD values
 
 		for win in win_max_ind :
 
-			t = win[0]
-			p = win[1]
+			t = win // self['n_phi']
+			p = win %  self['n_phi']
 
 			# Select the bins in this look direction's
 			# maximal window
 
-			for b in range( dir_max_ind[t][p],
-			                dir_max_ind[t][p] + win_bin ) :
+			for b in range( dir_max_ind[win],
+			                dir_max_ind[win] + win_bin ) :
 				self.arr[t][p][b].set_mom_sel( True )
 
 	#-----------------------------------------------------------------------

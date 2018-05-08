@@ -223,6 +223,8 @@ class pl_dat( ) :
 				return self['mom2']
 			else :
 				return 0
+		elif ( key == 'psd_mom' ) :
+			return self.psd_mom
 		else :
 			raise KeyError( 'Invalid key for "pl_dat".' )
 
@@ -275,16 +277,22 @@ class pl_dat( ) :
 
 	def calc_psd_mom( self ) :
 
+		# If the moments analysis failed, set "self.psd_mom" to None and
+		# abort
+
 		if ( ( self._spec.mom_n is None     ) or
 		     ( self._spec.mom_v_vec is None ) or
 		     ( self._spec.mom_w is None     )    ) :
-			return None
+
+			self.psd_mom = None
+
+			return
 
 		v2 = sum( [ self._spec.mom_v_vec[i]**2 for i in range( 3 ) ] )
 
 		u_vec = [ self['vel_cen'] * self['dir_x'],
 		          self['vel_cen'] * self['dir_y'],
-		          self['vel_cen'] * self['dir_z'] ]
+		          self['vel_cen'] * self['dir_z']  ]
 
 		# Calculate the exponent
 
