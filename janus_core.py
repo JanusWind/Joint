@@ -1708,23 +1708,27 @@ class core( QObject ) :
 
 		self.mom_pl_avg = plas( )
 
+		self.mom_pl_avg['v0_x']  = mean( self.mom_pl_res['v0_x' ] )
+		self.mom_pl_avg['v0_y']  = mean( self.mom_pl_res['v0_y' ] )
+		self.mom_pl_avg['v0_z']  = mean( self.mom_pl_res['v0_z' ] )
+
+		self.mom_pl_avg['sigma_v0_x']  = std( self.mom_pl_res['v0_x' ] )
+		self.mom_pl_avg['sigma_v0_y']  = std( self.mom_pl_res['v0_y' ] )
+		self.mom_pl_avg['sigma_v0_z']  = std( self.mom_pl_res['v0_z' ] )
+
 		self.mom_pl_avg.add_spec( name='Proton', sym='p', m=1., q=1. )
 
 		self.mom_pl_avg.add_pop( 'p',
 		                          name='Core', sym='c',
 		                          drift=False, aniso=False )
 
-		self.mom_pl_avg['v0_x']  = mean( self.mom_pl_res['v0_x' ] )
-		self.mom_pl_avg['v0_x']  = mean( self.mom_pl_res['v0_y' ] )
-		self.mom_pl_avg['v0_x']  = mean( self.mom_pl_res['v0_z' ] )
-		self.mom_pl_avg['n_p_c'] = mean( self.mom_pl_res['n_p_c'] )
-		self.mom_pl_avg['w_p_c'] = mean( self.mom_pl_res['w_p_c'] )
+		pop = self.mom_pl_avg['p_c']
 
-		self.mom_pl_avg['sigma_v0_x']  = std( self.mom_pl_res['v0_x' ] )
-		self.mom_pl_avg['sigma_v0_y']  = std( self.mom_pl_res['v0_y' ] )
-		self.mom_pl_avg['sigma_v0_z']  = std( self.mom_pl_res['v0_z' ] )
-		self.mom_pl_avg['sigma_n_p_c'] = std( self.mom_pl_res['n_p_c'] )
-		self.mom_pl_avg['sigma_w_p_c'] = std( self.mom_pl_res['w_p_c'] )
+		pop['n'] = mean( self.mom_pl_res['n_p_c'] )
+		pop['w'] = mean( self.mom_pl_res['w_p_c'] )
+
+		pop['sigma_n'] = std( self.mom_pl_res['n_p_c'] )
+		pop['sigma_w'] = std( self.mom_pl_res['w_p_c'] )
 
 		# Emit signal that PL moments-analysis results have changed.
 
