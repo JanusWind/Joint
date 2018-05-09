@@ -451,7 +451,7 @@ class pl_spec( ) :
 	# DEFINE THE FUNCTION FOR AUTOMATIC DATA SELECTION FOR THE MOMENTS ANLS.
 	#-----------------------------------------------------------------------
 
-	def auto_mom_sel( self, win_bin, win_dir ) :
+	def auto_mom_sel( self, win_dir, win_bin ) :
 
 		# If no spectrum has been loaded, abort.
 

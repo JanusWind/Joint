@@ -187,20 +187,11 @@ class core( QObject ) :
 
 		self.series = series( )
 
-		# Load the requested Wind/FC ion spectrum (if one has been
-		# requested).
-
-		# Note.  After loading the Wind/FC ion spectrum,
-		#        "self.load_spec" calls "self.load_mfi" to load the
-		#        associated Wind/MFI magnetic field data and then calls
-		#        "self.auto_sel" to make an automatic selection of the
-		#        spectrum's data.  In turn, "self.auto_sel" calls
-		#        "self.anls_mom" to perform a moments analysis on the
-		#        selected data.
+		# If a time has been requested, load the time
 
 		if ( time is not None ) :
 
-			self.load_time( time )
+			self.load_time( time_req=time )
 
 	#-----------------------------------------------------------------------
 	# INITIALIZE THE THE DATA AND ANALYSIS VARIABLES.
@@ -262,12 +253,12 @@ class core( QObject ) :
 
 		if ( var_fc ) :
 
-			self.fc_spec  = None
-
-			self.time_epc = None
-			self.time_val = None
-			self.time_txt = ''
-			self.time_vld = True
+			self.fc_spec   = None
+			self.fc_loaded = False
+			self.time_epc  = None
+			self.time_val  = None
+			self.time_txt  = ''
+			self.time_vld  = True
 
 		# If requested, (re-)initialize the variables associated with
 		# the spin rate.
@@ -310,9 +301,9 @@ class core( QObject ) :
 		if ( var_pl ) :
 
 			self.pl_spec_arr = []
-
-			self.pl_psd_min = 1e-10
-			self.pl_psd_max = 1e-5
+			self.pl_loaded   = False
+			self.pl_psd_min  = 1e-10
+			self.pl_psd_max  = 1e-5
 
 		# If requested, (re-)initialize the variables for the Wind/PESA
 		# window direction/bin selection
@@ -710,12 +701,14 @@ class core( QObject ) :
 
 			return
 
+		# Call the function that will load the spectra nearest this time
+
 		self.next_time( time_req=time_req,
 		                get_prev=get_prev,
 		                get_next=get_next  )
 
 	#-----------------------------------------------------------------------
-	#
+	# DETERMINE THE NEXT PROCEDURAL STEP AFTER ACCPETING THE SEARCH TIME
 	#-----------------------------------------------------------------------
 
 	def next_time( self, time_req=None, get_prev=False, get_next=False ) :
@@ -723,27 +716,46 @@ class core( QObject ) :
 		# Load the Wind/FC ion spectrum with a timestamp closest to that
 		# requested.
 
-		self.load_spec( time_req, get_prev=get_prev, get_next=get_next )
-
-		# Load the associated Wind/SPIN data associated with this
-		# spectrum.
-
-		self.load_spin( )
+		self.load_fc( time_req, get_prev=get_prev, get_next=get_next )
 
 		# Load the associated Wind/PESA-L data associated with this
 		# spectrum.
 
 		self.load_pl( )
-	
 
+		# If no spectra have been loaded, end the process
+
+		if not( fc_loaded or pl_loaded ) :
+
+			return
+
+		# Load the Wind/MFI data associated with the spectra
+
+		self.load_mfi( )
+
+		# If no Wind/MFI data have been loaded, end the process
+
+		if ( self.n_mfi == 0 ) :
+
+			return
+
+		# Load the Wind/SPIN data associated with the spectra
+
+		self.load_spin( )
+
+		# If the moments analysis is set to be dynamically updated, call
+		# the function that determines the next procedural step.
+
+		if ( self.dyn_mom ) :
+
+			self.next_spec( )
 
 	#-----------------------------------------------------------------------
 	# LOAD THE REQUESTED WIND/FC SPECTRUM.
 	#-----------------------------------------------------------------------
 
-	def load_spec( self, time_req=None,
+	def load_fc( self, time_req=None,
 	               get_prev=False, get_next=False ) :
-
 
 		# Message the user that a new Wind/FC ion spectrum is about to
 		# be loaded.
@@ -762,6 +774,10 @@ class core( QObject ) :
 		if ( self.fc_spec is None ) :
 			self.emit( SIGNAL('janus_chng_spc') )
 			return
+
+		# Record that a Wind/FC spectrum has been loaded successfully
+
+		self.fc_loaded = True
 
 		# Extract the parameters of the loaded Wind/FC ion spectrum.
 		  
@@ -785,12 +801,41 @@ class core( QObject ) :
 
 		self.emit( SIGNAL('janus_chng_spc') )
 
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR LOADING THE Wind/PESA-L ION DATA.
+	#-----------------------------------------------------------------------
+
+	def load_pl( self ) :
+
+		# Reset the spin variables.
+
+		self.rset_var( var_pl=True )
+
 		# Message the user that a new Wind/PESA-L ion spectrum is about
 		# to be loaded.
 
 		self.emit( SIGNAL('janus_mesg'), 'core', 'begin', 'pl' )
 
+		# Load the PESA-L spectra.
 
+		self.pl_spec_arr = self.pl_arcv.load_spec( self.fc_spec['time'],
+		                                           self.fc_spec['dur'],
+		                                           self.fc_spec['n_bin'] )
+
+		# If no spectra were found, abort.
+
+		if ( self.pl_spec_arr is None or len( self.pl_spec_arr == 0) ) :
+			self.emit( SIGNAL('janus_chng_spc') )
+			return
+
+		# Record that a Wind/PL spectrum has been loaded successfully
+
+		self.pl_loaded = True
+
+		# Find the min and max psd values for plotting PL spectra
+
+		self.mom_psd_min = min( [ spec['psd_min'] for spec in self.pl_spec_arr ] )
+		self.mom_psd_max = max( [ spec['psd_max'] for spec in self.pl_spec_arr ] )
 
 		# Emit a signal that indicates that a new Wind/PESA-L ion
 		# spectrum has now been loaded.
@@ -802,85 +847,6 @@ class core( QObject ) :
 
 		self.emit( SIGNAL('janus_mesg'), 'core', 'end', 'pl' )
 
-
-		# Load the associated Wind/MFI magnetic field data associated
-		# with this spectrum.
-
-		self.load_mfi( )
-
-		# If requested, run the moments analysis.
-
-		if ( self.dyn_mom ) :
-			self.auto_mom_sel( )
-
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR LOADING THE Wind/SPIN DATA.
-	#-----------------------------------------------------------------------
-
-	def load_spin( self ) :
-
-		# Reset the spin variables.
-
-		self.rset_var( var_spin=True )
-
-		# If no Wind/FC ion spectrum has been loaded, abort.
-
-		if ( self.fc_spec is None ) :
-			self.emit( SIGNAL('janus_chng_spin') )
-			return
-
-		# Message the user that new Wind/SPIN data are about to be
-		# loaded.
-
-		self.emit( SIGNAL('janus_mesg'), 'core', 'begin', 'spin' )
-
-		# Load the Wind/SPIN data associated with this spectrum.
-
-		self.spin_period = self.spin_arcv.load_spin( self.time_val )
-
-		# If no spin data were returned, abort with a signal that the
-		# data have changed.
-
-		if ( self.spin_period is None ) :
-			self.emit( SIGNAL('janus_chng_spin') )
-			return
-
-		# Assign the loaded spin rate to the spectrum rotation value.
-
-		self.fc_spec.set_rot( self.spin_period )
-
-		# Message the user that the spin period has been updated.
-
-		self.emit( SIGNAL('janus_mesg'), 'core', 'val', 'spin' )
-
-		self.emit( SIGNAL('janus_mesg'), 'core', 'end', 'spin' )
-
-		# Emit a signal that indicates that a new Wind/MFI data have now
-		# been loaded.
-
-		self.emit( SIGNAL('janus_chng_spin') )
-
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR LOADING THE Wind/PESA-L ION DATA.
-	#-----------------------------------------------------------------------
-
-	def load_pl( self ) :
-
-		# Reset the spin variables.
-
-		self.rset_var( var_pl=True )
-
-		# Load the PESA-L spectra.
-
-		self.pl_spec_arr = self.pl_arcv.load_spec( self.fc_spec['time'],
-		                                           self.fc_spec['dur'],
-		                                           self.fc_spec['n_bin'] )
-
-		# Find the min and max psd values for plotting PL spectra
-
-		self.mom_psd_min = min( [ spec['psd_min'] for spec in self.pl_spec_arr ] )
-		self.mom_psd_max = max( [ spec['psd_max'] for spec in self.pl_spec_arr ] )
-
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR LOADING THE Wind/MFI MAGNETIC FIELD DATA.
 	#-----------------------------------------------------------------------
@@ -890,12 +856,6 @@ class core( QObject ) :
 		# Reset the contents of the "self.mfi_*" arrays.
 
 		self.rset_var( var_mfi=True )
-
-		# If no Wind/FC ion spectrum has been loaded, abort.
-
-		if ( self.fc_spec is None ) :
-			self.emit( SIGNAL('janus_chng_mfi') )
-			return
 
 		# Message the user that new Wind/MFI data are about to be
 		# loaded.
@@ -999,6 +959,220 @@ class core( QObject ) :
 		# been loaded.
 
 		self.emit( SIGNAL('janus_chng_mfi') )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR LOADING THE Wind/SPIN DATA.
+	#-----------------------------------------------------------------------
+
+	def load_spin( self ) :
+
+		# Reset the spin variables.
+
+		self.rset_var( var_spin=True )
+
+		# Message the user that new Wind/SPIN data are about to be
+		# loaded.
+
+		self.emit( SIGNAL('janus_mesg'), 'core', 'begin', 'spin' )
+
+		# Load the Wind/SPIN data associated with this spectrum.
+
+		self.spin_period = self.spin_arcv.load_spin( self.time_val )
+
+		# If no spin data were returned, abort with a signal that the
+		# data have changed.
+
+		if ( self.spin_period is None ) :
+			self.emit( SIGNAL('janus_chng_spin') )
+			return
+
+		# Assign the loaded spin rate to the spectrum rotation value.
+
+		self.fc_spec.set_rot( self.spin_period )
+
+		# Message the user that the spin period has been updated.
+
+		self.emit( SIGNAL('janus_mesg'), 'core', 'val', 'spin' )
+
+		self.emit( SIGNAL('janus_mesg'), 'core', 'end', 'spin' )
+
+		# Emit a signal that indicates that a new Wind/MFI data have now
+		# been loaded.
+
+		self.emit( SIGNAL('janus_chng_spin') )
+
+	#-----------------------------------------------------------------------
+	# DETERMINE THE NEXT PRODECURAL STEP AFTER LOADING ANY FC AND/OR PL DATA
+	#-----------------------------------------------------------------------
+
+	def next_spec( self ) :
+
+		# If Wind/FC or Wind/PESA-L spectra have been loaded, call the
+		# function that performs the automatic point selection for the
+		# spectra
+
+		if self.fc_loaded :
+
+			self.auto_mom_fc_sel( )
+
+		if self.pl_loaded :
+
+			self.auto_mom_pl_sel( )
+
+		# If the moments analysis is set to be dynamically updated, call
+		# the function that determines the next procedural step.
+
+		if ( self.dyn_mom ) :
+
+			self.next_sel( )
+
+		
+
+		self.anls_mom( run_fc = fc_loaded, run_pl = pl_loaded )
+
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR AUTOMATIC DATA SELECTION FOR THE PL MOM. ANLS.
+	#-----------------------------------------------------------------------
+
+	def auto_mom_pl_spec( self ) :
+
+		# Re-initialize the data-selection variables for the moments
+		# analysis.
+
+		self.rset_var( var_mom_pl_res=True )
+
+		# If no Wind/PESA-L spectra have been loaded, abort
+
+		if not( self.pl_loaded ) :
+
+			return
+
+		# Perform the automatic data selection on each loaded spectrum
+
+		for spec in self.pl_spec_arr :
+
+			spec.auto_mom_sel( self.mom_pl_win_dir,
+			                   self.mom_pl_win_bin  )
+
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR AUTOMATIC DATA SELECTION FOR THE FC MOM. ANLS.
+	#-----------------------------------------------------------------------
+
+	def auto_mom_fc_sel( self ) :
+
+		# Re-initialize the data-selection variables for the moments
+		# analysis.
+
+		self.rset_var( var_mom_fc_sel=True )
+
+		# Initially, deselect all look directions and bins.
+
+		self.mom_sel_dir = [ [ False 
+		                       for d in range(self.fc_spec['n_dir']) ]
+		                       for c in range(self.fc_spec['n_cup']) ]
+
+		self.mom_sel_bin = [ [ [ False 
+		                         for b in range(self.fc_spec['n_bin']) ]
+                                         for d in range(self.fc_spec['n_dir']) ]
+		                         for c in range(self.fc_spec['n_cup']) ]
+
+		# If the "mom_win_???" variables are invalid, abort.
+
+		if ( ( self.mom_win_dir is None ) or
+		     ( self.mom_win_bin is None )    ) :
+
+			self.vldt_mom_sel( emit_all=True )
+
+			self.anls_mom( )
+
+			return
+
+		# Find the maximum current window (of "self.mom_win_bin" bins)
+		# for each direction
+		dir_max_ind  = [ [ self.fc_spec.find_max_curr( c, d,
+		                             win=self.mom_win_bin              )
+		                        for d in range(self.fc_spec['n_dir'] ) ]
+		                        for c in range(self.fc_spec['n_cup'] ) ]
+
+		dir_max_curr = [ [ self.fc_spec.calc_tot_curr( c, d,
+		                             dir_max_ind[c][d],
+		                             win=self.mom_win_bin              )
+		                        for d in range(self.fc_spec['n_dir'] ) ]
+		                        for c in range(self.fc_spec['n_cup'] ) ]
+
+		# Compute "cup_max_ind" (two element list)
+		# List of indices with maximum current for each cup
+
+		cup_max_ind  = [ 0 for c in range( self.fc_spec['n_cup'] ) ]
+
+		for c in range( self.fc_spec['n_cup'] ) :
+
+			curr_sum_max = 0.
+
+			for d in range( self.fc_spec['n_dir'] ) :
+
+				curr_sum = sum( [ dir_max_curr[c][
+				                  (d+i)%self.fc_spec['n_dir']  ]
+				                  for i in range(
+				                           self.mom_win_dir) ] )
+
+				if ( curr_sum > curr_sum_max ) :
+					cup_max_ind[c] = d
+					curr_sum_max   = curr_sum
+
+		# Populate "self.mom_sel_bin" and "self.mom_sel_dir"
+		# appropriately.
+
+		for c in range( self.fc_spec['n_cup'] ) :
+
+			for pd in range( cup_max_ind[c],
+			                 cup_max_ind[c] + self.mom_win_dir ) :
+
+				# Compute the actual direction-index (versus the
+				# pseudo-direction-index).
+
+				d = pd % self.fc_spec['n_dir'   ]
+                                self.mom_sel_dir[c][d] = True
+
+				# Select the bins in this look direction's
+				# maximal window
+
+				for b in range( dir_max_ind[c][d],
+				                dir_max_ind[c][d]
+				                          + self.mom_win_bin ) :
+					self.mom_sel_bin[c][d][b] = True
+
+                # Validate the new data selection (which includes populating
+		# the "self.mom_sel_dir" array).
+
+		self.vldt_mom_sel( emit_all=True )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION THAT CALLS THE MOMENTS ANALYSES
+	#-----------------------------------------------------------------------
+
+	def anls_mom( self ) :
+
+		# If a Wind/FC spectrum has been loaded, perform the
+		# moments analysis on that data
+
+		if run_fc :
+
+			self.anls_mom_fc( )
+
+		# If Wind/PL spectra have been loaded, perform the
+		# moments analysis on that data
+
+		if run_pl :
+
+			self.anls_mom_pl( )
+
+
+
+
+
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR CHANGING THE MOM. SELCTION DIRECTION WINDOW.
@@ -1148,110 +1322,7 @@ class core( QObject ) :
 
 		self.emit( SIGNAL('janus_chng_mom_win') )
 
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR AUTOMATIC DATA SELECTION FOR THE FC MOM. ANLS.
-	#-----------------------------------------------------------------------
 
-	def auto_mom_sel( self ) :
-
-		# Re-initialize the data-selection variables for the moments
-		# analysis.
-
-		self.rset_var( var_mom_fc_sel=True )
-		self.rset_var( var_mom_pl_res=True )
-
-		# If no spectrum has been loaded, abort.
-
-		if ( self.fc_spec is None ) :
-
-			return
-
-		# Initially, deselect all look directions and bins.
-
-		self.mom_sel_dir = [ [ False 
-		                       for d in range(self.fc_spec['n_dir']) ]
-		                       for c in range(self.fc_spec['n_cup']) ]
-
-		self.mom_sel_bin = [ [ [ False 
-		                         for b in range(self.fc_spec['n_bin']) ]
-                                         for d in range(self.fc_spec['n_dir']) ]
-		                         for c in range(self.fc_spec['n_cup']) ]
-
-		# If the "mom_win_???" variables are invalid, abort.
-
-		if ( ( self.mom_win_dir is None ) or
-		     ( self.mom_win_bin is None )    ) :
-
-			self.vldt_mom_sel( emit_all=True )
-
-			self.anls_mom( )
-
-			return
-
-		# Find the maximum current window (of "self.mom_win_bin" bins)
-		# for each direction
-		dir_max_ind  = [ [ self.fc_spec.find_max_curr( c, d,
-		                             win=self.mom_win_bin              )
-		                        for d in range(self.fc_spec['n_dir'] ) ]
-		                        for c in range(self.fc_spec['n_cup'] ) ]
-
-		dir_max_curr = [ [ self.fc_spec.calc_tot_curr( c, d,
-		                             dir_max_ind[c][d],
-		                             win=self.mom_win_bin              )
-		                        for d in range(self.fc_spec['n_dir'] ) ]
-		                        for c in range(self.fc_spec['n_cup'] ) ]
-
-		# Compute "cup_max_ind" (two element list)
-		# List of indices with maximum current for each cup
-
-		cup_max_ind  = [ 0 for c in range( self.fc_spec['n_cup'] ) ]
-
-		for c in range( self.fc_spec['n_cup'] ) :
-
-			curr_sum_max = 0.
-
-			for d in range( self.fc_spec['n_dir'] ) :
-
-				curr_sum = sum( [ dir_max_curr[c][
-				                  (d+i)%self.fc_spec['n_dir']  ]
-				                  for i in range(
-				                           self.mom_win_dir) ] )
-
-				if ( curr_sum > curr_sum_max ) :
-					cup_max_ind[c] = d
-					curr_sum_max   = curr_sum
-
-		# Populate "self.mom_sel_bin" and "self.mom_sel_dir"
-		# appropriately.
-
-		for c in range( self.fc_spec['n_cup'] ) :
-
-			for pd in range( cup_max_ind[c],
-			                 cup_max_ind[c] + self.mom_win_dir ) :
-
-				# Compute the actual direction-index (versus the
-				# pseudo-direction-index).
-
-				d = pd % self.fc_spec['n_dir'   ]
-                                self.mom_sel_dir[c][d] = True
-
-				# Select the bins in this look direction's
-				# maximal window
-
-				for b in range( dir_max_ind[c][d],
-				                dir_max_ind[c][d]
-				                          + self.mom_win_bin ) :
-					self.mom_sel_bin[c][d][b] = True
-
-                # Validate the new data selection (which includes populating
-		# the "self.mom_sel_dir" array).
-
-		self.vldt_mom_sel( emit_all=True )
-
-		# Run the moments analysis (and then, if the non-linear analysis
-		# is set to be dynamically updated, run that analysis as well).
-
-		self.anls_mom( )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR CHANGING THE SELECTION OF A SINGLE POINT.
