@@ -38,9 +38,10 @@ from janus_event_LineEdit import event_LineEdit
 # Load the necessary threading modules.
 
 from threading import Thread
-from janus_thread import n_thread, thread_chng_mom_win_dir, \
-                         thread_chng_mom_win_bin, thread_chng_mom_pl_win_dir, \
-                         thread_chng_mom_pl_win_bin
+from janus_thread import n_thread, thread_chng_mom_fc_win_dir, \
+                                   thread_chng_mom_fc_win_bin, \
+                                   thread_chng_mom_pl_win_dir, \
+                                   thread_chng_mom_pl_win_bin
 
 
 ################################################################################
@@ -210,13 +211,13 @@ class widget_mom_ctrl( QWidget ) :
 
 		if ( fnc == 'fc_dir' ) :
 
-			Thread( target=thread_chng_mom_win_dir,
+			Thread( target=thread_chng_mom_fc_win_dir,
 				args=( self.core,
 			               self.txt_win_dir.text( ) ) ).start( )
 
 		elif ( fnc == 'fc_bin' ) :
 
-			Thread( target=thread_chng_mom_win_bin,
+			Thread( target=thread_chng_mom_fc_win_bin,
 				args=( self.core,
 			               self.txt_win_bin.text( ) ) ).start( )
 

@@ -48,7 +48,7 @@ from numpy import amax, amin, array, ceil, floor, log10, sqrt, tile, where
 # Load the necessary threading modules.
 
 from threading import Thread
-from janus_thread import n_thread, thread_chng_mom_sel, thread_chng_nln_sel
+from janus_thread import n_thread, thread_chng_nln_sel
 
 # Load the modules necessary handling dates and times.
 

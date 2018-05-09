@@ -48,7 +48,7 @@ from numpy import amax, amin, array, ceil, floor, log10, sqrt, tile, where
 # Load the necessary threading modules.
 
 from threading import Thread
-from janus_thread import n_thread, thread_chng_mom_sel, thread_chng_nln_sel
+from janus_thread import n_thread, thread_chng_mom_fc_sel, thread_chng_nln_sel
 
 
 ################################################################################
@@ -982,7 +982,7 @@ class widget_fc_cup( QWidget ) :
 
 			if ( self.core.dsp == 'mom' ) :
 
-				Thread( target=thread_chng_mom_sel,
+				Thread( target=thread_chng_mom_fc_sel,
 				        args=( self.core,
 				               self.c, d, b ) ).start()
 

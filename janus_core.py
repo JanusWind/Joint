@@ -324,6 +324,12 @@ class core( QObject ) :
 			self.mom_pl_res = None
 			self.mom_pl_avg = None
 
+			# Clear the moments results in each PL spectrum.
+
+			for spec in self.pl_spec_arr :
+
+				spec.rset_mom( )
+
 		# If requested, (re-)initialize the varaibles for the windows
 		# associated with automatic data selection for the FC moments
 		# analysis.
@@ -725,7 +731,7 @@ class core( QObject ) :
 
 		# If no spectra have been loaded, end the process
 
-		if not( fc_loaded or pl_loaded ) :
+		if not( self.fc_loaded or self.pl_loaded ) :
 
 			return
 
@@ -748,7 +754,8 @@ class core( QObject ) :
 
 		if ( self.dyn_mom ) :
 
-			self.next_spec( )
+			self.next_spec( run_fc = self.fc_loaded,
+			                run_pl = self.pl_loaded  )
 
 	#-----------------------------------------------------------------------
 	# LOAD THE REQUESTED WIND/FC SPECTRUM.
@@ -756,6 +763,8 @@ class core( QObject ) :
 
 	def load_fc( self, time_req=None,
 	               get_prev=False, get_next=False ) :
+
+		print self.time_txt
 
 		# Message the user that a new Wind/FC ion spectrum is about to
 		# be loaded.
@@ -834,8 +843,10 @@ class core( QObject ) :
 
 		# Find the min and max psd values for plotting PL spectra
 
-		self.mom_psd_min = min( [ spec['psd_min'] for spec in self.pl_spec_arr ] )
-		self.mom_psd_max = max( [ spec['psd_max'] for spec in self.pl_spec_arr ] )
+		self.mom_psd_min = min( [ spec['psd_min']
+		                          for spec in self.pl_spec_arr ] )
+		self.mom_psd_max = max( [ spec['psd_max']
+		                          for spec in self.pl_spec_arr ] )
 
 		# Emit a signal that indicates that a new Wind/PESA-L ion
 		# spectrum has now been loaded.
@@ -1005,17 +1016,23 @@ class core( QObject ) :
 	# DETERMINE THE NEXT PRODECURAL STEP AFTER LOADING ANY FC AND/OR PL DATA
 	#-----------------------------------------------------------------------
 
-	def next_spec( self ) :
+	def next_spec( self, run_fc = False, run_pl = False ) :
+
+		# If no process has been requested, abort.
+
+		if not( run_fc or run_pl ) :
+
+			return
 
 		# If Wind/FC or Wind/PESA-L spectra have been loaded, call the
 		# function that performs the automatic point selection for the
 		# spectra
 
-		if self.fc_loaded :
+		if ( run_fc and self.fc_loaded ) :
 
 			self.auto_mom_fc_sel( )
 
-		if self.pl_loaded :
+		if ( run_pl and self.pl_loaded ) :
 
 			self.auto_mom_pl_sel( )
 
@@ -1024,37 +1041,8 @@ class core( QObject ) :
 
 		if ( self.dyn_mom ) :
 
-			self.next_sel( )
-
-		
-
-		self.anls_mom( run_fc = fc_loaded, run_pl = pl_loaded )
-
-
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR AUTOMATIC DATA SELECTION FOR THE PL MOM. ANLS.
-	#-----------------------------------------------------------------------
-
-	def auto_mom_pl_spec( self ) :
-
-		# Re-initialize the data-selection variables for the moments
-		# analysis.
-
-		self.rset_var( var_mom_pl_res=True )
-
-		# If no Wind/PESA-L spectra have been loaded, abort
-
-		if not( self.pl_loaded ) :
-
-			return
-
-		# Perform the automatic data selection on each loaded spectrum
-
-		for spec in self.pl_spec_arr :
-
-			spec.auto_mom_sel( self.mom_pl_win_dir,
-			                   self.mom_pl_win_bin  )
-
+			self.next_sel( run_fc = ( run_fc and self.fc_loaded ),
+			               run_pl = ( run_pl and self.pl_loaded )  )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR AUTOMATIC DATA SELECTION FOR THE FC MOM. ANLS.
@@ -1144,225 +1132,71 @@ class core( QObject ) :
 				                          + self.mom_win_bin ) :
 					self.mom_sel_bin[c][d][b] = True
 
-                # Validate the new data selection (which includes populating
-		# the "self.mom_sel_dir" array).
-
-		self.vldt_mom_sel( emit_all=True )
-
 	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION THAT CALLS THE MOMENTS ANALYSES
+	# DEFINE THE FUNCTION FOR AUTOMATIC DATA SELECTION FOR THE PL MOM. ANLS.
 	#-----------------------------------------------------------------------
 
-	def anls_mom( self ) :
+	def auto_mom_pl_sel( self ) :
 
-		# If a Wind/FC spectrum has been loaded, perform the
-		# moments analysis on that data
+		# Re-initialize the data-selection variables for the moments
+		# analysis.
 
-		if run_fc :
+		self.rset_var( var_mom_pl_res=True )
+
+		# If no Wind/PESA-L spectra have been loaded, abort
+
+		if not( self.pl_loaded ) :
+
+			return
+
+		# Perform the automatic data selection on each loaded spectrum
+
+		for spec in self.pl_spec_arr :
+
+			spec.auto_mom_sel( self.mom_pl_win_dir,
+			                   self.mom_pl_win_bin  )
+
+	#-----------------------------------------------------------------------
+	# DETERMINE THE NEXT PROCEDURAL STEP AFTER DATA SELECTION
+	#-----------------------------------------------------------------------
+
+	def next_sel( self, run_fc = False, run_pl = False ) :
+
+		# If no process has been requested, abort.
+
+		if not( run_fc or run_pl ) :
+
+			return
+
+		# If Wind/FC or Wind/PESA-L spectra have been loaded, call the
+		# function that performs the moments analyses for the spectra
+
+		if ( run_fc and self.fc_loaded ) :
+
+			# Validate the Wind/FC point-selection (which includes
+			# populating the "self.mom_sel_dir" array)
+
+			self.vldt_mom_fc_sel( emit_all=True )
+
+			# Run the moments analysis on the Wind/FC data 
 
 			self.anls_mom_fc( )
 
-		# If Wind/PL spectra have been loaded, perform the
-		# moments analysis on that data
+		if ( run_pl and self.pl_loaded ) :
 
-		if run_pl :
+			# Validate the Wind/PESA-L point-selection
+
+			self.vldt_mom_pl_sel( )
+
+			# Run the moments analysis on the Wind/PESA-L data
 
 			self.anls_mom_pl( )
-
-
-
-
-
-
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR CHANGING THE MOM. SELCTION DIRECTION WINDOW.
-	#-----------------------------------------------------------------------
- 
-	def chng_mom_win_dir( self, val ) :
-
-		# Try to convert the "val" argument to an integer and store it.
-		# If this fails, store "None".
-    
-		if ( val is None ) :
-
-			self.mom_win_dir = None
-
-		else :
-
-			try :
-
-				self.mom_win_dir = int( val )
-
-				if ( self.mom_win_dir < self.mom_min_sel_dir ) :
-					self.mom_win_dir = None
-
-				if ( self.mom_win_dir > self.mom_max_sel_dir ) :
-					self.mom_win_dir = None
-
-			except :
-
-				self.mom_win_dir = None
-
-		# Emit a signal that a change has occured to the moments window
-		# parameters.
-
-		self.emit( SIGNAL('janus_chng_mom_win') )
-
-		# Call the automatic selection of data for the moments analysis.
-
-		self.auto_mom_sel( )
-
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR CHANGING THE MOMENTS SELCTION BIN WINDOW.
-	#-----------------------------------------------------------------------
-  
-	def chng_mom_win_bin( self, val ) :
-
-		# Try to convert the "val" argument to an integer and store it.
-		# If this fails, store "None".
-
-		if ( val is None ) :
-			self.mom_win_bin = None
-		else :
-			try :
-				self.mom_win_bin = int( val )
-				if( ( self.mom_win_bin < self.mom_min_sel_bin  )
-				or  ( self.mom_win_bin > self.fc_spec['n_bin'] )
-				                                             ) :
-					self.mom_win_bin = None
-			except :
-				self.mom_win_bin = None
-
-		# Emit a signal that a change has occured to the moments window
-		# parameters.
-
-		self.emit( SIGNAL('janus_chng_mom_win') )
-
-		# Call the automatic selection of data for the moments analysis.
-
-		self.auto_mom_sel( )
-
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR CHANGING THE MOM. SELCTION DIRECTION WINDOW.
-	#-----------------------------------------------------------------------
- 
-	def chng_mom_pl_win_dir( self, val ) :
-
-		# Try to convert the "val" argument to an integer and store it.
-		# If this fails, store "None".
-
-		if ( val is None ) :
-
-			self.mom_pl_win_dir = None
-
-		else :
-
-			try :
-
-				self.mom_pl_win_dir = int( val )
-
-				if ( self.mom_pl_win_dir < self.mom_pl_min_sel_dir ) :
-					self.mom_pl_win_dir = None
-
-				if ( self.mom_pl_win_dir > self.mom_pl_max_sel_dir ) :
-					self.mom_pl_win_dir = None
-
-			except :
-
-				self.mom_pl_win_dirl = None
-
-		# Call the automatic selection of data for the moments analysis.
-
-		if self.mom_pl_win_dir is not None :
-
-			[ spec.auto_mom_sel( self.mom_pl_win_bin,
-		        	             self.mom_pl_win_dir,
-		        	             self.mom_pl_min_sel_bin,
-		        	             self.mom_pl_min_sel_dir )
-			  for spec in self.pl_spec_arr                 ]
-
-		# Emit a signal that a change has occured to the moments window
-		# parameters.
-
-		self.emit( SIGNAL('janus_chng_mom_win') )
-
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR CHANGING THE MOMENTS SELCTION BIN WINDOW.
-	#-----------------------------------------------------------------------
-  
-	def chng_mom_pl_win_bin( self, val ) :
-
-		# Try to convert the "val" argument to an integer and store it.
-		# If this fails, store "None".
-
-		if ( val is None ) :
-			self.mom_pl_win_bin = None
-		else :
-			try :
-				self.mom_pl_win_bin = int( val )
-				if( ( self.mom_pl_win_bin < self.mom_pl_min_sel_bin  )
-				or  ( self.mom_pl_win_bin > self.pl_spec_arr[0]['n_bin'] )
-				                                             ) :
-					self.mom_pl_win_bin = None
-			except :
-				self.mom_pl_win_bin = None
-
-		# Call the automatic selection of data for the moments analysis.
-
-		if self.mom_pl_win_bin is not None :
-
-			[ spec.auto_mom_sel( self.mom_pl_win_bin,
-		        	             self.mom_pl_win_dir,
-		        	             self.mom_pl_min_sel_bin,
-		        	             self.mom_pl_min_sel_dir )
-			  for spec in self.pl_spec_arr                 ]
-
-		# Emit a signal that a change has occured to the moments window
-		# parameters.
-
-		self.emit( SIGNAL('janus_chng_mom_win') )
-
-
-
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR CHANGING THE SELECTION OF A SINGLE POINT.
-	#-----------------------------------------------------------------------
-
-	def chng_mom_sel( self, c, d, b ) :
-
-		# Change the selection of the requested datum.
-
-		self.mom_sel_bin[c][d][b] = not self.mom_sel_bin[c][d][b]
-
-		# Emit a signal that indicates that the datum's selection status
-		# for the moments analysis has changed.
-
-		self.emit( SIGNAL('janus_chng_mom_sel_bin'), c, d, b )
-
-		# Validate the new data selection (i.e., make sure that the two
-		# "self.sel_???" arrays are mutually-consistent) and update the
-		# "self.n_sel_???" counters.
-
-		self.vldt_mom_sel( )
-
-		# Ensure that the moments analysis has been set for "dyanmic"
-		# mode (since the user presumably wants it this way).  Rerun the
-		# moments analysis.
-
-		# Note.  An alternative behavior would be to check the value of
-		#        "self.dyn_mom" (without changing it) and then rerunning
-		#        the moments analysis only if this parameter has the
-		#        value "True".
-
-		self.chng_dyn( 'mom', True, rerun=False )
-
-		self.anls_mom( )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR VALIDATING THE FC DATA SELECTION.
 	#-----------------------------------------------------------------------
 
-	def vldt_mom_sel( self, emit_all=False ) :
+	def vldt_mom_fc_sel( self, emit_all=False ) :
 
 		# Note.  This function ensures that the two "self.mom_sel_???"
 		#        arrays are mutually consistent.  For each set of "c"-
@@ -1398,19 +1232,27 @@ class core( QObject ) :
 		                       for c in range( self.fc_spec['n_cup'] ) ]
 
 		# Determine the total number of selected pointing directions; if
-		# this number is less than the minimum "self.mom_min_sel_dir",
-		# deselect all pointing directions.
+		# this number is less than the minimum "self.mom_min_sel_dir" or
+		# greater than the number of available directions, deselect all
+		# pointing directions and disable any FC analyses.
 
 		self.mom_n_sel_dir = \
 		               sum( [ sum( sub ) for sub in self.mom_sel_dir ] )
 
-		if ( self.mom_n_sel_dir < self.mom_min_sel_dir ) :
+		if ( ( self.mom_n_sel_dir < self.mom_min_sel_dir ) or
+		     ( self.mom_n_sel_dir > self.fc_spec['n_dir'] ) ) :
 
 			self.mom_sel_dir = [ [ False
 			               for d in range( self.fc_spec['n_dir'] ) ]
 			               for c in range( self.fc_spec['n_cup'] ) ]
 
 			self.mom_n_sel_dir = 0
+
+			self.fc_loaded = False
+
+		else:
+
+			self.fc_loaded = True
 
 		# Emit (if necessary) the appropriate update signal(s).
 
@@ -1440,7 +1282,7 @@ class core( QObject ) :
 	# DEFINE THE FUNCTION FOR VALIDATING THE PL DATA SELECTION.
 	#-----------------------------------------------------------------------
 
-#	def vldt_mom_pl_sel( self, emit_all=False ) :
+	def vldt_mom_pl_sel( self ) :
 
 		# Note.  This function ensures that the two "self.mom_sel_???"
 		#        arrays are mutually consistent.  For each set of "t"-
@@ -1454,48 +1296,52 @@ class core( QObject ) :
 		#        Additionally, this functions serves to update the
 		#        "self.mom_n_sel_???" counters.
 
+		self.mom_pl_n_sel_dir = self.pl_spec_arr[0]['n_sel_dir']
 
-		# Save the initial selection of pointing directions.
-
-#		old_mom_pl_sel_dir = deepcopy( self.mom_pl_sel_dir )
-
-#		self.mom_pl_n_sel_dir = self.pl_spec_arr[0]['n_sel_dir']
-
+		# If the chosen number of pointing directions or bins is invalid
+		# or less than the corresponding minimum value,
+		# OR
 		# If the total number of selected pointing directions is less
-		# than the minimum "self.mom_min_sel_dir", deselect all
-		# pointing directions.
+		# than the minimum "self.mom_min_sel_dir" or greater the the
+		# number of available directions,
+		# deselect all data.
 
-#		if ( self.pl_spec_arr[0]['n_sel_dir'] < self.mom_pl_min_sel_dir ) :
+		if ( ( self.mom_pl_win_dir is None                 ) or
+		     ( self.mom_pl_win_bin is None                 ) or
+		     ( self.mom_pl_win_dir < self.mom_pl_min_dir   ) or
+		     ( self.mom_pl_win_bin < self.mom_pl_min_bin   ) or    
+		     ( self.pl_spec_arr[0]['n_sel_dir']
+		                         < self.mom_pl_min_sel_dir ) or
+		     ( self.pl_spec_arr[0]['n_sel_dir']
+		                       > self.pl_spec_arr['n_dir'] )    ):
 
-#			for t in range( self.pl_spec_arr[0]['n_the'] ) :
+			for t in range( self.pl_spec_arr[0]['n_the'] ) :
 
-#				for p in range( self.pl_spec_arr[0]['n_phi'] ) :
+				for p in range( self.pl_spec_arr[0]['n_phi'] ) :
 
-#					for b in range(
-#					        self.pl_spec_arr[0]['n_bin'] ) :
+					for b in range(
+					        self.pl_spec_arr[0]['n_bin'] ) :
 
-#						[ spec[t][p][b].set_mom_sel( False )
-#						  for spec in pl_spec_arr ]
+						[ spec[t][p][b].set_mom_sel( False )
+						  for spec in pl_spec_arr ]
 
-#			self.mom_pl_n_sel_dir = 0
+			self.mom_pl_n_sel_dir = 0
+
+			self.pl_loaded = False
+
+		else :
+
+			self.pl_loaded = True
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RUNNING THE MOMENTS ANALYSIS ON FC DATA.
 	#-----------------------------------------------------------------------
 
-	def anls_mom( self ) :
+	def anls_mom_fc( self ) :
 
 		# Re-initialize and the output of the moments analysis.
 
 		self.rset_var( var_mom_fc_res=True )
-
-		# If the point-selection arrays have not been populated, run
-		# the automatic point selection.
-
-		if ( ( self.mom_sel_dir is None ) or
-		     ( self.mom_sel_bin is None )    ) :
-
-			self.auto_mom_sel( )
 
 		# If any of the following conditions are met, emit a signal that
 		# indicates that the results of the moments analysis have
@@ -1503,9 +1349,7 @@ class core( QObject ) :
 		#   -- No (valid) ion spectrum has been requested.
 		#   -- Insufficient data have been selected.
 
-		if ( ( self.fc_spec is None                       ) or
-		     ( self.mom_n_sel_dir < self.mom_min_sel_dir  ) or
-		     ( self.mom_n_sel_dir > self.fc_spec['n_dir'] )    ) :
+		if not( self.fc_loaded ) :
 
 			self.emit( SIGNAL('janus_mesg'),
 			                  'core', 'norun', 'mom' )
@@ -1669,20 +1513,6 @@ class core( QObject ) :
 		                                    self.mom_res['n_p_c'], 0.,
 		                                    self.mom_res['w_p_c']      )
 
-
-
-
-
-
-		# Run the moments analysis on each PL spectrum.
-
-		self.anls_mom_pl( )
-
-
-
-
-
-
 		# Message the user that the moments analysis has completed.
 
 		self.emit( SIGNAL('janus_mesg'), 'core', 'end', 'mom' )
@@ -1725,31 +1555,27 @@ class core( QObject ) :
 
 	def anls_mom_pl( self ) :
 
-		# Re-initialize and the output of the moments analysis.
+		# Re-initialize the output of the moments analysis.
 
 		self.rset_var( var_mom_pl_res=True )
 
 		# If no PL spectra have been loaded, abort.
 
-		if ( ( self.pl_spec_arr is None     ) or
-		     ( len( self.pl_spec_arr ) == 0 )    ) :
+		if not( self.pl_loaded ) :
 
 			return
 
-		# Clear the moments results in each PL spectrum.
+		# If any of the following conditions are met, emit a signal that
+		# indicates that the results of the moments analysis have
+		# changed, and then abort.
+		#   -- No (valid) ion spectra have been requested.
+		#   -- Insufficient data have been selected.
 
-		for spec in self.pl_spec_arr :
-
-			spec.rset_mom( )
-
-		# If the "win" variables are invalid, send a signal and abort.
-
-		if ( ( self.mom_pl_win_dir is None               ) or
-		     ( self.mom_pl_win_bin is None               ) or
-		     ( self.mom_pl_win_dir < self.mom_pl_min_dir ) or
-		     ( self.mom_pl_win_bin < self.mom_pl_min_bin )    ) :
+		if not( self.pl_loaded ) :
 
 			self.emit( SIGNAL('janus_chng_mom_pl') )
+
+			return
 
 		# Perform the linear moments analysis on the PL data and save
 		# the results as a series of plas objects.
@@ -1804,6 +1630,172 @@ class core( QObject ) :
 		# Emit signal that PL moments-analysis results have changed.
 
 		self.emit( SIGNAL('janus_chng_mom_pl') )
+
+
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR CHANGING THE MOM. SELCTION DIRECTION WINDOW.
+	#-----------------------------------------------------------------------
+ 
+	def chng_mom_fc_win_dir( self, val ) :
+
+		# Try to convert the "val" argument to an integer and store it.
+		# If this fails, store "None".
+    
+		if ( val is None ) :
+
+			self.mom_win_dir = None
+
+		else :
+
+			try :
+
+				self.mom_win_dir = int( val )
+
+				if ( self.mom_win_dir < self.mom_min_sel_dir ) :
+					self.mom_win_dir = None
+
+				if ( self.mom_win_dir > self.mom_max_sel_dir ) :
+					self.mom_win_dir = None
+
+			except :
+
+				self.mom_win_dir = None
+
+		# Emit a signal that a change has occured to the moments window
+		# parameters.
+
+		self.emit( SIGNAL('janus_chng_mom_win') )
+
+		# Call the automatic selection of data for the moments analysis.
+
+		self.next_spec( run_fc = True )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR CHANGING THE MOMENTS SELCTION BIN WINDOW.
+	#-----------------------------------------------------------------------
+  
+	def chng_mom_fc_win_bin( self, val ) :
+
+		# Try to convert the "val" argument to an integer and store it.
+		# If this fails, store "None".
+
+		if ( val is None ) :
+			self.mom_win_bin = None
+		else :
+			try :
+				self.mom_win_bin = int( val )
+				if( ( self.mom_win_bin < self.mom_min_sel_bin  )
+				or  ( self.mom_win_bin > self.fc_spec['n_bin'] )
+				                                             ) :
+					self.mom_win_bin = None
+			except :
+				self.mom_win_bin = None
+
+		# Emit a signal that a change has occured to the moments window
+		# parameters.
+
+		self.emit( SIGNAL('janus_chng_mom_win') )
+
+		# Call the automatic selection of data for the moments analysis.
+
+		self.next_spec( run_fc = True )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR CHANGING THE MOM. SELCTION DIRECTION WINDOW.
+	#-----------------------------------------------------------------------
+ 
+	def chng_mom_pl_win_dir( self, val ) :
+
+		# Try to convert the "val" argument to an integer and store it.
+		# If this fails, store "None".
+
+		if ( val is None ) :
+
+			self.mom_pl_win_dir = None
+
+		else :
+
+			try :
+
+				self.mom_pl_win_dir = int( val )
+
+				if ( self.mom_pl_win_dir < self.mom_pl_min_sel_dir ) :
+					self.mom_pl_win_dir = None
+
+				if ( self.mom_pl_win_dir > self.mom_pl_max_sel_dir ) :
+					self.mom_pl_win_dir = None
+
+			except :
+
+				self.mom_pl_win_dirl = None
+
+		# Emit a signal that a change has occured to the moments window
+		# parameters.
+
+		self.emit( SIGNAL('janus_chng_mom_win') )
+
+		# Call the automatic selection of data for the moments analysis.
+
+		self.next_spec( run_pl = True )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR CHANGING THE MOMENTS SELCTION BIN WINDOW.
+	#-----------------------------------------------------------------------
+  
+	def chng_mom_pl_win_bin( self, val ) :
+
+		# Try to convert the "val" argument to an integer and store it.
+		# If this fails, store "None".
+
+		if ( val is None ) :
+			self.mom_pl_win_bin = None
+		else :
+			try :
+				self.mom_pl_win_bin = int( val )
+				if( ( self.mom_pl_win_bin < self.mom_pl_min_sel_bin  )
+				or  ( self.mom_pl_win_bin > self.pl_spec_arr[0]['n_bin'] )
+				                                             ) :
+					self.mom_pl_win_bin = None
+			except :
+				self.mom_pl_win_bin = None
+
+		# Emit a signal that a change has occured to the moments window
+		# parameters.
+
+		self.emit( SIGNAL('janus_chng_mom_win') )
+
+		# Call the automatic selection of data for the moments analysis.
+
+		self.next_spec( run_fc = True )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR CHANGING THE SELECTION OF A SINGLE POINT.
+	#-----------------------------------------------------------------------
+
+	def chng_mom_fc_sel( self, c, d, b ) :
+
+		# Change the selection of the requested datum.
+
+		self.mom_sel_bin[c][d][b] = not self.mom_sel_bin[c][d][b]
+
+		# Emit a signal that indicates that the datum's selection status
+		# for the moments analysis has changed.
+
+		self.emit( SIGNAL('janus_chng_mom_sel_bin'), c, d, b )
+
+		# Ensure that the moments analysis has been set for "dyanmic"
+		# mode (since the user presumably wants it this way).  Rerun the
+		# moments analysis.
+
+		# Note.  An alternative behavior would be to check the value of
+		#        "self.dyn_mom" (without changing it) and then rerunning
+		#        the moments analysis only if this parameter has the
+		#        value "True".
+
+		self.chng_dyn( 'mom', True, rerun=False )
+
+		self.next_sel( run_fc = True )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR CHANGING A NLN SPECIES.
@@ -2999,7 +2991,7 @@ class core( QObject ) :
 
 			if ( anal == 'mom' ) :
 
-				self.anls_mom( )
+				self.next_sel( run_fc = True, run_pl = True )
 
 				if ( ( not self.dyn_sel ) and
 				     ( not self.dyn_gss )     ) :
@@ -3262,13 +3254,15 @@ class core( QObject ) :
 		if ( signal ) :
 			self.emit( SIGNAL('janus_rstr_opt') )
 
+
+
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR AUTOMATICALLY RUNNING A RANGE OF SPECTRA.
 	#-----------------------------------------------------------------------
 
 	def auto_run( self, t_strt, t_stop,
 	                    get_next=None, err_halt=None, pause=None ) :
-
+		
 		# Supply values for any missing keywords.
 
 		get_next = False if ( get_next is None ) else get_next
@@ -3306,10 +3300,10 @@ class core( QObject ) :
 
 			if ( first_pass ) :
 				first_pass = False
-				self.load_spec( time_req=time_strt,
+				self.next_time( time_req=time_strt,
 				                get_next=get_next   )
 			else :
-				self.load_spec( time_req=self.time_epc,
+				self.next_time( time_req=self.time_epc,
 				                get_next=True           )
 
 			# If no spectrum was able to be loaded, abort.
@@ -3362,6 +3356,7 @@ class core( QObject ) :
 		# ended.
 
 		self.emit( SIGNAL('janus_done_auto_run') )
+		
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR SAVING THE RESULTS LOG TO A FILE.
