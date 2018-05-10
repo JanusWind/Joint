@@ -135,28 +135,28 @@ class widget_mom_ctrl( QWidget ) :
 		# Update the "fc_dir" text-box based on the value stored in
 		# "core".
 
-		if ( self.core.mom_win_dir is None ) :
+		if ( self.core.mom_fc_win_dir is None ) :
 
 			self.txt_win_dir.setStyleSheet( "color: red;" )
 
 		else :
 
 			self.txt_win_dir.setTextUpdate(
-			                          str( self.core.mom_win_dir ) )
+			                          str( self.core.mom_fc_win_dir ) )
 
 			self.txt_win_dir.setStyleSheet( "color: black;" )
 
 		# Update the "fc_bin" text-box based on the value stored in
 		# "core". 
 
-		if ( self.core.mom_win_bin is None ) :
+		if ( self.core.mom_fc_win_bin is None ) :
 
 			self.txt_win_bin.setStyleSheet( "color: red;" )
 
 		else :
 
 			self.txt_win_bin.setTextUpdate(
-			                          str( self.core.mom_win_bin ) )
+			                          str( self.core.mom_fc_win_bin ) )
 
 			self.txt_win_bin.setStyleSheet( "color: black;" )
 

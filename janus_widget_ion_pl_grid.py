@@ -118,8 +118,8 @@ class widget_pl_grid( QWidget ) :
 		                                         self.resp_chng_pl_spc )
 		self.connect( self.core, SIGNAL('janus_chng_mom_win'),
 		                                    self.resp_chng_mom_win )
-		self.connect( self.core, SIGNAL('janus_chng_mom_res'),
-		                                        self.resp_chng_mom_res )
+		self.connect( self.core, SIGNAL('janus_chng_mom_pl'),
+		                                        self.resp_chng_mom_pl )
 
 		#TODO add more signals
 
@@ -638,11 +638,8 @@ class widget_pl_grid( QWidget ) :
 		# user, assume that the curves in all plots should be
 		# (re-)rendered.
 
-		if ( self.core.pl_spec_arr == [] or self.core.mom_psd is None ) :
+		if ( self.core.pl_spec_arr == [] ) :
 			return
-
-		print self.n
-		print self.core.pl_spec_arr[self.n]
 
 		# For each plot in the grid, generate and display a fit curve
 		# based on the results of the analysis.
@@ -680,11 +677,12 @@ class widget_pl_grid( QWidget ) :
 					# Extract the points for this fit curve.
 
 					x = array( vel_cen )
-					y = array( self.core.mom_psd[self.n][t][p] )
+
+					y = array( self.core.pl_spec_arr[self.n]['psd_mom'][t][p] )
 
 					for tk in range(len(y)):
-						if y[tk] == 0:
-							y[tk] = 1e-11
+						if y[tk] == 0 or y[tk] is None:
+							y[tk] = 1.e-20
 
 					if ( self.log_x ) :
 						ax = log10( x )
@@ -692,6 +690,7 @@ class widget_pl_grid( QWidget ) :
 						ax = x
 
 					if ( self.log_y ) :
+						print y
 						ay = log10( y )
 					else :
 						ay = y
@@ -797,10 +796,10 @@ class widget_pl_grid( QWidget ) :
 		#self.make_hst( )
 
 	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_mom_res" SIGNAL.
+	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_mom_pl" SIGNAL.
 	#-----------------------------------------------------------------------
 
-	def resp_chng_mom_res( self ) :
+	def resp_chng_mom_pl( self ) :
 
 		# If the results of the moments analysis are being displayed,
 		# reset any existing fit curves and make new ones.

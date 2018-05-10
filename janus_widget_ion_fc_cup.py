@@ -492,15 +492,15 @@ class widget_fc_cup( QWidget ) :
 				sel_alt = None
 
 				if ( ( self.core.dsp == 'mom'          ) and 
-				     ( self.core.mom_sel_bin
+				     ( self.core.mom_fc_sel_bin
 						           is not None ) and
-				     ( self.core.mom_sel_dir
+				     ( self.core.mom_fc_sel_dir
 					                   is not None )     ) :
 
 					sel_bin = \
-					       self.core.mom_sel_bin[self.c][d][b]
+					       self.core.mom_fc_sel_bin[self.c][d][b]
 					sel_dir = \
-					       self.core.mom_sel_dir[self.c][d]
+					       self.core.mom_fc_sel_dir[self.c][d]
 
 				elif ( ( self.core.dsp == 'gsl'        ) and 
 				       ( self.core.nln_sel is not None )     ) :
@@ -1069,8 +1069,8 @@ class widget_fc_cup( QWidget ) :
 			# corresponding to the specified datum.
 
 			self.chng_pnt( j, i, b,
-			               self.core.mom_sel_bin[c][d][b],
-			               sel_dir=self.core.mom_sel_dir[c][ d] )
+			               self.core.mom_fc_sel_bin[c][d][b],
+			               sel_dir=self.core.mom_fc_sel_dir[c][ d] )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_mom_sel_dir" SIGNAL.
@@ -1115,8 +1115,8 @@ class widget_fc_cup( QWidget ) :
 
 			for b in range( self.core.fc_spec['n_bin'] ) :
 				self.chng_pnt( j, i, b,
-				            self.core.mom_sel_bin[c][d][b],
-				            sel_dir=self.core.mom_sel_dir[c][d] )
+				            self.core.mom_fc_sel_bin[c][d][b],
+				            sel_dir=self.core.mom_fc_sel_dir[c][d] )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_mom_sel_all" SIGNAL.

@@ -78,7 +78,7 @@ def thread_load_spec( core, time_req, get_prev=False, get_next=False ) :
 	core.emit( SIGNAL('janus_busy_end') )
 	core.emit( SIGNAL('janus_busy_beg') )
 
-	core.next_time( time_req, get_prev, get_next )
+	core.load_time( time_req, get_prev, get_next )
 
 	core.emit( SIGNAL('janus_busy_end') )
 

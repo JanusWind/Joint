@@ -262,6 +262,12 @@ class pl_spec( ) :
 			             for b in range( self._n_bin )     ]
 			             for p in range( self._n_phi )     ]
 			             for t in range( self._n_the )     ]
+		elif ( key == 'psd_mom_flat' ) :
+			return [  self.arr[t][p][b].calc_psd_mom( )
+			          for b in range( self._n_bin )
+			          for p in range( self._n_phi )
+			          for t in range( self._n_the )     ]
+
 		elif ( key == 'n_sel_bin' ) :
 			return [ [ sum( [ self.arr[t][p][b]['mom_sel']
 			                  for b in range( self._n_bin ) ] )
@@ -484,7 +490,7 @@ class pl_spec( ) :
 
 		win_max_ind = []
 
-		win_max_ind = argsort( dir_max_psd )[-self._sel_min_dir:]
+		win_max_ind = argsort( dir_max_psd )[-win_dir:]
 
 		# Assign a selection value of "True" to the data that were
 		# identified as having the highest PSD values

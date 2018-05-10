@@ -106,8 +106,8 @@ class core( QObject ) :
 	# | chng_mfi          |                              |
 	# | chng_spin         |                              |
 	# | chng_mom_win      |                              |
-	# | chng_mom_sel_bin  | c, d, b                      |
-	# | chng_mom_sel_dir  | c, d                         |
+	# | chng_mom_fc_sel_bin  | c, d, b                      |
+	# | chng_mom_fc_sel_dir  | c, d                         |
 	# | chng_mom_sel_all  |                              |
 	# | chng_mom_res      |                              |
 	# | chng_nln_pop      | i                            |
@@ -336,32 +336,29 @@ class core( QObject ) :
 
 		if ( var_mom_fc_win ) :
 
-			self.mom_win_dir = 7
-			self.mom_win_bin = 7
+			self.mom_fc_win_dir = 7
+			self.mom_fc_win_bin = 7
 
 		# If requested, (re-)initialize the variables associated with
 		# the data seleciton for the FC moments analysis.
 
 		if ( var_mom_fc_sel ) :
 
-			self.mom_min_sel_dir =  5
-			self.mom_min_sel_bin =  3
+			self.mom_fc_min_dir =  5
+			self.mom_fc_min_bin =  3
 
-			self.mom_max_sel_dir = 20
+			self.mom_fc_max_dir = 20
 
-			self.mom_sel_dir     = None
-			self.mom_sel_bin     = None
+			self.mom_fc_sel_dir     = None
+			self.mom_fc_sel_bin     = None
 
 		# If requested, (re-)initialize and store the variables
 		# associated with the results of the FC moments analysis.
 
 		if ( var_mom_fc_res ) :
 
-			self.mom_res  = None
+			self.mom_fc_res  = None
 			self.mom_curr = None
-
-			self.mom_pl_res = None
-			self.mom_psd    = None
 
 		# If requested, (re-)initialize the variables associated with
 		# the ion species and populations for the non-linear analysis.
@@ -764,8 +761,6 @@ class core( QObject ) :
 	def load_fc( self, time_req=None,
 	               get_prev=False, get_next=False ) :
 
-		print self.time_txt
-
 		# Message the user that a new Wind/FC ion spectrum is about to
 		# be loaded.
 
@@ -833,7 +828,7 @@ class core( QObject ) :
 
 		# If no spectra were found, abort.
 
-		if ( self.pl_spec_arr is None or len( self.pl_spec_arr == 0) ) :
+		if ( self.pl_spec_arr is None or len( self.pl_spec_arr ) == 0 ) :
 			self.emit( SIGNAL('janus_chng_spc') )
 			return
 
@@ -1057,19 +1052,19 @@ class core( QObject ) :
 
 		# Initially, deselect all look directions and bins.
 
-		self.mom_sel_dir = [ [ False 
+		self.mom_fc_sel_dir = [ [ False 
 		                       for d in range(self.fc_spec['n_dir']) ]
 		                       for c in range(self.fc_spec['n_cup']) ]
 
-		self.mom_sel_bin = [ [ [ False 
+		self.mom_fc_sel_bin = [ [ [ False 
 		                         for b in range(self.fc_spec['n_bin']) ]
                                          for d in range(self.fc_spec['n_dir']) ]
 		                         for c in range(self.fc_spec['n_cup']) ]
 
 		# If the "mom_win_???" variables are invalid, abort.
 
-		if ( ( self.mom_win_dir is None ) or
-		     ( self.mom_win_bin is None )    ) :
+		if ( ( self.mom_fc_win_dir is None ) or
+		     ( self.mom_fc_win_bin is None )    ) :
 
 			self.vldt_mom_sel( emit_all=True )
 
@@ -1077,16 +1072,16 @@ class core( QObject ) :
 
 			return
 
-		# Find the maximum current window (of "self.mom_win_bin" bins)
+		# Find the maximum current window (of "self.mom_fc_win_bin" bins)
 		# for each direction
 		dir_max_ind  = [ [ self.fc_spec.find_max_curr( c, d,
-		                             win=self.mom_win_bin              )
+		                             win=self.mom_fc_win_bin              )
 		                        for d in range(self.fc_spec['n_dir'] ) ]
 		                        for c in range(self.fc_spec['n_cup'] ) ]
 
 		dir_max_curr = [ [ self.fc_spec.calc_tot_curr( c, d,
 		                             dir_max_ind[c][d],
-		                             win=self.mom_win_bin              )
+		                             win=self.mom_fc_win_bin              )
 		                        for d in range(self.fc_spec['n_dir'] ) ]
 		                        for c in range(self.fc_spec['n_cup'] ) ]
 
@@ -1104,33 +1099,33 @@ class core( QObject ) :
 				curr_sum = sum( [ dir_max_curr[c][
 				                  (d+i)%self.fc_spec['n_dir']  ]
 				                  for i in range(
-				                           self.mom_win_dir) ] )
+				                           self.mom_fc_win_dir) ] )
 
 				if ( curr_sum > curr_sum_max ) :
 					cup_max_ind[c] = d
 					curr_sum_max   = curr_sum
 
-		# Populate "self.mom_sel_bin" and "self.mom_sel_dir"
+		# Populate "self.mom_fc_sel_bin" and "self.mom_fc_sel_dir"
 		# appropriately.
 
 		for c in range( self.fc_spec['n_cup'] ) :
 
 			for pd in range( cup_max_ind[c],
-			                 cup_max_ind[c] + self.mom_win_dir ) :
+			                 cup_max_ind[c] + self.mom_fc_win_dir ) :
 
 				# Compute the actual direction-index (versus the
 				# pseudo-direction-index).
 
 				d = pd % self.fc_spec['n_dir'   ]
-                                self.mom_sel_dir[c][d] = True
+                                self.mom_fc_sel_dir[c][d] = True
 
 				# Select the bins in this look direction's
 				# maximal window
 
 				for b in range( dir_max_ind[c][d],
 				                dir_max_ind[c][d]
-				                          + self.mom_win_bin ) :
-					self.mom_sel_bin[c][d][b] = True
+				                          + self.mom_fc_win_bin ) :
+					self.mom_fc_sel_bin[c][d][b] = True
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR AUTOMATIC DATA SELECTION FOR THE PL MOM. ANLS.
@@ -1174,7 +1169,7 @@ class core( QObject ) :
 		if ( run_fc and self.fc_loaded ) :
 
 			# Validate the Wind/FC point-selection (which includes
-			# populating the "self.mom_sel_dir" array)
+			# populating the "self.mom_fc_sel_dir" array)
 
 			self.vldt_mom_fc_sel( emit_all=True )
 
@@ -1200,12 +1195,12 @@ class core( QObject ) :
 
 		# Note.  This function ensures that the two "self.mom_sel_???"
 		#        arrays are mutually consistent.  For each set of "c"-
-		#        and "d"-values, "self.mom_sel_dir[c,d]" can only be
+		#        and "d"-values, "self.mom_fc_sel_dir[c,d]" can only be
 		#        "True" if at least "self.min_sel_bin" of the elements
-		#        in "self.mom_sel_bin[c,d,:]" are "True".  However, if
-		#        fewer than "self.mom_min_sel_dir" sets of "c"- and
+		#        in "self.mom_fc_sel_bin[c,d,:]" are "True".  However, if
+		#        fewer than "self.mom_fc_min_dir" sets of "c"- and
 		#        "d"-values satisfy this criterion, all elements of
-		#        "self.mom_sel_dir" are given the value "False".		
+		#        "self.mom_fc_sel_dir" are given the value "False".		
 		#
 		#        Additionally, this functions serves to update the
 		#        "self.mom_n_sel_???" counters.
@@ -1213,12 +1208,12 @@ class core( QObject ) :
 
 		# Save the initial selection of pointing directions.
 
-		old_mom_sel_dir = deepcopy( self.mom_sel_dir )
+		old_mom_fc_sel_dir = deepcopy( self.mom_fc_sel_dir )
 
 		# Update the counter "self.mom_n_sel_bin" (i.e., the number of
 		# selected data in each pointing direction).
 
-		self.mom_n_sel_bin = [ [ sum( self.mom_sel_bin[c][d] )
+		self.mom_n_sel_bin = [ [ sum( self.mom_fc_sel_bin[c][d] )
 		                       for d in range( self.fc_spec['n_dir'] ) ]
 		                       for c in range( self.fc_spec['n_cup'] ) ]
 
@@ -1226,23 +1221,23 @@ class core( QObject ) :
 		# data selection, and then update the counter
 		# "self.mom_n_sel_dir".
 
-		self.mom_sel_dir = [ [
-		              self.mom_n_sel_bin[c][d] >= self.mom_min_sel_bin
+		self.mom_fc_sel_dir = [ [
+		              self.mom_n_sel_bin[c][d] >= self.mom_fc_min_bin
 		                       for d in range( self.fc_spec['n_dir'] ) ]
 		                       for c in range( self.fc_spec['n_cup'] ) ]
 
 		# Determine the total number of selected pointing directions; if
-		# this number is less than the minimum "self.mom_min_sel_dir" or
+		# this number is less than the minimum "self.mom_fc_min_dir" or
 		# greater than the number of available directions, deselect all
 		# pointing directions and disable any FC analyses.
 
 		self.mom_n_sel_dir = \
-		               sum( [ sum( sub ) for sub in self.mom_sel_dir ] )
+		               sum( [ sum( sub ) for sub in self.mom_fc_sel_dir ] )
 
-		if ( ( self.mom_n_sel_dir < self.mom_min_sel_dir ) or
+		if ( ( self.mom_n_sel_dir < self.mom_fc_min_dir ) or
 		     ( self.mom_n_sel_dir > self.fc_spec['n_dir'] ) ) :
 
-			self.mom_sel_dir = [ [ False
+			self.mom_fc_sel_dir = [ [ False
 			               for d in range( self.fc_spec['n_dir'] ) ]
 			               for c in range( self.fc_spec['n_cup'] ) ]
 
@@ -1263,7 +1258,7 @@ class core( QObject ) :
 		else :
 
 			# Identify differences between the new and old versions
-			# of "self.mom_sel_dir".  For each pointing direction
+			# of "self.mom_fc_sel_dir".  For each pointing direction
 			# whose selection status for the moments analysis has
 			# changed, emit a signal indicating this.
 
@@ -1271,8 +1266,8 @@ class core( QObject ) :
 
 				for d in range( self.fc_spec['n_dir'] ) :
 
-					if ( self.mom_sel_dir[c][d]
-					            != old_mom_sel_dir[c][d] ) :
+					if ( self.mom_fc_sel_dir[c][d]
+					            != old_mom_fc_sel_dir[c][d] ) :
 
 						self.emit( SIGNAL(
 						      'janus_chng_mom_sel_dir'),
@@ -1284,14 +1279,16 @@ class core( QObject ) :
 
 	def vldt_mom_pl_sel( self ) :
 
+		# FIXME change this comment
+
 		# Note.  This function ensures that the two "self.mom_sel_???"
 		#        arrays are mutually consistent.  For each set of "t"-
-		#        and "p"-values, "self.mom_sel_dir[t,p]" can only be
-		#        "True" if at least "self.min_sel_bin" of the elements
-		#        in "self.mom_sel_bin[t,p,:]" are "True".  However, if
-		#        fewer than "self.mom_min_sel_dir" sets of "t"- and
-		#        "p"-values satisfy this criterion, all elements of
-		#        "self.mom_sel_dir" are given the value "False".		
+		#        and "p"-values, "self.mom_pl_sel_dir[t,p]" can only be
+		#        "True" if at least "self.min_sel_bin" of the data
+		#        are selected.  However, if
+		#        fewer than "self.mom_pl_min_dir" sets of "t"- and
+		#        "p"-values satisfy this criterion, all data are given
+		#        given the 'selected' value "False".		
 		#
 		#        Additionally, this functions serves to update the
 		#        "self.mom_n_sel_???" counters.
@@ -1302,7 +1299,7 @@ class core( QObject ) :
 		# or less than the corresponding minimum value,
 		# OR
 		# If the total number of selected pointing directions is less
-		# than the minimum "self.mom_min_sel_dir" or greater the the
+		# than the minimum "self.mom_pl_min_dir" or greater the the
 		# number of available directions,
 		# deselect all data.
 
@@ -1311,9 +1308,9 @@ class core( QObject ) :
 		     ( self.mom_pl_win_dir < self.mom_pl_min_dir   ) or
 		     ( self.mom_pl_win_bin < self.mom_pl_min_bin   ) or    
 		     ( self.pl_spec_arr[0]['n_sel_dir']
-		                         < self.mom_pl_min_sel_dir ) or
+		                         < self.mom_pl_min_dir ) or
 		     ( self.pl_spec_arr[0]['n_sel_dir']
-		                       > self.pl_spec_arr['n_dir'] )    ):
+		                       > self.pl_spec_arr[0]['n_dir'] )    ):
 
 			for t in range( self.pl_spec_arr[0]['n_the'] ) :
 
@@ -1365,7 +1362,7 @@ class core( QObject ) :
 		# Extract the "c"- and "d"-indices of each selected pointing
 		# direction.
 
-		( tk_c, tk_d ) = where( self.mom_sel_dir )
+		( tk_c, tk_d ) = where( self.mom_fc_sel_dir )
 
 		# Initialize the "eta_*" arrays.
 
@@ -1412,7 +1409,7 @@ class core( QObject ) :
 			# Extract the "b" values of the selected data from this
 			# look direction.
 
-                        b = [i for i, x in enumerate( self.mom_sel_bin[c][d] )
+                        b = [i for i, x in enumerate( self.mom_fc_sel_bin[c][d] )
                                                                   if x==True   ]
 
 			eta_v[k] = - sum( [ self.fc_spec['curr'][c][d][i] 
@@ -1447,7 +1444,7 @@ class core( QObject ) :
 			# Extract the "b" indices of the selected data from this
 			# look direction.
 
-                        b = [i for i, x in enumerate( self.mom_sel_bin[c][d] )
+                        b = [i for i, x in enumerate( self.mom_fc_sel_bin[c][d] )
                                                                 if x==True   ]
 
 			# Estimate the number density and thermal speed based on
@@ -1492,13 +1489,13 @@ class core( QObject ) :
 
 		# Save the results of the FC moments analysis in a plas object.
 
-		self.mom_res = plas( )
+		self.mom_fc_res = plas( )
 
-		self.mom_res['v0_vec'] = mom_v_vec
+		self.mom_fc_res['v0_vec'] = mom_v_vec
 
-		self.mom_res.add_spec( name='Proton', sym='p', m=1., q=1. )
+		self.mom_fc_res.add_spec( name='Proton', sym='p', m=1., q=1. )
 
-		self.mom_res.add_pop( 'p',
+		self.mom_fc_res.add_pop( 'p',
 		                      drift=False, aniso=False,
 		                      name='Core', sym='c',
 		                      n=mom_n,     w=mom_w          )
@@ -1507,11 +1504,11 @@ class core( QObject ) :
 		# (linear) moments analysis.
 
 		self.mom_curr = self.fc_spec.calc_curr(
-		                                    self.mom_res['m_p'],
-		                                    self.mom_res['q_p'],
-		                                    self.mom_res['v0_vec'],
-		                                    self.mom_res['n_p_c'], 0.,
-		                                    self.mom_res['w_p_c']      )
+		                                    self.mom_fc_res['m_p'],
+		                                    self.mom_fc_res['q_p'],
+		                                    self.mom_fc_res['v0_vec'],
+		                                    self.mom_fc_res['n_p_c'], 0.,
+		                                    self.mom_fc_res['w_p_c']      )
 
 		# Message the user that the moments analysis has completed.
 
@@ -1555,9 +1552,8 @@ class core( QObject ) :
 
 	def anls_mom_pl( self ) :
 
-		# Re-initialize the output of the moments analysis.
-
-		self.rset_var( var_mom_pl_res=True )
+		# Note: Currently, auto_mom_pl_sel( ) must be called before this
+		#       function
 
 		# If no PL spectra have been loaded, abort.
 
@@ -1584,9 +1580,6 @@ class core( QObject ) :
 
 		for spec in self.pl_spec_arr :
 
-			spec.auto_mom_sel( self.mom_pl_win_bin,
-			                   self.mom_pl_win_dir  ) 
-
 			spec.anls_mom( )
 
 			# If the moments analysis fails for this spectrum,
@@ -1600,8 +1593,8 @@ class core( QObject ) :
 
 			self.mom_pl_res.add_spec( spec['mom_res'] )
 
-		# Compute the mean values and standard deviations for the PL
-		# moments analysis results
+		# Compute the mean values for the PL moments analysis results
+		# and store them as a 'plas' object.
 
 		self.mom_pl_avg = plas( )
 
@@ -1609,9 +1602,9 @@ class core( QObject ) :
 		self.mom_pl_avg['v0_y']  = mean( self.mom_pl_res['v0_y' ] )
 		self.mom_pl_avg['v0_z']  = mean( self.mom_pl_res['v0_z' ] )
 
-		self.mom_pl_avg['sigma_v0_x']  = std( self.mom_pl_res['v0_x' ] )
-		self.mom_pl_avg['sigma_v0_y']  = std( self.mom_pl_res['v0_y' ] )
-		self.mom_pl_avg['sigma_v0_z']  = std( self.mom_pl_res['v0_z' ] )
+		self.mom_pl_avg['sig_v0_x']  = std( self.mom_pl_res['v0_x' ] )
+		self.mom_pl_avg['sig_v0_y']  = std( self.mom_pl_res['v0_y' ] )
+		self.mom_pl_avg['sig_v0_z']  = std( self.mom_pl_res['v0_z' ] )
 
 		self.mom_pl_avg.add_spec( name='Proton', sym='p', m=1., q=1. )
 
@@ -1619,19 +1612,20 @@ class core( QObject ) :
 		                          name='Core', sym='c',
 		                          drift=False, aniso=False )
 
+		# Compute the standard deviation values for the PL moments
+		# analysis results
+
 		pop = self.mom_pl_avg['p_c']
 
 		pop['n'] = mean( self.mom_pl_res['n_p_c'] )
 		pop['w'] = mean( self.mom_pl_res['w_p_c'] )
 
-		pop['sigma_n'] = std( self.mom_pl_res['n_p_c'] )
-		pop['sigma_w'] = std( self.mom_pl_res['w_p_c'] )
+		pop['sig_n'] = std( self.mom_pl_res['n_p_c'] )
+		pop['sig_w'] = std( self.mom_pl_res['w_p_c'] )
 
 		# Emit signal that PL moments-analysis results have changed.
 
 		self.emit( SIGNAL('janus_chng_mom_pl') )
-
-
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR CHANGING THE MOM. SELCTION DIRECTION WINDOW.
@@ -1644,23 +1638,23 @@ class core( QObject ) :
     
 		if ( val is None ) :
 
-			self.mom_win_dir = None
+			self.mom_fc_win_dir = None
 
 		else :
 
 			try :
 
-				self.mom_win_dir = int( val )
+				self.mom_fc_win_dir = int( val )
 
-				if ( self.mom_win_dir < self.mom_min_sel_dir ) :
-					self.mom_win_dir = None
+				if ( self.mom_fc_win_dir < self.mom_fc_min_dir ) :
+					self.mom_fc_win_dir = None
 
-				if ( self.mom_win_dir > self.mom_max_sel_dir ) :
-					self.mom_win_dir = None
+				if ( self.mom_fc_win_dir > self.mom_fc_max_dir ) :
+					self.mom_fc_win_dir = None
 
 			except :
 
-				self.mom_win_dir = None
+				self.mom_fc_win_dir = None
 
 		# Emit a signal that a change has occured to the moments window
 		# parameters.
@@ -1681,16 +1675,16 @@ class core( QObject ) :
 		# If this fails, store "None".
 
 		if ( val is None ) :
-			self.mom_win_bin = None
+			self.mom_fc_win_bin = None
 		else :
 			try :
-				self.mom_win_bin = int( val )
-				if( ( self.mom_win_bin < self.mom_min_sel_bin  )
-				or  ( self.mom_win_bin > self.fc_spec['n_bin'] )
+				self.mom_fc_win_bin = int( val )
+				if( ( self.mom_fc_win_bin < self.mom_fc_min_bin  )
+				or  ( self.mom_fc_win_bin > self.fc_spec['n_bin'] )
 				                                             ) :
-					self.mom_win_bin = None
+					self.mom_fc_win_bin = None
 			except :
-				self.mom_win_bin = None
+				self.mom_fc_win_bin = None
 
 		# Emit a signal that a change has occured to the moments window
 		# parameters.
@@ -1720,15 +1714,15 @@ class core( QObject ) :
 
 				self.mom_pl_win_dir = int( val )
 
-				if ( self.mom_pl_win_dir < self.mom_pl_min_sel_dir ) :
+				if ( self.mom_pl_win_dir < self.mom_pl_min_dir ) :
 					self.mom_pl_win_dir = None
 
-				if ( self.mom_pl_win_dir > self.mom_pl_max_sel_dir ) :
+				if ( self.mom_pl_win_dir > self.pl_spec_arr[0]['n_dir'] ) :
 					self.mom_pl_win_dir = None
 
 			except :
 
-				self.mom_pl_win_dirl = None
+				self.mom_pl_win_dir = None
 
 		# Emit a signal that a change has occured to the moments window
 		# parameters.
@@ -1753,7 +1747,7 @@ class core( QObject ) :
 		else :
 			try :
 				self.mom_pl_win_bin = int( val )
-				if( ( self.mom_pl_win_bin < self.mom_pl_min_sel_bin  )
+				if( ( self.mom_pl_win_bin < self.mom_pl_min_bin  )
 				or  ( self.mom_pl_win_bin > self.pl_spec_arr[0]['n_bin'] )
 				                                             ) :
 					self.mom_pl_win_bin = None
@@ -1777,7 +1771,7 @@ class core( QObject ) :
 
 		# Change the selection of the requested datum.
 
-		self.mom_sel_bin[c][d][b] = not self.mom_sel_bin[c][d][b]
+		self.mom_fc_sel_bin[c][d][b] = not self.mom_fc_sel_bin[c][d][b]
 
 		# Emit a signal that indicates that the datum's selection status
 		# for the moments analysis has changed.
@@ -2103,7 +2097,7 @@ class core( QObject ) :
 		# (sucessfully), run the "make_nln_gss" function (to update the
 		# "self.nln_gss_" arrays, widgets, etc.) and then abort.
 
-		if ( self.mom_res is None ) :
+		if ( self.mom_fc_res is None ) :
 
 			self.make_nln_gss( )
 
@@ -2114,7 +2108,7 @@ class core( QObject ) :
 
 		try :
 			self.nln_plas['v0_vec'] = [
-			         round( v, 1 ) for v in self.mom_res['v0_vec'] ]
+			         round( v, 1 ) for v in self.mom_fc_res['v0_vec'] ]
 		except :
 			pass
 
@@ -2138,7 +2132,7 @@ class core( QObject ) :
 			try :
 				self.nln_plas.arr_pop[i]['n'] = round_sig(
 				                      self.nln_set_gss_n[i]
-				                      * self.mom_res['n_p'], 4 )
+				                      * self.mom_fc_res['n_p'], 4 )
 			except :
 				self.nln_plas.arr_pop[i]['n'] = None
 
@@ -2148,13 +2142,13 @@ class core( QObject ) :
 			if ( self.nln_plas.arr_pop[i]['drift'] ) :
 				try :
 					sgn = sign( dot(
-					             self.mom_res['v0_vec'],
+					             self.mom_fc_res['v0_vec'],
 					             self.mfi_avg_nrm        ) )
 					if ( sgn == 0. ) :
 						sgn = 1.
 					self.nln_plas.arr_pop[i]['dv'] = \
 					    round_sig( 
-					        sgn * self.mom_res['v0_mag']
+					        sgn * self.mom_fc_res['v0_mag']
 					            * self.nln_set_gss_d[i], 4 )
 				except :
 					self.nln_plas.arr_pop[i]['dv'] = None
@@ -2164,7 +2158,7 @@ class core( QObject ) :
 
 			try :
 				w = round_sig( self.nln_set_gss_w[i] 
-				               * self.mom_res['w_p'], 4 )
+				               * self.mom_fc_res['w_p'], 4 )
 			except :
 				w = None
 
@@ -2473,7 +2467,7 @@ class core( QObject ) :
 		# Select data based on the selection windows from each of the
 		# look directions selected for the moments analysis.
 
-		( tk_c, tk_d ) = where( self.mom_sel_dir )
+		( tk_c, tk_d ) = where( self.mom_fc_sel_dir )
 
 		n_tk = len( tk_c )
 
@@ -3320,7 +3314,7 @@ class core( QObject ) :
 					self.stop_auto_run = True
 					break
 				if ( ( self.dyn_mom         ) and
-				     ( self.mom_res is None )     ) :
+				     ( self.mom_fc_res is None )     ) :
 					self.stop_auto_run = True
 					break
 				if ( ( self.dyn_nln               ) and

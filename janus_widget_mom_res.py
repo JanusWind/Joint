@@ -136,7 +136,7 @@ class widget_mom_res( format_TextEdit ) :
 		# If the moments analysis has not been performed, finish
 		# the table and return
 
-		if ( self.core.mom_res is None ) :
+		if ( self.core.mom_fc_res is None ) :
 
 			txt += '</table>'
 			self.insertHtml( txt )
@@ -152,13 +152,13 @@ class widget_mom_res( format_TextEdit ) :
 
 		if ( self.core.opt['res_n'] ) :
 
-			txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_res['n_p_c'] )
+			txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_fc_res['n_p_c'] )
 
 		if ( self.core.opt['res_v'] ) :
 
-			txt += '<td align="right">{:.0f}</td>'.format( self.core.mom_res['v_p_c'] )
+			txt += '<td align="right">{:.0f}</td>'.format( self.core.mom_fc_res['v_p_c'] )
 
-			v_vec = self.core.mom_res['v_vec_p_c']
+			v_vec = self.core.mom_fc_res['v_vec_p_c']
 			txt += '<td align="right">{:.0f}</td>'.format( v_vec[0] )
 			txt += '<td align="right">{:.0f}</td>'.format( v_vec[1] )
 			txt += '<td align="right">{:.0f}</td>'.format( v_vec[2] )
@@ -166,8 +166,8 @@ class widget_mom_res( format_TextEdit ) :
 		if ( ( self.core.opt['res_dw'] ) and
 		     ( self.core.opt['res_w'] )    ) :
 
-			txt += '<td align="right">{:.0f}</td>'.format( self.core.mom_res['w_p_c'] )
-			txt += '<td align="right">{:.1f}</td>'.format( self.core.mom_res['T_p_c'] )
+			txt += '<td align="right">{:.0f}</td>'.format( self.core.mom_fc_res['w_p_c'] )
+			txt += '<td align="right">{:.1f}</td>'.format( self.core.mom_fc_res['T_p_c'] )
 
 		txt += '<th>FC</th>'
 
@@ -206,18 +206,18 @@ class widget_mom_res( format_TextEdit ) :
 
 		txt += '<th><i>&sigma;<sub>PL</sub></i></th>'
 
-		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_std['n_p_c'] )
+		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_avg['p_c']['sig_n'] )
 
-		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_std['v_p_c'] )
+		txt += '<td align="right">TBD</td>'
+#		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_avg['sig_v0'] )
 
-		a_v_vec = self.core.mom_pl_std['v_vec_p_c']
+		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_avg['sig_v0_x'] )
+		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_avg['sig_v0_y'] )
+		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_avg['sig_v0_z'] )
 
-		txt += '<td align="right">{:.2f}</td>'.format( a_v_vec[0] )
-		txt += '<td align="right">{:.2f}</td>'.format( a_v_vec[1] )
-		txt += '<td align="right">{:.2f}</td>'.format( a_v_vec[2] )
-
-		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_std['w_p_c'] )
-		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_std['T_p_c'] )
+		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_avg['p_c']['sig_w'] )
+		txt += '<td align="right">TBD</td>'
+#		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_avg['sig_T'] )
 
 		txt += '<th><i>&sigma;<sub>PL</sub></i></th>'
 
