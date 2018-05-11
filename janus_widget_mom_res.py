@@ -175,6 +175,20 @@ class widget_mom_res( format_TextEdit ) :
 
 		# End of FC data
 
+		# If there is no PL data, finish the table
+
+		if len( self.core.pl_spec_arr ) == 0 :
+
+			txt += '</table>'
+
+			self.insertHtml( txt )
+
+			# Scroll to the top of the text area.
+
+			self.moveCursor( QTextCursor.Start )
+
+			return
+
 		# Write the PL data to the table
 
 		# Mean values

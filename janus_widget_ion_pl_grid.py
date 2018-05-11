@@ -43,7 +43,8 @@ from janus_step import step
 
 # Load the necessary "numpy" array modules and numeric-function modules.
 
-from numpy import amax, amin, array, ceil, floor, log10, sqrt, tile, where
+from numpy import amax, amin, array, ceil, floor, log10, sqrt, tile, where, \
+                  float64
 
 # Load the necessary threading modules.
 
@@ -680,9 +681,14 @@ class widget_pl_grid( QWidget ) :
 
 					y = array( self.core.pl_spec_arr[self.n]['psd_mom'][t][p] )
 
+					# If any points are 0 or None, set them
+					# to an arbitrary minimum value
+
+					# FIXME HOW?!
+
 					for tk in range(len(y)):
 						if y[tk] == 0 or y[tk] is None:
-							y[tk] = 1.e-20
+							y[tk] = 1e-20
 
 					if ( self.log_x ) :
 						ax = log10( x )
