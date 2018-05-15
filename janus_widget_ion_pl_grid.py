@@ -163,7 +163,7 @@ class widget_pl_grid( QWidget ) :
 		# selection points, and the fit curves.
 
 		self.make_hst( )
-		self.make_pnt( )
+		###self.make_pnt( )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR INITIALIZING THE WIDGET AND ITS PLOTS.
@@ -683,10 +683,9 @@ class widget_pl_grid( QWidget ) :
 					# If any points are 0 or None, set them
 					# to an arbitrary minimum value
 
-					# FIXME HOW?!
-
 					for tk in range(len(y)):
-						if y[tk] == 0 or y[tk] is None:
+						if ( ( y[tk] == 0    ) or
+						     ( y[tk] is None )    ) :
 							y[tk] = 1e-20
 
 					if ( self.log_x ) :
@@ -694,13 +693,9 @@ class widget_pl_grid( QWidget ) :
 					else :
 						ax = x
 
-					ay = [None]*len(y)
-
 					if ( self.log_y ) :
-
-						for k in range( len( y ) ) :
-							ay[k] = log10( y[k] )
-#						ay = log10( y )
+						ay = array( [ log10( v )
+						              for v in y ] )
 					else :
 						ay = y
 
@@ -795,6 +790,8 @@ class widget_pl_grid( QWidget ) :
 	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_pl_spc" SIGNAL.
 	#-----------------------------------------------------------------------
 
+	#TODO: Delete this function and the call of it above.
+
 	def resp_chng_pl_spc( self ) :
 
 		# Clear the plots of all their elements and regenerate them.
@@ -807,6 +804,9 @@ class widget_pl_grid( QWidget ) :
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_mom_pl" SIGNAL.
 	#-----------------------------------------------------------------------
+
+	#TODO resp_chng_mom_pl_sel
+	#     resp_chng_mom_pl_res
 
 	def resp_chng_mom_pl( self ) :
 

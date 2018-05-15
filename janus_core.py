@@ -1187,6 +1187,8 @@ class core( QObject ) :
 
 			self.anls_mom_pl( )
 
+		# TODO: based on self.dyn_??? variables, decide what to do next.
+
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR VALIDATING THE FC DATA SELECTION.
 	#-----------------------------------------------------------------------
@@ -1572,20 +1574,15 @@ class core( QObject ) :
 		# Perform the linear moments analysis on the PL data and save
 		# the results as a series of plas objects.
 
-		self.mom_pl_res = series( )
+		self.mom_pl_res = series( sort=False )
 
 		for spec in self.pl_spec_arr :
 
+			# Run moments analysis.
+
 			spec.anls_mom( )
 
-			# If the moments analysis fails for this spectrum,
-			# move on to the next one 
-
-			if spec['mom_res'] is None:
-
-				continue
-
-			# Add the spectrum to the series
+			# Add the results to the series.
 
 			self.mom_pl_res.add_spec( spec['mom_res'] )
 
@@ -1692,6 +1689,34 @@ class core( QObject ) :
 		self.next_spec( run_fc = True )
 
 	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR CHANGING THE SELECTION OF A SINGLE POINT.
+	#-----------------------------------------------------------------------
+
+	def chng_mom_fc_sel( self, c, d, b ) :
+
+		# Change the selection of the requested datum.
+
+		self.mom_fc_sel_bin[c][d][b] = not self.mom_fc_sel_bin[c][d][b]
+
+		# Emit a signal that indicates that the datum's selection status
+		# for the moments analysis has changed.
+
+		self.emit( SIGNAL('janus_chng_mom_sel_bin'), c, d, b )
+
+		# Ensure that the moments analysis has been set for "dyanmic"
+		# mode (since the user presumably wants it this way).  Rerun the
+		# moments analysis.
+
+		# Note.  An alternative behavior would be to check the value of
+		#        "self.dyn_mom" (without changing it) and then rerunning
+		#        the moments analysis only if this parameter has the
+		#        value "True".
+
+		self.chng_dyn( 'mom', True, rerun=False )
+
+		self.next_sel( run_fc = True )
+
+	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR CHANGING THE MOM. SELCTION DIRECTION WINDOW.
 	#-----------------------------------------------------------------------
  
@@ -1757,35 +1782,29 @@ class core( QObject ) :
 
 		# Call the automatic selection of data for the moments analysis.
 
-		self.next_spec( run_fc = True )
+		self.next_spec( run_pl = True )
 
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR CHANGING THE SELECTION OF A SINGLE POINT.
-	#-----------------------------------------------------------------------
 
-	def chng_mom_fc_sel( self, c, d, b ) :
 
-		# Change the selection of the requested datum.
 
-		self.mom_fc_sel_bin[c][d][b] = not self.mom_fc_sel_bin[c][d][b]
 
-		# Emit a signal that indicates that the datum's selection status
-		# for the moments analysis has changed.
 
-		self.emit( SIGNAL('janus_chng_mom_sel_bin'), c, d, b )
 
-		# Ensure that the moments analysis has been set for "dyanmic"
-		# mode (since the user presumably wants it this way).  Rerun the
-		# moments analysis.
 
-		# Note.  An alternative behavior would be to check the value of
-		#        "self.dyn_mom" (without changing it) and then rerunning
-		#        the moments analysis only if this parameter has the
-		#        value "True".
 
-		self.chng_dyn( 'mom', True, rerun=False )
 
-		self.next_sel( run_fc = True )
+
+
+
+
+
+
+
+
+
+
+
+
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR CHANGING A NLN SPECIES.
