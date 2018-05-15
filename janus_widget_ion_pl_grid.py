@@ -44,7 +44,7 @@ from janus_step import step
 # Load the necessary "numpy" array modules and numeric-function modules.
 
 from numpy import amax, amin, array, ceil, floor, log10, sqrt, tile, where, \
-                  float64
+                  float64, shape
 
 # Load the necessary threading modules.
 
@@ -695,9 +695,13 @@ class widget_pl_grid( QWidget ) :
 					else :
 						ax = x
 
+					ay = [None]*len(y)
+
 					if ( self.log_y ) :
-						print y
-						ay = log10( y )
+
+						for k in range( len( y ) ) :
+							ay[k] = log10( y[k] )
+#						ay = log10( y )
 					else :
 						ay = y
 
