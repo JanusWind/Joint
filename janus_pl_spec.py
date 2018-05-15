@@ -467,10 +467,7 @@ class pl_spec( ) :
 
 		# Initially, assign all data to a selection value of "False".
 
-		[ [ [ self.arr[t][p][b].set_mom_sel( False ) 
-		      for b in range( self['n_bin'] )        ]
-                      for p in range( self['n_phi'] )        ]
-		      for t in range( self['n_the'] )        ]
+		self.rset_mom_sel( )
 
 		# Find the maximum psd window (of "n_win_bin" bins)
 		# for each direction

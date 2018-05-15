@@ -526,8 +526,7 @@ class widget_pl_grid( QWidget ) :
 #				     ( self.core.pl_spec_arr[self.n].mom_sel_dir
 #					                   is not None )     ) :
 
-				sel_bin = \
-				       self.core.pl_spec_arr[self.n].arr[t][p][b]['mom_sel']
+				sel_bin = self.core.pl_spec_arr[self.n].arr[t][p][b]['mom_sel']
 
 				"""
 				elif ( ( self.core.dsp == 'gsl'        ) and 

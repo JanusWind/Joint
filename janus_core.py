@@ -1066,9 +1066,9 @@ class core( QObject ) :
 		if ( ( self.mom_fc_win_dir is None ) or
 		     ( self.mom_fc_win_bin is None )    ) :
 
-			self.vldt_mom_sel( emit_all=True )
+			self.vldt_mom_fc_sel( emit_all=True )
 
-			self.anls_mom( )
+			self.anls_mom_fc( )
 
 			return
 
@@ -1319,7 +1319,7 @@ class core( QObject ) :
 					for b in range(
 					        self.pl_spec_arr[0]['n_bin'] ) :
 
-						[ spec[t][p][b].set_mom_sel( False )
+						[ spec.rset_mom_sel( )
 						  for spec in pl_spec_arr ]
 
 			self.mom_pl_n_sel_dir = 0
@@ -1555,12 +1555,8 @@ class core( QObject ) :
 		# Note: Currently, auto_mom_pl_sel( ) must be called before this
 		#       function
 
-		# If no PL spectra have been loaded, abort.
-
-		if not( self.pl_loaded ) :
-
-			return
-
+		# If no PL spectra have been loaded
+		# OR
 		# If any of the following conditions are met, emit a signal that
 		# indicates that the results of the moments analysis have
 		# changed, and then abort.
