@@ -222,16 +222,14 @@ class widget_mom_res( format_TextEdit ) :
 
 		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_avg['p_c']['sig_n'] )
 
-		txt += '<td align="right">TBD</td>'
-#		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_avg['sig_v0'] )
+		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_std_v )
 
 		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_avg['sig_v0_x'] )
 		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_avg['sig_v0_y'] )
 		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_avg['sig_v0_z'] )
 
 		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_avg['p_c']['sig_w'] )
-		txt += '<td align="right">TBD</td>'
-#		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_avg['sig_T'] )
+		txt += '<td align="right">{:.2f}</td>'.format( self.core.mom_pl_std_T )
 
 		txt += '<th><i>&sigma;<sub>PL</sub></i></th>'
 

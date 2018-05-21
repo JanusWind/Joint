@@ -62,7 +62,7 @@ from janus_pl_spec import pl_spec
 from numpy import zeros
 
 ################################################################################
-## DEFINE THE "widget_fc_cup" CLASS TO CUSTOMIZE "QWidget" FOR Wind/FC PLOTS.
+## DEFINE THE "widget_pl_grid" CLASS TO CUSTOMIZE "QWidget" FOR Wind/PL PLOTS.
 ################################################################################
 
 class widget_pl_grid( QWidget ) :
@@ -115,12 +115,12 @@ class widget_pl_grid( QWidget ) :
 		# Prepare to respond to signals received from the Janus core.
 
 		self.connect( self.core, SIGNAL('janus_rset'),  self.resp_rset )
-		self.connect( self.core, SIGNAL('janus_chng_pl_spc'),
-		                                         self.resp_chng_pl_spc )
 		self.connect( self.core, SIGNAL('janus_chng_mom_win'),
 		                                    self.resp_chng_mom_win )
-		self.connect( self.core, SIGNAL('janus_chng_mom_pl'),
-		                                        self.resp_chng_mom_pl )
+		self.connect( self.core, SIGNAL('janus_chng_mom_pl_sel'),
+		                                     self.resp_chng_mom_pl_sel )
+		self.connect( self.core, SIGNAL('janus_chng_mom_pl_res'),
+		                                     self.resp_chng_mom_pl_res )
 
 		#TODO add more signals
 
@@ -163,7 +163,6 @@ class widget_pl_grid( QWidget ) :
 		# selection points, and the fit curves.
 
 		self.make_hst( )
-		###self.make_pnt( )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR INITIALIZING THE WIDGET AND ITS PLOTS.
@@ -365,7 +364,7 @@ class widget_pl_grid( QWidget ) :
 		# If no spectrum has been loaded, clear any existing histograms
 		# and abort.
 
-		if ( self.core.pl_spec_arr is None ) : return
+		if ( self.core.pl_spec_arr == [] ) : return
 
 		# Generate the timestamp label
 
@@ -787,33 +786,26 @@ class widget_pl_grid( QWidget ) :
 		self.rset_pnt( )
 
 	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_pl_spc" SIGNAL.
+	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_mom_pl_res" SIGNAL.
 	#-----------------------------------------------------------------------
 
-	#TODO: Delete this function and the call of it above.
-
-	def resp_chng_pl_spc( self ) :
-
-		# Clear the plots of all their elements and regenerate them.
-
-		self.rset_hst( )
-		self.rset_pnt( )
-
-		#self.make_hst( )
-
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_mom_pl" SIGNAL.
-	#-----------------------------------------------------------------------
-
-	#TODO resp_chng_mom_pl_sel
-	#     resp_chng_mom_pl_res
-
-	def resp_chng_mom_pl( self ) :
+	def resp_chng_mom_pl_sel( self ) :
 
 		# If the results of the moments analysis are being displayed,
 		# reset any existing fit curves and make new ones.
 
-		self.make_crv( )
+		self.make_pnt( )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_mom_pl_res" SIGNAL.
+	#-----------------------------------------------------------------------
+
+	def resp_chng_mom_pl_res( self ) :
+
+		# If the results of the moments analysis are being displayed,
+		# reset any existing fit curves and make new ones.
+		return
+		#self.make_crv( )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_mom_win" SIGNAL.
@@ -823,8 +815,6 @@ class widget_pl_grid( QWidget ) :
 
 		# Update the color and visibility of the plot points
 		# corresponding to each of this look direction's data.
-
-		print self.n
 
 		for t in range( self.core.pl_spec_arr[self.n]['n_the'] ) :
 

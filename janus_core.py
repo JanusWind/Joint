@@ -321,8 +321,10 @@ class core( QObject ) :
 			self.mom_pl_min_dir = 3
 			self.mom_pl_min_bin = 3
 
-			self.mom_pl_res = None
-			self.mom_pl_avg = None
+			self.mom_pl_res   = None
+			self.mom_pl_avg   = None
+			self.mom_pl_std_v = None
+			self.mom_pl_std_T = None
 
 			# Clear the moments results in each PL spectrum.
 
@@ -1151,6 +1153,10 @@ class core( QObject ) :
 			spec.auto_mom_sel( self.mom_pl_win_dir,
 			                   self.mom_pl_win_bin  )
 
+		# Emit a signal that the PESA-L point selection has changed.
+
+		self.emit( SIGNAL( 'janus_chng_mom_pl_sel' ) )
+
 	#-----------------------------------------------------------------------
 	# DETERMINE THE NEXT PROCEDURAL STEP AFTER DATA SELECTION
 	#-----------------------------------------------------------------------
@@ -1158,6 +1164,8 @@ class core( QObject ) :
 	def next_sel( self, run_fc = False, run_pl = False ) :
 
 		# If no process has been requested, abort.
+
+		return
 
 		if not( run_fc or run_pl ) :
 
@@ -1181,11 +1189,13 @@ class core( QObject ) :
 
 			# Validate the Wind/PESA-L point-selection
 
-			self.vldt_mom_pl_sel( )
+			# self.vldt_mom_pl_sel( )
 
 			# Run the moments analysis on the Wind/PESA-L data
 
 			self.anls_mom_pl( )
+
+		self.emit( SIGNAL('janus_chng_mom_res') )
 
 		# TODO: based on self.dyn_??? variables, decide what to do next.
 
@@ -1275,6 +1285,7 @@ class core( QObject ) :
 						      'janus_chng_mom_sel_dir'),
 						      c, d )
 
+	'''
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR VALIDATING THE PL DATA SELECTION.
 	#-----------------------------------------------------------------------
@@ -1331,6 +1342,7 @@ class core( QObject ) :
 		else :
 
 			self.pl_loaded = True
+	'''
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RUNNING THE MOMENTS ANALYSIS ON FC DATA.
@@ -1519,7 +1531,7 @@ class core( QObject ) :
 		# Emit a signal that indicates that the results of the moments
 		# analysis have changed.
 
-		self.emit( SIGNAL('janus_chng_mom_res') )
+		# self.emit( SIGNAL('janus_chng_mom_res') )
 
 		# Update the initial guess for the non-linear analysis if
 		# dynamic updating has been requested.  If it wasn't, make sure
@@ -1567,7 +1579,7 @@ class core( QObject ) :
 
 		if not( self.pl_loaded ) :
 
-			self.emit( SIGNAL('janus_chng_mom_pl') )
+			self.emit( SIGNAL('janus_chng_mom_pl_res') )
 
 			return
 
@@ -1608,6 +1620,9 @@ class core( QObject ) :
 		# Compute the standard deviation values for the PL moments
 		# analysis results
 
+		self.mom_pl_std_v = None
+		self.mom_pl_std_T = None
+
 		pop = self.mom_pl_avg['p_c']
 
 		pop['n'] = mean( self.mom_pl_res['n_p_c'] )
@@ -1616,9 +1631,12 @@ class core( QObject ) :
 		pop['sig_n'] = std( self.mom_pl_res['n_p_c'] )
 		pop['sig_w'] = std( self.mom_pl_res['w_p_c'] )
 
+		self.mom_pl_std_v = std( self.mom_pl_res['v_p_c'] )
+		self.mom_pl_std_T = std( self.mom_pl_res['T_p_c'] )
+
 		# Emit signal that PL moments-analysis results have changed.
 
-		self.emit( SIGNAL('janus_chng_mom_pl') )
+		self.emit( SIGNAL('janus_chng_mom_pl_res') )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR CHANGING THE MOM. SELCTION DIRECTION WINDOW.
