@@ -108,8 +108,6 @@ class widget_pl( QTabWidget ) :
 
 		for n in range( len( self.core.pl_spec_arr ) ) :
 
-			print n
-
 			wdg = widget_pl_grid( self.core, n,
 		                                  n_plt_x=5, n_plt_y=5 )
 

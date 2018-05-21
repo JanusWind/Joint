@@ -258,7 +258,7 @@ class pl_spec( ) :
 			return max( self['psd_flat'][i] for i in
 			           where( array( self['psd_flat'] ) != 0. )[0] )
 		elif ( key == 'psd_mom' ) :
-			return [ [ [ self.arr[t][p][b].calc_psd_mom( )
+			return [ [ [ self.arr[t][p][b]['psd_mom']
 			             for b in range( self._n_bin )     ]
 			             for p in range( self._n_phi )     ]
 			             for t in range( self._n_the )     ]
@@ -459,15 +459,18 @@ class pl_spec( ) :
 
 	def auto_mom_sel( self, win_dir, win_bin ) :
 
-		# If no spectrum has been loaded, abort.
-
-		if ( self.arr is None ) :
-
-			return
-
 		# Initially, assign all data to a selection value of "False".
 
 		self.rset_mom_sel( )
+
+		# If no spectrum has been loaded or the window selection is
+		# invalid, abort.
+
+		if ( ( self.arr is None ) or
+		     ( win_dir is None  ) or
+		     ( win_bin is None  )    ) :
+
+			return
 
 		# Find the maximum psd window (of "n_win_bin" bins)
 		# for each direction

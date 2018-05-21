@@ -1135,6 +1135,8 @@ class core( QObject ) :
 
 	def auto_mom_pl_sel( self ) :
 
+		time.sleep(3)
+
 		# Re-initialize the data-selection variables for the moments
 		# analysis.
 
@@ -1165,8 +1167,6 @@ class core( QObject ) :
 
 		# If no process has been requested, abort.
 
-		return
-
 		if not( run_fc or run_pl ) :
 
 			return
@@ -1189,7 +1189,7 @@ class core( QObject ) :
 
 			# Validate the Wind/PESA-L point-selection
 
-			# self.vldt_mom_pl_sel( )
+			self.vldt_mom_pl_sel( )
 
 			# Run the moments analysis on the Wind/PESA-L data
 
@@ -1285,7 +1285,7 @@ class core( QObject ) :
 						      'janus_chng_mom_sel_dir'),
 						      c, d )
 
-	'''
+
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR VALIDATING THE PL DATA SELECTION.
 	#-----------------------------------------------------------------------
@@ -1301,7 +1301,7 @@ class core( QObject ) :
 		#        are selected.  However, if
 		#        fewer than "self.mom_pl_min_dir" sets of "t"- and
 		#        "p"-values satisfy this criterion, all data are given
-		#        given the 'selected' value "False".		
+		#        given the 'selected' value "False".
 		#
 		#        Additionally, this functions serves to update the
 		#        "self.mom_n_sel_???" counters.
@@ -1333,7 +1333,7 @@ class core( QObject ) :
 					        self.pl_spec_arr[0]['n_bin'] ) :
 
 						[ spec.rset_mom_sel( )
-						  for spec in pl_spec_arr ]
+						  for spec in self.pl_spec_arr ]
 
 			self.mom_pl_n_sel_dir = 0
 
@@ -1342,7 +1342,7 @@ class core( QObject ) :
 		else :
 
 			self.pl_loaded = True
-	'''
+
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RUNNING THE MOMENTS ANALYSIS ON FC DATA.
@@ -1746,6 +1746,7 @@ class core( QObject ) :
 		if ( val is None ) :
 
 			self.mom_pl_win_dir = None
+			
 
 		else :
 
@@ -1762,6 +1763,14 @@ class core( QObject ) :
 			except :
 
 				self.mom_pl_win_dir = None
+
+		# If PESA-L spectra have been loaded, ensure that
+		# "self.pl_loaded" is True so the point selection can be
+		# validated.
+
+		if self.pl_spec_arr != [] :
+
+			self.pl_loaded = True
 
 		# Emit a signal that a change has occured to the moments window
 		# parameters.
@@ -1792,6 +1801,14 @@ class core( QObject ) :
 					self.mom_pl_win_bin = None
 			except :
 				self.mom_pl_win_bin = None
+
+		# If PESA-L spectra have been loaded, ensure that
+		# "self.pl_loaded" is True so the point selection can be
+		# validated.
+
+		if self.pl_spec_arr != [] :
+
+			self.pl_loaded = True
 
 		# Emit a signal that a change has occured to the moments window
 		# parameters.

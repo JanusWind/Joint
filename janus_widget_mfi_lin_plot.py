@@ -32,7 +32,12 @@ from PyQt4.QtGui import QFont, QGridLayout, QWidget
 
 # Load the modules necessary for plotting.
 
-from pyqtgraph import mkPen, PlotDataItem, PlotWidget, setConfigOption
+from pyqtgraph import mkPen, PlotDataItem, PlotWidget, setConfigOption, \
+                      InfiniteLine
+
+# Load the modules necessary handling dates and times.
+
+from datetime import datetime, timedelta
 
 # Load the necessary "numpy" array modules and numeric-function modules.
 
@@ -141,6 +146,7 @@ class widget_mfi_lin_plot( QWidget ) :
 		self.crv_x = None
 		self.crv_y = None
 		self.crv_z = None
+		self.pl    = []
 
 		# Populate this plot and adjust it's settings.
 
@@ -199,6 +205,14 @@ class widget_mfi_lin_plot( QWidget ) :
 		self.plt.setXRange( t_min, t_max, padding=0.0 )
 		self.plt.setYRange( b_min, b_max, padding=0.0 )
 
+		# Set the PESA-L pen with a width corresponding to one rotation
+		# Note: For some reason, the lines are not wide enough unless 5
+		#       is added to the scaled width of the rotation time
+
+		rot = 3.05 * self.axs_x.width( ) / ( t_max - t_min ) + 5
+
+		self.pen_pl    = mkPen( color=(200, 200, 100) , width=rot )
+
 		# If the core contains no Wind/MFI magnetic field data, return.
 
 		if ( self.core.n_mfi <= 0 ) :
@@ -221,6 +235,24 @@ class widget_mfi_lin_plot( QWidget ) :
 		self.crv_z = PlotDataItem( self.core.mfi_s,
 		                           self.core.mfi_b_z,
 		                           pen=self.pen_crv_z )
+
+		# If PESA-L spectra were loaded, add the vertical indicators
+		# showing their time relative to the start of the FC spectrum
+
+		for n in range( len( self.core.pl_spec_arr ) ) :
+
+			time = self.core.pl_spec_arr[n]['time'][0]
+
+			t_0 = self.core.fc_spec['time']
+
+			delta_t = ( time - t_0 ).total_seconds( )
+
+			self.pl += [ InfiniteLine( delta_t + 3.07/2.,
+			                           pen=self.pen_pl    ) ]		
+
+		for i in range( len( self.pl ) ) :
+
+			self.plt.addItem( self.pl[i] )
 
 		self.plt.addItem( self.crv_m )
 		self.plt.addItem( self.crv_n )
@@ -251,6 +283,12 @@ class widget_mfi_lin_plot( QWidget ) :
 		if ( self.crv_z is not None ) :
 			self.plt.removeItem( self.crv_z )
 
+		if ( self.pl != [] ) :
+
+			for i in range( len( self.pl ) ) :
+
+				self.plt.removeItem( self.pl[i] )
+
 		# if ( self.crv_colat is not None ) :
 		# 	self.plt.removeItem( self.crv_colat )
 
@@ -266,6 +304,7 @@ class widget_mfi_lin_plot( QWidget ) :
 		self.crv_x = None
 		self.crv_y = None
 		self.crv_z = None
+		self.pl    = []
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RESPONDING TO THE "rset" SIGNAL.

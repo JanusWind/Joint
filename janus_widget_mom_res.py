@@ -177,7 +177,8 @@ class widget_mom_res( format_TextEdit ) :
 
 		# If there is no PL data, finish the table
 
-		if len( self.core.pl_spec_arr ) == 0 :
+		if ( ( len( self.core.pl_spec_arr ) == 0 ) or
+		     ( not( self.core.pl_loaded )        )    ) :
 
 			txt += '</table>'
 

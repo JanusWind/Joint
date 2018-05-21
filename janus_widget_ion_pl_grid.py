@@ -115,8 +115,6 @@ class widget_pl_grid( QWidget ) :
 		# Prepare to respond to signals received from the Janus core.
 
 		self.connect( self.core, SIGNAL('janus_rset'),  self.resp_rset )
-		self.connect( self.core, SIGNAL('janus_chng_mom_win'),
-		                                    self.resp_chng_mom_win )
 		self.connect( self.core, SIGNAL('janus_chng_mom_pl_sel'),
 		                                     self.resp_chng_mom_pl_sel )
 		self.connect( self.core, SIGNAL('janus_chng_mom_pl_res'),
@@ -775,6 +773,39 @@ class widget_pl_grid( QWidget ) :
 						self.pnt[t,p,b] = None
 
 	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR RESETTING THE PLOTS' FIT CURVES.
+	#-----------------------------------------------------------------------
+
+	def rset_crv( self ) :
+
+		# For each plot that exists in the grid, remove and delete its
+		# fit curves.
+
+		for t in range( self.n_plt_y ) :
+
+			for p in range( self.n_plt_x ) :
+
+				# If the plot does not exist, move onto the the
+				# next one.
+
+				if ( self.plt[t,p] is None ) :
+					continue
+
+				# Remove and delete this plot's fit curve.
+
+				if ( self.crv[t,p] is not None ) :
+					self.plt[t,p].removeItem(
+					                         self.crv[t,p] )
+					self.crv[t,p] = None
+
+				for n in range( self.n_ion ) :
+
+					if ( self.crv_ion[t,p,n] is not None ) :
+						self.plt[t,p].removeItem(
+						           self.crv_ion[t,p,n] )
+						self.crv_ion[t,p,n] = None
+
+	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RESPONDING TO THE "rset" SIGNAL.
 	#-----------------------------------------------------------------------
 
@@ -784,6 +815,7 @@ class widget_pl_grid( QWidget ) :
 
 		self.rset_hst( )
 		self.rset_pnt( )
+		self.rset_crv( )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_mom_pl_res" SIGNAL.
@@ -804,9 +836,9 @@ class widget_pl_grid( QWidget ) :
 
 		# If the results of the moments analysis are being displayed,
 		# reset any existing fit curves and make new ones.
-		return
-		#self.make_crv( )
 
+		self.make_crv( )
+	'''
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_mom_win" SIGNAL.
 	#-----------------------------------------------------------------------
@@ -824,4 +856,4 @@ class widget_pl_grid( QWidget ) :
 
 					self.chng_pnt( t, p, b,
 		           		               self.core.pl_spec_arr[self.n].arr[t][p][b]['mom_sel'] )
-
+	'''
