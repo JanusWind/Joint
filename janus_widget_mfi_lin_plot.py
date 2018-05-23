@@ -211,7 +211,7 @@ class widget_mfi_lin_plot( QWidget ) :
 
 		rot = 3.05 * self.axs_x.width( ) / ( t_max - t_min ) + 5
 
-		self.pen_pl    = mkPen( color=(200, 200, 100) , width=rot )
+		self.pen_pl    = mkPen( color=(230, 230, 230) , width=rot )
 
 		# If the core contains no Wind/MFI magnetic field data, return.
 

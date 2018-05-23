@@ -25,6 +25,8 @@
 ## LOAD THE NECESSARY MODULES.
 ################################################################################
 
+from datetime import timedelta
+
 # Load the modules necessary for the graphical interface.
 
 from PyQt4.QtCore import QPointF, Qt, SIGNAL
@@ -33,7 +35,7 @@ from PyQt4.QtGui import QGridLayout, QWidget
 # Load the modules necessary for plotting.
 
 from pyqtgraph import AxisItem, GraphicsLayoutWidget, LabelItem, mkBrush, \
-                      mkPen, PlotDataItem, TextItem
+                      mkPen, PlotDataItem, TextItem, InfiniteLine
 
 from janus_event_ViewBox import event_ViewBox
 
@@ -446,6 +448,52 @@ class widget_fc_cup( QWidget ) :
 
 			self.lbl[j,i].setText( txt, color=(0,0,0) )
 			#self.lbl[j,i].setFont( self.fnt           )
+
+			# If PESA-L spectra were loaded, add the vertical 
+			# indicators showing the coinciding bins of the FC
+			# spectrum
+
+			for n in range( len( self.core.pl_spec_arr ) ) :
+
+				pl_time = self.core.pl_spec_arr[n]['time'][0] +\
+				          timedelta( seconds=0.5 *
+				               self.core.pl_spec_arr[n]['rot'] )
+
+				for b in range( self.core.fc_spec['n_bin'] ) :
+
+					fc_time_i = self.core.fc_spec.arr\
+					                  [self.c][d][b]['time']
+					fc_time_f = fc_time_i + \
+					            timedelta( seconds = 
+					              self.core.fc_spec['rot'] )
+
+					if ( ( fc_time_i <= pl_time ) and
+					     ( fc_time_f >= pl_time )     ) :
+
+						# Calculate the scaled pixel
+						# width of the bin
+
+						center = self.core.fc_spec.arr\
+						       [self.c][d][b]['vel_cen']
+
+						acen = log10( center ) if \
+						      ( self.log_x ) else center
+
+						width = self.core.fc_spec.arr\
+						       [self.c][d][b]['vel_del']
+
+						awidth = log10( width ) if \
+						       ( self.log_x ) else width
+
+						pix = awidth/3.
+
+						pen_pl = mkPen(
+						         color=(230, 230, 230),
+						                     width=pix )
+
+						self.plt[j,i].addItem(
+						            InfiniteLine( acen,
+						                  pen=pen_pl ) )
 
 			# Generate the histogram for the data from this look
 			# direction and display it in the plot.

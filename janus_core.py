@@ -728,6 +728,8 @@ class core( QObject ) :
 
 		self.load_pl( )
 
+		self.emit( SIGNAL('janus_chng_spc') )
+
 		# If no spectra have been loaded, end the process
 
 		if not( self.fc_loaded or self.pl_loaded ) :
@@ -805,7 +807,7 @@ class core( QObject ) :
 		# Emit a signal that indicates that a new Wind/FC ion spectrum
 		# has now been loaded.
 
-		self.emit( SIGNAL('janus_chng_spc') )
+
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR LOADING THE Wind/PESA-L ION DATA.
@@ -831,7 +833,7 @@ class core( QObject ) :
 		# If no spectra were found, abort.
 
 		if ( self.pl_spec_arr is None or len( self.pl_spec_arr ) == 0 ) :
-			self.emit( SIGNAL('janus_chng_spc') )
+			self.emit( SIGNAL('janus_chng_pl_spc') )
 			return
 
 		# Record that a Wind/PL spectrum has been loaded successfully
