@@ -2367,26 +2367,19 @@ class core( QObject ) :
 
 		self.make_nln_gss( )
 
-		# If no process has been requested or no Wind/FC spectrum has
-		# been loaded
-		# OR
-		# if the moments analysis does not seem to have been run
-		# (sucessfully), update the display and abort 
-
-		if( not( run_fc and self.fc_loaded ) or
-		       (  self.mom_fc_res is None  )    ) :
-
-			self.chng_dsp( 'gsl' )
-
-			return
-
 		if( self.dyn_sel ) :
 
 			self.auto_nln_sel( )
+			self.after_nln_sel( )
+
+			return
 
 		if( self.dyn_nln ) :
 
 			self.anls_nln( )
+			return
+
+		self.chng_dsp( 'gsl' )
 
 
 
