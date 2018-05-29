@@ -224,6 +224,7 @@ class widget_fc_cup( QWidget ) :
 
 		self.hst = tile( None, [ self.n_plt_y, self.n_plt_x ] )
 		self.lbl = tile( None, [ self.n_plt_y, self.n_plt_x ] )
+		self.lin = tile( None, [ self.n_plt_y, self.n_plt_x, 8 ] )
 
 		self.crv     = tile( None, [ self.n_plt_y, self.n_plt_x ] )
 		self.crv_ion = tile( None, [ self.n_plt_y, self.n_plt_x,
@@ -488,12 +489,23 @@ class widget_fc_cup( QWidget ) :
 						pix = awidth/3.
 
 						pen_pl = mkPen(
-						         color=(230, 230, 230),
+						         color=(245, 245, 245),
 						                     width=pix )
 
-						self.plt[j,i].addItem(
+						# Make a line to indicate this
+						# PESA_L spectrum location
+						# relative to the FC spectrum
+
+						self.lin[j,i,n] = \
 						            InfiniteLine( acen,
-						                  pen=pen_pl ) )
+						                    pen=pen_pl )
+
+						# Put the line behind the label
+
+						self.lin[j,i,n].setZValue( -1 )
+
+						self.plt[j,i].addItem(
+						               self.lin[j,i,n] )
 
 			# Generate the histogram for the data from this look
 			# direction and display it in the plot.
@@ -846,9 +858,23 @@ class widget_fc_cup( QWidget ) :
 				# and delete it.
 
 				if ( self.hst[j,i] is not None ) :
+
 					self.plt[j,i].removeItem(
 					                         self.hst[j,i] )
+
 					self.hst[j,i] = None
+
+				# If PESA-L lines exists for this plot, remove
+				# and delete them.
+
+				for n in range( len( self.core.pl_spec_arr ) ) :
+
+					if ( self.lin[j,i,n] is not None ) :
+
+						self.plt[j,i].removeItem(
+					                       self.lin[j,i,n] )
+
+						self.lin[j,i,n] = None
 
 				# If requested, reset this plot's label text to
 				# the empty string.

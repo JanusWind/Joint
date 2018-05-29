@@ -92,7 +92,7 @@ def thread_anls_mom( core ) :
 	core.emit( SIGNAL('janus_busy_end') )
 	core.emit( SIGNAL('janus_busy_beg') )
 
-	core.next_sel( run_fc = True, run_pl = True )
+	core.after_sel( run_fc = True, run_pl = True )
 	core.chng_dsp( 'mom' )
 
 	core.emit( SIGNAL('janus_busy_end') )
@@ -235,7 +235,7 @@ def thread_auto_mom_sel( core ) :
         core.emit( SIGNAL('janus_busy_end') )
         core.emit( SIGNAL('janus_busy_beg') )
 
-        core.next_spec( run_fc = True, run_pl = True )
+        core.after_spec( run_fc = True, run_pl = True )
 
         core.emit( SIGNAL('janus_busy_end') )
 

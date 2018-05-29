@@ -211,7 +211,7 @@ class widget_mfi_lin_plot( QWidget ) :
 
 		rot = 3.05 * self.axs_x.width( ) / ( t_max - t_min ) + 5
 
-		self.pen_pl    = mkPen( color=(230, 230, 230) , width=rot )
+		self.pen_pl    = mkPen( color=(245, 245, 245) , width=rot )
 
 		# If the core contains no Wind/MFI magnetic field data, return.
 
@@ -247,8 +247,9 @@ class widget_mfi_lin_plot( QWidget ) :
 
 			delta_t = ( time - t_0 ).total_seconds( )
 
-			self.pl += [ InfiniteLine( delta_t + 3.07/2.,
-			                           pen=self.pen_pl    ) ]		
+			self.pl += [ InfiniteLine( delta_t +
+			                           self.core.fc_spec['rot']/2.,
+			                           pen=self.pen_pl           ) ]		
 
 		for i in range( len( self.pl ) ) :
 

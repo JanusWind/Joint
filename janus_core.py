@@ -708,7 +708,7 @@ class core( QObject ) :
 
 		# Call the function that will load the spectra nearest this time
 
-		self.next_time( time_req=time_req,
+		self.after_time( time_req=time_req,
 		                get_prev=get_prev,
 		                get_next=get_next  )
 
@@ -716,7 +716,7 @@ class core( QObject ) :
 	# DETERMINE THE NEXT PROCEDURAL STEP AFTER ACCPETING THE SEARCH TIME
 	#-----------------------------------------------------------------------
 
-	def next_time( self, time_req=None, get_prev=False, get_next=False ) :
+	def after_time( self, time_req=None, get_prev=False, get_next=False ) :
 
 		# Load the Wind/FC ion spectrum with a timestamp closest to that
 		# requested.
@@ -727,6 +727,8 @@ class core( QObject ) :
 		# spectrum.
 
 		self.load_pl( )
+
+		# Emit a signal that the spectra have changed
 
 		self.emit( SIGNAL('janus_chng_spc') )
 
@@ -755,8 +757,8 @@ class core( QObject ) :
 
 		if ( self.dyn_mom ) :
 
-			self.next_spec( run_fc = self.fc_loaded,
-			                run_pl = self.pl_loaded  )
+			self.after_spec( run_fc = self.fc_loaded,
+			                 run_pl = self.pl_loaded  )
 
 	#-----------------------------------------------------------------------
 	# LOAD THE REQUESTED WIND/FC SPECTRUM.
@@ -1015,23 +1017,24 @@ class core( QObject ) :
 	# DETERMINE THE NEXT PRODECURAL STEP AFTER LOADING ANY FC AND/OR PL DATA
 	#-----------------------------------------------------------------------
 
-	def next_spec( self, run_fc = False, run_pl = False ) :
+	def after_spec( self, run_fc = False, run_pl = False ) :
 
-		# If no process has been requested, abort.
+		# If no process has been requested or no corresponding Wind/FC
+		# or Wind/PESA-L spectra have been loaded, abort.
 
-		if not( run_fc or run_pl ) :
+		if not( ( run_fc and self.fc_loaded ) or 
+		        ( run_pl and self.pl_loaded )    ) :
 
 			return
 
-		# If Wind/FC or Wind/PESA-L spectra have been loaded, call the
-		# function that performs the automatic point selection for the
-		# spectra
+		# Call the function(s) that performs the automatic point
+		# selection for the spectrum
 
-		if ( run_fc and self.fc_loaded ) :
+		if ( run_fc ) :
 
 			self.auto_mom_fc_sel( )
 
-		if ( run_pl and self.pl_loaded ) :
+		if ( run_pl ) :
 
 			self.auto_mom_pl_sel( )
 
@@ -1040,8 +1043,7 @@ class core( QObject ) :
 
 		if ( self.dyn_mom ) :
 
-			self.next_sel( run_fc = ( run_fc and self.fc_loaded ),
-			               run_pl = ( run_pl and self.pl_loaded )  )
+			self.after_sel( run_fc = run_fc, run_pl = run_pl )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR AUTOMATIC DATA SELECTION FOR THE FC MOM. ANLS.
@@ -1165,18 +1167,20 @@ class core( QObject ) :
 	# DETERMINE THE NEXT PROCEDURAL STEP AFTER DATA SELECTION
 	#-----------------------------------------------------------------------
 
-	def next_sel( self, run_fc = False, run_pl = False ) :
+	def after_sel( self, run_fc = False, run_pl = False ) :
 
-		# If no process has been requested, abort.
+		# If no process has been requested or no corresponding Wind/FC
+		# or Wind/PESA-L spectra have been loaded, abort.
 
-		if not( run_fc or run_pl ) :
+		if not( ( run_fc and self.fc_loaded ) or 
+		        ( run_pl and self.pl_loaded )    ) :
 
 			return
 
-		# If Wind/FC or Wind/PESA-L spectra have been loaded, call the
-		# function that performs the moments analyses for the spectra
+		# Call the function that performs the moments analyses for the
+		# spectra
 
-		if ( run_fc and self.fc_loaded ) :
+		if ( run_fc ) :
 
 			# Validate the Wind/FC point-selection (which includes
 			# populating the "self.mom_fc_sel_dir" array)
@@ -1187,7 +1191,7 @@ class core( QObject ) :
 
 			self.anls_mom_fc( )
 
-		if ( run_pl and self.pl_loaded ) :
+		if ( run_pl ) :
 
 			# Validate the Wind/PESA-L point-selection
 
@@ -1199,7 +1203,17 @@ class core( QObject ) :
 
 		self.emit( SIGNAL('janus_chng_mom_res') )
 
-		# TODO: based on self.dyn_??? variables, decide what to do next.
+		# If the initial guess is set to be dynamically updated, call
+		# the function that determines the next procedural step.
+		# Otherwise, update the display to show the moments results.
+
+		if ( self.dyn_gss ) :
+
+			self.after_mom( run_fc = run_fc )
+
+		else :
+
+			self.chng_dsp( 'mom' )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR VALIDATING THE FC DATA SELECTION.
@@ -1287,7 +1301,6 @@ class core( QObject ) :
 						      'janus_chng_mom_sel_dir'),
 						      c, d )
 
-
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR VALIDATING THE PL DATA SELECTION.
 	#-----------------------------------------------------------------------
@@ -1344,7 +1357,6 @@ class core( QObject ) :
 		else :
 
 			self.pl_loaded = True
-
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RUNNING THE MOMENTS ANALYSIS ON FC DATA.
@@ -1676,7 +1688,7 @@ class core( QObject ) :
 
 		# Call the automatic selection of data for the moments analysis.
 
-		self.next_spec( run_fc = True )
+		self.after_spec( run_fc = True )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR CHANGING THE MOMENTS SELCTION BIN WINDOW.
@@ -1692,9 +1704,12 @@ class core( QObject ) :
 		else :
 			try :
 				self.mom_fc_win_bin = int( val )
-				if( ( self.mom_fc_win_bin < self.mom_fc_min_bin  )
-				or  ( self.mom_fc_win_bin > self.fc_spec['n_bin'] )
-				                                             ) :
+
+				if( ( self.mom_fc_win_bin <
+				      self.mom_fc_min_bin   )
+				 or ( self.mom_fc_win_bin >
+				      self.fc_spec['n_bin'] ) ) :
+
 					self.mom_fc_win_bin = None
 			except :
 				self.mom_fc_win_bin = None
@@ -1706,7 +1721,7 @@ class core( QObject ) :
 
 		# Call the automatic selection of data for the moments analysis.
 
-		self.next_spec( run_fc = True )
+		self.after_spec( run_fc = True )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR CHANGING THE SELECTION OF A SINGLE POINT.
@@ -1734,7 +1749,7 @@ class core( QObject ) :
 
 		self.chng_dyn( 'mom', True, rerun=False )
 
-		self.next_sel( run_fc = True )
+		self.after_sel( run_fc = True )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR CHANGING THE MOM. SELCTION DIRECTION WINDOW.
@@ -1756,10 +1771,12 @@ class core( QObject ) :
 
 				self.mom_pl_win_dir = int( val )
 
-				if ( self.mom_pl_win_dir < self.mom_pl_min_dir ) :
+				if ( self.mom_pl_win_dir <
+				     self.mom_pl_min_dir   ) :
 					self.mom_pl_win_dir = None
 
-				if ( self.mom_pl_win_dir > self.pl_spec_arr[0]['n_dir'] ) :
+				if ( self.mom_pl_win_dir >
+				     self.pl_spec_arr[0]['n_dir'] ) :
 					self.mom_pl_win_dir = None
 
 			except :
@@ -1781,7 +1798,7 @@ class core( QObject ) :
 
 		# Call the automatic selection of data for the moments analysis.
 
-		self.next_spec( run_pl = True )
+		self.after_spec( run_pl = True )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR CHANGING THE MOMENTS SELCTION BIN WINDOW.
@@ -1797,9 +1814,11 @@ class core( QObject ) :
 		else :
 			try :
 				self.mom_pl_win_bin = int( val )
-				if( ( self.mom_pl_win_bin < self.mom_pl_min_bin  )
-				or  ( self.mom_pl_win_bin > self.pl_spec_arr[0]['n_bin'] )
-				                                             ) :
+
+				if( ( self.mom_pl_win_bin <
+				      self.mom_pl_min_bin   )
+				 or ( self.mom_pl_win_bin >
+				      self.pl_spec_arr[0]['n_bin'] ) ) :
 					self.mom_pl_win_bin = None
 			except :
 				self.mom_pl_win_bin = None
@@ -1819,315 +1838,49 @@ class core( QObject ) :
 
 		# Call the automatic selection of data for the moments analysis.
 
-		self.next_spec( run_pl = True )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+		self.after_spec( run_pl = True )
 
 	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR CHANGING A NLN SPECIES.
+	# DETERMINE THE NEXT PROCEDURAL STEP AFTER MOMENTS ANALYSIS
 	#-----------------------------------------------------------------------
 
-	def chng_nln_spc( self, s, param, val ) :
+	def after_mom( self, run_fc = False ) :
 
-		# Ensure that "i" is a valid ion-species index.
+		# If no process has been requested or no Wind/FC spectrum has
+		# been loaded, abort.
 
-		s = int( s )
+		if not( ( run_fc and self.fc_loaded ) ) :
 
-		if ( ( s < 0 ) or ( s >= self.nln_n_spc ) ) :
 			return
 
-		# Change the parameter of the specified ion-species to the
-		# specified value.
+		# If the moments analysis does not seem to have been run
+		# (sucessfully), run the "make_nln_gss" function (to update the
+		# "self.nln_gss_" arrays, widgets, etc.) and then abort.
 
-		if   ( param == 'name' ) :
-			try :
-				self.nln_plas.arr_spec[s]['name'] = str( val )
-			except :
-				self.nln_plas.arr_spec[s]['name'] = None
+		if ( self.mom_fc_res is None ) :
 
-		elif ( param == 'sym' ) :
-			try :
-				self.nln_plas.arr_spec[s]['sym'] = str( val )
-			except :
-				self.nln_plas.arr_spec[s]['sym'] = None
-
-		elif ( param == 'm' ) :
-			try :
-				val = float( val )
-				if ( val >= 0 ) :
-					self.nln_plas.arr_spec[s]['m'] = val
-				else :
-					self.nln_plas.arr_spec[s]['m'] = None
-			except :
-				self.nln_plas.arr_spec[s]['m'] = None
-
-		elif ( param == 'q' ) :
-			try :
-				val = float( val )
-				if ( val >= 0 ) :
-					self.nln_plas.arr_spec[s]['q'] = val
-				else :
-					self.nln_plas.arr_spec[s]['q'] = None
-			except :
-				self.nln_plas.arr_spec[s]['q'] = None
-
-		# Propagate the changes to the ion population.
-
-		self.prop_nln_ion( )
-
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR CHANGING A NLN POPULATION.
-	#-----------------------------------------------------------------------
-
-	def chng_nln_pop( self, i, param, val ) :
-
-		# Ensure that "i" is a valid ion-population index.
-
-		i = int( i )
-
-		if ( ( i < 0 ) or ( i >= self.nln_n_pop ) ) :
-			return
-
-		# Change the parameter of the specified ion-population to the
-		# specified value.
-
-		if ( param == 'use' ) :
-
-			self.nln_pop_use[i] = bool( val )
-
-		if ( param == 'spec' ) :
-
-			if ( ( val >= 0              ) and
-			     ( val <  self.nln_n_spc )     ) :
-
-				# If the population's name and/or symbol would
-				# contradict with a population already
-				# associated with the new species, clear out
-				# both.
-
-				if ( ( self.nln_plas.get_pop( 
-				          self.nln_plas.arr_spec[
-				                         val]['sym'],
-				          self.nln_plas.arr_pop[
-				                           i]['name'] )
-				                             is not None) or
-				     ( self.nln_plas.get_pop( 
-				          self.nln_plas.arr_spec[
-				                         val]['sym'],
-				          self.nln_plas.arr_pop[
-				                           i]['sym']  )
-				                             is not None)    ) :
-
-					self.nln_plas.arr_pop[i]['name'] = None
-					self.nln_plas.arr_pop[i]['sym']  = None
-
-					self.emit( SIGNAL(
-					              'janus_chng_nln_pop'), i )
-				try :
-					self.nln_plas.arr_pop[i]['spec'] = \
-					             self.nln_plas.arr_spec[val]
-				except :
-					self.nln_plas.arr_pop[i]['spec'] = None
-			else :
-				self.nln_plas.arr_pop[i]['spec'] = None
-
-		if ( param == 'name' ) :
-
-			try :
-				self.nln_plas.arr_pop[i]['name'] = str( val )
-			except :
-				self.nln_plas.arr_pop[i]['name'] = None
-
-		if ( param == 'sym' ) :
-
-			try :
-				self.nln_plas.arr_pop[i]['sym'] = str( val )
-			except :
-				self.nln_plas.arr_pop[i]['sym'] = None
-
-		if ( param == 'drift' ) :
-
-			try :
-				self.nln_plas.arr_pop[i]['drift'] = bool( val )
-			except :
-				self.nln_plas.arr_pop[i]['drift'] = None
-
-		if ( param == 'aniso' ) :
-
-			try :
-				self.nln_plas.arr_pop[i]['aniso'] = bool( val )
-			except :
-				self.nln_plas.arr_pop[i]['aniso'] = None
-
-		# Propagate the changes to the ion population.
-
-		self.prop_nln_ion( )
-
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR PROPAGATING INFO. ON THE ION SPECIES/POP.'S.
-	#-----------------------------------------------------------------------
-
-	def prop_nln_ion( self ) :
-
-		# Record the validity of each ion population.
-
-		for p in range( self.nln_n_pop ) :
-
-			self.nln_pop_vld[p] = \
-			     self.nln_plas.arr_pop[p].valid( require_val=False )
-
-		# Emit a signal that indicates that the ion parameters for the
-		# non-linear analysis have changed.
-
-		self.emit( SIGNAL('janus_chng_nln_ion') )
-
-		# If dynamic updating of the initial guess has been enabled, run
-		# the automated guess-generator.  Otherwise, skip directly to
-		# the function that generates the initial-guess arrays.
-
-		if ( self.dyn_gss ) :
-			self.auto_nln_gss( )
-		else :
 			self.make_nln_gss( )
 
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR CHANGING A SETTING FOR THE NLN ANALYSIS.
-	#-----------------------------------------------------------------------
-
-	def chng_nln_set( self, i, param, val ) :
-
-		# Ensure that the arguments are valid.
-
-		if ( ( i < 0 ) or ( i >= self.nln_n_pop ) ) :
 			return
 
-		# Change the parameter(s) of the specified ion species to the
-		# specified values.
+		# If the initial guess is set to be dynamically updated, call
+		# the function that performs the initial guess for the
+		# nonlinear analysis.
 
-		if   ( param == 'gss_n' ) :
+		if( self.dyn_gss ) :
 
-			try :
-				self.nln_set_gss_n[i] = float( val )
-			except :
-				self.nln_set_gss_n[i] = None
-
-			if ( ( self.nln_set_gss_n[i] is not None ) and
-			     ( self.nln_set_gss_n[i] <= 0        )     ) :
-				self.nln_set_gss_n[i] = None
-
-		elif ( param == 'gss_d' ) :
-
-			try :
-				self.nln_set_gss_d[i] = float( val )
-			except :
-				self.nln_set_gss_d[i] = None
-
-		elif ( param == 'gss_w' ) :
-
-			try :
-				self.nln_set_gss_w[i] = float( val )
-			except :
-				self.nln_set_gss_w[i] = None
-
-			if ( ( self.nln_set_gss_w[i] is not None ) and
-			     ( self.nln_set_gss_w[i] <= 0        )     ) :
-				self.nln_set_gss_w[i] = None
-
-		elif ( param == 'sel' ) :
-
-			try :
-				self.nln_set_sel_a[i] = float( val[0] )
-			except :
-				self.nln_set_sel_a[i] = None
-
-			try :
-				self.nln_set_sel_b[i] = float( val[1] )
-			except :
-				self.nln_set_sel_b[i] = None
-
-			if ( ( self.nln_set_sel_a[i] is not None       ) and
-			     ( self.nln_set_sel_b[i] is not None       ) and
-			     ( self.nln_set_sel_a[i]
-			                      >= self.nln_set_sel_b[i] )     ) :
-				self.nln_set_sel_a[i] = None
-				self.nln_set_sel_b[i] = None
-		else :
-			return
-
-		# Validate the settings for the specified ion population.
-
-		if   ( ( self.nln_set_gss_n[i] is None ) or
-		       ( self.nln_set_gss_w[i] is None )    ) :
-			self.nln_set_gss_vld[i] = False
-
-		elif ( ( self.nln_plas.arr_pop[i]['drift'] ) and
-		       ( self.nln_set_gss_d[i] is None     )     ) :
-			self.nln_set_gss_vld[i] = False
-		else :
-			self.nln_set_gss_vld[i] = True
-
-		if ( ( self.nln_set_sel_a[i] is None ) or
-		     ( self.nln_set_sel_b[i] is None )    ) :
-			self.nln_set_sel_vld[i] = False
-
-		else :
-			self.nln_set_sel_vld[i] = True
-
-		# Propagate the changes to the settings for the non-linear
-		# analysis.
-
-		self.prop_nln_set( param[0:3] )
-
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR PROPAGATING THE SETTINGS FOR THE NLN ANALYSIS.
-	#-----------------------------------------------------------------------
-
-	def prop_nln_set( self, chng ) :
-
-		# Emit a signal that indicates that the settings for the
-		# non-linear analysis have changed.
-
-		self.emit( SIGNAL('janus_chng_nln_set') )
-
-		# Regenerate the initial guess or data selection.
-
-		# Note.  The functions called should make any necessay updates
-		#        to the dynamic variables.
-
-		if   ( chng == 'gss' ) :
 			self.auto_nln_gss( )
 
-		elif ( chng == 'sel' ) :
-			self.auto_nln_sel( )
+		# If the nonlinear data selection and/or analysis is set to be
+		# dynamically updated, call the function that determines the
+		# next procedural step.
+
+		if ( self.dyn_sel or self.dyn_nln ) :
+
+			self.after_nln_gss( run_fc = run_fc )
 		else :
-			return
 
-		# If the above call of "auto_nln_???" did not cause the
-		# non-linear fitting to be run, make sure that the initial guess
-		# and data selection are being displayed.
-
-		if ( not self.dyn_nln ) :
-			self.chng_dsp( "gsl" )
+			self.after_nln_gss( )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR AUTO-GENERATING THE INITIAL GUESS FOR NLN.
@@ -2144,16 +1897,6 @@ class core( QObject ) :
 		# Reset all variables associated with the initial guess.
 
 		self.rset_var( var_nln_gss=True )
-
-		# If the moments analysis does not seem to have been run
-		# (sucessfully), run the "make_nln_gss" function (to update the
-		# "self.nln_gss_" arrays, widgets, etc.) and then abort.
-
-		if ( self.mom_fc_res is None ) :
-
-			self.make_nln_gss( )
-
-			return
 
 		# Attempt to generate an initial guess of the bulk velocity (of
 		# non-drifting species).
@@ -2212,6 +1955,7 @@ class core( QObject ) :
 				w = round_sig( self.nln_set_gss_w[i] 
 				               * self.mom_fc_res['w_p'], 4 )
 			except :
+
 				w = None
 
 			if ( self.nln_plas.arr_pop[i].aniso ) :
@@ -2219,102 +1963,6 @@ class core( QObject ) :
 				self.nln_plas.arr_pop[i]['w_par'] = w
 			else :
 				self.nln_plas.arr_pop[i]['w'] = w
-
-		# Run the "make_nln_gss" function to update the "self.nln_gss_"
-		# arrays, widgets, etc.
-
-		self.make_nln_gss( )
-
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR CHANGING A GUESS VALUE FOR ONE NLN PARAMETER.
-	#-----------------------------------------------------------------------
-
-	def chng_nln_gss( self, i, param, val ) :
-
-		# Assume that, in calling this function, the user would like
-		# futher adjustments to the initial guess to be manual; i.e.,
-		# disable dynamic generation of an automatic initial-guess.
-
-		self.chng_dyn( 'gss', False, rerun=False )
-
-		# Ensure that the argument "p" is a valid population (unless
-		# the "param" argument indicates a velocity component, in which
-		# case "p" is irrelevant).
-
-		if ( ( param != 'v_x' ) and
-		     ( param != 'v_y' ) and ( param != 'v_z' ) ) :
-
-			if ( ( i < 0 ) or ( i >= self.nln_n_pop ) ) :
-				return
-
-		# Change the requested parameter of the requested ion population
-		# to the requested value.
-
-		# Note.  Simply "pass"-ing in the event of an "except"-ion
-		#        should be sufficient.  If the "pyon" class raises an
-		#        "except"-ion during an assignment, it should set the
-		#        parameter in question equal to "None".
-
-		if   ( param == 'v_x' ) :
-
-			try :
-				self.nln_plas['v0_x'] = val
-			except :
-				self.nln_plas['v0_x'] = None
-
-		elif ( param == 'v_y' ) :
-
-			try :
-				self.nln_plas['v0_y'] = val
-			except :
-				self.nln_plas['v0_y'] = None
-
-		elif ( param == 'v_z' ) :
-
-			try :
-				self.nln_plas['v0_z'] = val
-			except :
-				self.nln_plas['v0_z'] = None
-
-		elif ( param == 'n' ) :
-
-			try :
-				self.nln_plas.arr_pop[i]['n'] = val
-			except :
-				self.nln_plas.arr_pop[i]['n'] = None
-
-		elif ( param == 'dv' ) :
-
-			try :
-				self.nln_plas.arr_pop[i]['dv'] = val
-			except :
-				self.nln_plas.arr_pop[i]['dv'] = None
-
-		elif ( param == 'w' ) :
-
-			try :
-				self.nln_plas.arr_pop[i]['w'] = val
-			except :
-				self.nln_plas.arr_pop[i]['w'] = None
-
-		elif ( param == 'w_per' ) :
-
-			try :
-				self.nln_plas.arr_pop[i]['w_per'] = val
-			except :
-				self.nln_plas.arr_pop[i]['w_per'] = None
-
-		elif ( param == 'w_par' ) :
-
-			try :
-				self.nln_plas.arr_pop[i]['w_par'] = val
-			except :
-				self.nln_plas.arr_pop[i]['w_par'] = None
-
-		# Run the "make_nln_gss" function to update the "self.nln_gss_"
-		# arrays, widgets, etc.
-
-		self.make_nln_gss( )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR MAKING THE NLN INITIAL GUESS PARAMETER ARRAY.
@@ -2448,31 +2096,438 @@ class core( QObject ) :
 		                     for d in range( self.fc_spec['n_dir']   ) ]
 		                     for c in range( self.fc_spec['n_cup']   ) ]
 
-		# Propagate the new initial-guess for the non-linear analysis.
-
-		self.prop_nln_gss( )
-
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR PROPAGATING THE GUESS FOR THE NLN ANALYSIS.
-	#-----------------------------------------------------------------------
-
-	def prop_nln_gss( self ) :
-
 		# Emit a signal that indicates that the initial guess for the
 		# non-linear analysis has changed.
 
 		self.emit( SIGNAL('janus_chng_nln_gss') )
 
-		# If warranted (based on the values of "self.dyn_???"), proceed
-		# with dynamic updates to the non-linear analysis.  Otherwise,
-		# make sure that the initial guess is being displayed.
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR CHANGING A GUESS VALUE FOR ONE NLN PARAMETER.
+	#-----------------------------------------------------------------------
 
-		if ( self.dyn_sel ) :
-			self.auto_nln_sel( )
-		elif ( self.dyn_nln ) :
-			self.anls_nln( )
-		else :
+	def chng_nln_gss( self, i, param, val ) :
+
+		# Assume that, in calling this function, the user would like
+		# futher adjustments to the initial guess to be manual; i.e.,
+		# disable dynamic generation of an automatic initial-guess.
+
+		self.chng_dyn( 'gss', False, rerun=False )
+
+		# Ensure that the argument "p" is a valid population (unless
+		# the "param" argument indicates a velocity component, in which
+		# case "p" is irrelevant).
+
+		if ( ( param != 'v_x' ) and
+		     ( param != 'v_y' ) and ( param != 'v_z' ) ) :
+
+			if ( ( i < 0 ) or ( i >= self.nln_n_pop ) ) :
+				return
+
+		# Change the requested parameter of the requested ion population
+		# to the requested value.
+
+		# Note.  Simply "pass"-ing in the event of an "except"-ion
+		#        should be sufficient.  If the "pyon" class raises an
+		#        "except"-ion during an assignment, it should set the
+		#        parameter in question equal to "None".
+
+		if   ( param == 'v_x' ) :
+
+			try :
+				self.nln_plas['v0_x'] = val
+			except :
+				self.nln_plas['v0_x'] = None
+
+		elif ( param == 'v_y' ) :
+
+			try :
+				self.nln_plas['v0_y'] = val
+			except :
+				self.nln_plas['v0_y'] = None
+
+		elif ( param == 'v_z' ) :
+
+			try :
+				self.nln_plas['v0_z'] = val
+			except :
+				self.nln_plas['v0_z'] = None
+
+		elif ( param == 'n' ) :
+
+			try :
+				self.nln_plas.arr_pop[i]['n'] = val
+			except :
+				self.nln_plas.arr_pop[i]['n'] = None
+
+		elif ( param == 'dv' ) :
+
+			try :
+				self.nln_plas.arr_pop[i]['dv'] = val
+			except :
+				self.nln_plas.arr_pop[i]['dv'] = None
+
+		elif ( param == 'w' ) :
+
+			try :
+				self.nln_plas.arr_pop[i]['w'] = val
+			except :
+				self.nln_plas.arr_pop[i]['w'] = None
+
+		elif ( param == 'w_per' ) :
+
+			try :
+				self.nln_plas.arr_pop[i]['w_per'] = val
+			except :
+				self.nln_plas.arr_pop[i]['w_per'] = None
+
+		elif ( param == 'w_par' ) :
+
+			try :
+				self.nln_plas.arr_pop[i]['w_par'] = val
+			except :
+				self.nln_plas.arr_pop[i]['w_par'] = None
+
+		# Call the function that decides what to do after the initial 
+		# guess is changed
+
+		self.after_nln_gss( run_fc = ( self.dyn_sel or self.dyn_nln ) )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR CHANGING A NLN SPECIES.
+	#-----------------------------------------------------------------------
+
+	def chng_nln_spc( self, s, param, val ) :
+
+		# Ensure that "i" is a valid ion-species index.
+
+		s = int( s )
+
+		if ( ( s < 0 ) or ( s >= self.nln_n_spc ) ) :
+			return
+
+		# Change the parameter of the specified ion-species to the
+		# specified value.
+
+		if   ( param == 'name' ) :
+			try :
+				self.nln_plas.arr_spec[s]['name'] = str( val )
+			except :
+				self.nln_plas.arr_spec[s]['name'] = None
+
+		elif ( param == 'sym' ) :
+			try :
+				self.nln_plas.arr_spec[s]['sym'] = str( val )
+			except :
+				self.nln_plas.arr_spec[s]['sym'] = None
+
+		elif ( param == 'm' ) :
+			try :
+				val = float( val )
+				if ( val >= 0 ) :
+					self.nln_plas.arr_spec[s]['m'] = val
+				else :
+					self.nln_plas.arr_spec[s]['m'] = None
+			except :
+				self.nln_plas.arr_spec[s]['m'] = None
+
+		elif ( param == 'q' ) :
+			try :
+				val = float( val )
+				if ( val >= 0 ) :
+					self.nln_plas.arr_spec[s]['q'] = val
+				else :
+					self.nln_plas.arr_spec[s]['q'] = None
+			except :
+				self.nln_plas.arr_spec[s]['q'] = None
+
+		# Record the validity of each ion population.
+
+		for p in range( self.nln_n_pop ) :
+
+			self.nln_pop_vld[p] = \
+			     self.nln_plas.arr_pop[p].valid( require_val=False )
+
+		# Emit a signal that indicates that the ion parameters for the
+		# non-linear analysis have changed.
+
+		self.emit( SIGNAL('janus_chng_nln_ion') )
+
+		# Call the function that determines the next procedural step
+
+		self.after_mom( run_fc = True )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR CHANGING A NLN POPULATION.
+	#-----------------------------------------------------------------------
+
+	def chng_nln_pop( self, i, param, val ) :
+
+		# Ensure that "i" is a valid ion-population index.
+
+		i = int( i )
+
+		if ( ( i < 0 ) or ( i >= self.nln_n_pop ) ) :
+			return
+
+		# Change the parameter of the specified ion-population to the
+		# specified value.
+
+		if ( param == 'use' ) :
+
+			self.nln_pop_use[i] = bool( val )
+
+		if ( param == 'spec' ) :
+
+			if ( ( val >= 0              ) and
+			     ( val <  self.nln_n_spc )     ) :
+
+				# If the population's name and/or symbol would
+				# contradict with a population already
+				# associated with the new species, clear out
+				# both.
+
+				if ( ( self.nln_plas.get_pop( 
+				          self.nln_plas.arr_spec[
+				                         val]['sym'],
+				          self.nln_plas.arr_pop[
+				                           i]['name'] )
+				                             is not None) or
+				     ( self.nln_plas.get_pop( 
+				          self.nln_plas.arr_spec[
+				                         val]['sym'],
+				          self.nln_plas.arr_pop[
+				                           i]['sym']  )
+				                             is not None)    ) :
+
+					self.nln_plas.arr_pop[i]['name'] = None
+					self.nln_plas.arr_pop[i]['sym']  = None
+
+					self.emit( SIGNAL(
+					              'janus_chng_nln_pop'), i )
+				try :
+					self.nln_plas.arr_pop[i]['spec'] = \
+					             self.nln_plas.arr_spec[val]
+				except :
+					self.nln_plas.arr_pop[i]['spec'] = None
+			else :
+				self.nln_plas.arr_pop[i]['spec'] = None
+
+		if ( param == 'name' ) :
+
+			try :
+				self.nln_plas.arr_pop[i]['name'] = str( val )
+			except :
+				self.nln_plas.arr_pop[i]['name'] = None
+
+		if ( param == 'sym' ) :
+
+			try :
+				self.nln_plas.arr_pop[i]['sym'] = str( val )
+			except :
+				self.nln_plas.arr_pop[i]['sym'] = None
+
+		if ( param == 'drift' ) :
+
+			try :
+				self.nln_plas.arr_pop[i]['drift'] = bool( val )
+			except :
+				self.nln_plas.arr_pop[i]['drift'] = None
+
+		if ( param == 'aniso' ) :
+
+			try :
+				self.nln_plas.arr_pop[i]['aniso'] = bool( val )
+			except :
+				self.nln_plas.arr_pop[i]['aniso'] = None
+
+		# Record the validity of each ion population.
+
+		for p in range( self.nln_n_pop ) :
+
+			self.nln_pop_vld[p] = \
+			     self.nln_plas.arr_pop[p].valid( require_val=False )
+
+		# Emit a signal that indicates that the ion parameters for the
+		# non-linear analysis have changed.
+
+		self.emit( SIGNAL('janus_chng_nln_ion') )
+
+		# Call the function that determines the next procedural step
+
+		self.after_mom( run_fc = True )
+
+	#-----------------------------------------------------------------------
+	# DETERMINE THE NEXT PROCEDURAL STEP AFTER INITIAL GUESS IS MADE FOR NLN
+	#-----------------------------------------------------------------------
+
+	def after_nln_gss( self, run_fc = False ) :
+
+		# run the "make_nln_gss" function to update the
+		# "self.nln_gss_" arrays, widgets, etc.
+
+		self.make_nln_gss( )
+
+		# If no process has been requested or no Wind/FC spectrum has
+		# been loaded
+		# OR
+		# if the moments analysis does not seem to have been run
+		# (sucessfully), update the display and abort 
+
+		if( not( run_fc and self.fc_loaded ) or
+		       (  self.mom_fc_res is None  )    ) :
+
 			self.chng_dsp( 'gsl' )
+
+			return
+
+		if( self.dyn_sel ) :
+
+			self.auto_nln_sel( )
+
+		if( self.dyn_nln ) :
+
+			self.anls_nln( )
+
+
+
+
+
+
+
+
+
+
+	#-----------------------------------------------------------------------
+	# DETERMINE THE NEXT PROCEDURAL STEP AFTER NLN POINT SELECTION IS MADE
+	#-----------------------------------------------------------------------
+
+	def after_nln_sel( self, run_fc = False ) :
+	
+		return
+
+
+
+
+
+
+
+
+
+
+
+
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR CHANGING A SETTING FOR THE NLN ANALYSIS.
+	#-----------------------------------------------------------------------
+
+	def chng_nln_set( self, i, param, val ) :
+
+		# Ensure that the arguments are valid.
+
+		if ( ( i < 0 ) or ( i >= self.nln_n_pop ) ) :
+			return
+
+		# Change the parameter(s) of the specified ion species to the
+		# specified values.
+
+		if   ( param == 'gss_n' ) :
+
+			try :
+				self.nln_set_gss_n[i] = float( val )
+			except :
+				self.nln_set_gss_n[i] = None
+
+			if ( ( self.nln_set_gss_n[i] is not None ) and
+			     ( self.nln_set_gss_n[i] <= 0        )     ) :
+				self.nln_set_gss_n[i] = None
+
+		elif ( param == 'gss_d' ) :
+
+			try :
+				self.nln_set_gss_d[i] = float( val )
+			except :
+				self.nln_set_gss_d[i] = None
+
+		elif ( param == 'gss_w' ) :
+
+			try :
+				self.nln_set_gss_w[i] = float( val )
+			except :
+				self.nln_set_gss_w[i] = None
+
+			if ( ( self.nln_set_gss_w[i] is not None ) and
+			     ( self.nln_set_gss_w[i] <= 0        )     ) :
+				self.nln_set_gss_w[i] = None
+
+		elif ( param == 'sel' ) :
+
+			try :
+				self.nln_set_sel_a[i] = float( val[0] )
+			except :
+				self.nln_set_sel_a[i] = None
+
+			try :
+				self.nln_set_sel_b[i] = float( val[1] )
+			except :
+				self.nln_set_sel_b[i] = None
+
+			if ( ( self.nln_set_sel_a[i] is not None       ) and
+			     ( self.nln_set_sel_b[i] is not None       ) and
+			     ( self.nln_set_sel_a[i]
+			                      >= self.nln_set_sel_b[i] )     ) :
+				self.nln_set_sel_a[i] = None
+				self.nln_set_sel_b[i] = None
+		else :
+			return
+
+		# Validate the settings for the specified ion population.
+
+		if   ( ( self.nln_set_gss_n[i] is None ) or
+		       ( self.nln_set_gss_w[i] is None )    ) :
+			self.nln_set_gss_vld[i] = False
+
+		elif ( ( self.nln_plas.arr_pop[i]['drift'] ) and
+		       ( self.nln_set_gss_d[i] is None     )     ) :
+			self.nln_set_gss_vld[i] = False
+		else :
+			self.nln_set_gss_vld[i] = True
+
+		if ( ( self.nln_set_sel_a[i] is None ) or
+		     ( self.nln_set_sel_b[i] is None )    ) :
+			self.nln_set_sel_vld[i] = False
+
+		else :
+			self.nln_set_sel_vld[i] = True
+
+		# Call the correct function to determine the next procedural
+		# step based on which setting changed
+
+		chng = param[0:3]
+
+		# Emit a signal that indicates that the settings for the
+		# non-linear analysis have changed.
+
+		self.emit( SIGNAL('janus_chng_nln_set') )
+
+		# Regenerate the initial guess or data selection.
+
+		# Note.  The functions called should make any necessay updates
+		#        to the dynamic variables.
+
+		if   ( chng == 'gss' ) :
+
+			self.after_mom( run_fc = True )
+
+		elif ( chng == 'sel' ) :
+
+			self.after_nln_gss( run_fc = True )
+
+
+
+
+
+
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR AUTOMATIC DATA SELECT. FOR THE NON-LIN. ANAL.
@@ -2949,6 +3004,28 @@ class core( QObject ) :
 
 		self.emit( SIGNAL('janus_chng_nln_res') )
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR CHANGING THE DISPLAYED ANALYSIS.
 	#-----------------------------------------------------------------------
@@ -3037,7 +3114,7 @@ class core( QObject ) :
 
 			if ( anal == 'mom' ) :
 
-				self.next_sel( run_fc = True, run_pl = True )
+				self.after_sel( run_fc = True, run_pl = True )
 
 				if ( ( not self.dyn_sel ) and
 				     ( not self.dyn_gss )     ) :
@@ -3346,10 +3423,10 @@ class core( QObject ) :
 
 			if ( first_pass ) :
 				first_pass = False
-				self.next_time( time_req=time_strt,
+				self.after_time( time_req=time_strt,
 				                get_next=get_next   )
 			else :
-				self.next_time( time_req=self.time_epc,
+				self.after_time( time_req=self.time_epc,
 				                get_next=True           )
 
 			# If no spectrum was able to be loaded, abort.
