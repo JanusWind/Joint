@@ -1547,33 +1547,6 @@ class core( QObject ) :
 
 		# self.emit( SIGNAL('janus_chng_mom_res') )
 
-		# Update the initial guess for the non-linear analysis if
-		# dynamic updating has been requested.  If it wasn't, make sure
-		# that the new results of the moments analysis are being
-		# displayed.
-
-		# Note.  No call to "self.auto_nln_sel" is required here.  If
-		#        "self.dyn_gss" is "True", then "self.auto_nln_gss"
-		#        will call "self.auto_nln_sel" iff "self.dyn_sel" is
-		#        also "True".  If "self.dyn_gss" is "False", then
-		#        calling "self.auto_nln_sel" is completely unnecessary
-		#        as its output would be no different than that from its
-		#        last run (since no changes to the initial guess would
-		#        have been made since then.
-		#
-		#        Likewise, no call is needed here to "self.anls_nln"
-		#        since "self.suto_nln_gss" will handle this if
-		#        necessary.  Again, if "self.dyn_gss" is "False", then
-		#        calling "self.anls_nln" is completely unnecessary as
-		#        its output would be no different than that from its
-		#        last run (since no changes to the inital guess or to
-		#        the point selection would have been made since then).
-
-		###if ( self.dyn_gss ) :
-		###	self.auto_nln_gss( )
-		###else :
-		###	self.chng_dsp( 'mom' )
-
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RUNNING THE MOMENTS ANALYSIS ON PESA-L DATA.
 	#-----------------------------------------------------------------------
@@ -2395,147 +2368,6 @@ class core( QObject ) :
 
 		self.chng_dsp( 'gsl' )
 
-
-
-
-
-
-
-
-
-
-	#-----------------------------------------------------------------------
-	# DETERMINE THE NEXT PROCEDURAL STEP AFTER NLN POINT SELECTION IS MADE
-	#-----------------------------------------------------------------------
-
-	def after_nln_sel( self, run_fc = False ) :
-	
-		return
-
-
-
-
-
-
-
-
-
-
-
-
-
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR CHANGING A SETTING FOR THE NLN ANALYSIS.
-	#-----------------------------------------------------------------------
-
-	def chng_nln_set( self, i, param, val ) :
-
-		# Ensure that the arguments are valid.
-
-		if ( ( i < 0 ) or ( i >= self.nln_n_pop ) ) :
-			return
-
-		# Change the parameter(s) of the specified ion species to the
-		# specified values.
-
-		if   ( param == 'gss_n' ) :
-
-			try :
-				self.nln_set_gss_n[i] = float( val )
-			except :
-				self.nln_set_gss_n[i] = None
-
-			if ( ( self.nln_set_gss_n[i] is not None ) and
-			     ( self.nln_set_gss_n[i] <= 0        )     ) :
-				self.nln_set_gss_n[i] = None
-
-		elif ( param == 'gss_d' ) :
-
-			try :
-				self.nln_set_gss_d[i] = float( val )
-			except :
-				self.nln_set_gss_d[i] = None
-
-		elif ( param == 'gss_w' ) :
-
-			try :
-				self.nln_set_gss_w[i] = float( val )
-			except :
-				self.nln_set_gss_w[i] = None
-
-			if ( ( self.nln_set_gss_w[i] is not None ) and
-			     ( self.nln_set_gss_w[i] <= 0        )     ) :
-				self.nln_set_gss_w[i] = None
-
-		elif ( param == 'sel' ) :
-
-			try :
-				self.nln_set_sel_a[i] = float( val[0] )
-			except :
-				self.nln_set_sel_a[i] = None
-
-			try :
-				self.nln_set_sel_b[i] = float( val[1] )
-			except :
-				self.nln_set_sel_b[i] = None
-
-			if ( ( self.nln_set_sel_a[i] is not None       ) and
-			     ( self.nln_set_sel_b[i] is not None       ) and
-			     ( self.nln_set_sel_a[i]
-			                      >= self.nln_set_sel_b[i] )     ) :
-				self.nln_set_sel_a[i] = None
-				self.nln_set_sel_b[i] = None
-		else :
-			return
-
-		# Validate the settings for the specified ion population.
-
-		if   ( ( self.nln_set_gss_n[i] is None ) or
-		       ( self.nln_set_gss_w[i] is None )    ) :
-			self.nln_set_gss_vld[i] = False
-
-		elif ( ( self.nln_plas.arr_pop[i]['drift'] ) and
-		       ( self.nln_set_gss_d[i] is None     )     ) :
-			self.nln_set_gss_vld[i] = False
-		else :
-			self.nln_set_gss_vld[i] = True
-
-		if ( ( self.nln_set_sel_a[i] is None ) or
-		     ( self.nln_set_sel_b[i] is None )    ) :
-			self.nln_set_sel_vld[i] = False
-
-		else :
-			self.nln_set_sel_vld[i] = True
-
-		# Call the correct function to determine the next procedural
-		# step based on which setting changed
-
-		chng = param[0:3]
-
-		# Emit a signal that indicates that the settings for the
-		# non-linear analysis have changed.
-
-		self.emit( SIGNAL('janus_chng_nln_set') )
-
-		# Regenerate the initial guess or data selection.
-
-		# Note.  The functions called should make any necessay updates
-		#        to the dynamic variables.
-
-		if   ( chng == 'gss' ) :
-
-			self.after_mom( )
-
-		elif ( chng == 'sel' ) :
-
-			self.after_nln_gss( )
-
-
-
-
-
-
-
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR AUTOMATIC DATA SELECT. FOR THE NON-LIN. ANAL.
 	#-----------------------------------------------------------------------
@@ -2574,7 +2406,7 @@ class core( QObject ) :
 		if ( ( len( pop ) == 0 ) or
 		     ( self.n_mfi == 0 )    ) :
 
-			self.vldt_nln_sel( )
+#			self.vldt_nln_sel( )
 
 			return
 
@@ -2696,104 +2528,35 @@ class core( QObject ) :
 
 		self.nln_n_sel = len( where( self.nln_sel )[0] )
 
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR PROPAGATING THE NLN DATA-SELECTION.
-	#-----------------------------------------------------------------------
-
-	def prop_nln_sel( self, pnt=None ) :
-
-		# Update the count of selected data.
-
-		self.nln_n_sel = len( where( self.nln_sel )[0] )
-
 		# Emit a signal that indicates that the data-selection for the
 		# non-linear analysis has changed.
 
-		if ( pnt is None ) :
-			self.emit( SIGNAL('janus_chng_nln_sel_all') )
-		else :
-			self.emit( SIGNAL('janus_chng_nln_sel_bin'),
-			           pnt[0], pnt[1], pnt[2]            )
+		self.emit( SIGNAL('janus_chng_nln_sel_bin'),
+		           pnt[0], pnt[1], pnt[2]            )
 
-		# If dynamic updating of the non-linear fitting has been
-		# enabled, run it.  Otherwise, make sure that the initial guess
-		# and data selection are being displayed.
+		# Call the function that determines the next procedural step
 
-		if ( self.dyn_nln ) :
+		self.after_nln_sel( )
+
+	#-----------------------------------------------------------------------
+	# DETERMINE THE NEXT PROCEDURAL STEP AFTER NLN POINT SELECTION IS MADE
+	#-----------------------------------------------------------------------
+
+	def after_nln_sel( self ) :
+
+		# If the non-linear analysis is set to be dynamically updated,
+		# run the analysis and update the display. Otherwise, just
+		# update the display.
+
+		if( self.dyn_nln ):
 
 			self.anls_nln( )
 
-		else :
+			self.chng_dsp( 'nln' )
+
+		else:
 
 			self.chng_dsp( 'gsl' )
-
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR CALCULATING THE NLN MODEL CURRNET.
-	#-----------------------------------------------------------------------
-
-	def calc_nln_curr( self, dat, prm ) :
-
-		# Initialize the returned list: the total calculated current for
-		# each datum.
-
-		curr = [ 0. for d in dat ]
-
-		# For each ion species, extract the passed parameters and
-		# calculate it's contribution to the total current.
-
-		prm_v0 = ( prm[0], prm[1], prm[2] )
-
-		k = 3
-
-		for p in self.nln_gss_pop :
-
-			# Extract the density of population "p".
-
-			prm_n = prm[k]
-
-			k += 1
-
-			# Determine the bulk velocity of population "p",
-			# extracting (if necessary) the population's drift.
-
-			if ( self.nln_plas.arr_pop[p]['drift'] ) :
-
-				prm_dv = prm[k]
-
-				k += 1
-
-			else :
-
-				prm_dv = 0.
-
-			# Extract the thermal speed(s).
-
-			if ( self.nln_plas.arr_pop[p]['aniso'] ) :
-
-				prm_w = ( prm[k], prm[k+1] )
-
-				k += 2
-
-			else :
-
-				prm_w = prm[k]
-
-				k += 1
-
-			# Add the contribution of this ion species to
-			# the total currents.
-
-			for d in range( len( dat ) ) :
-
-				curr[d] += dat[d].calc_curr(
-				                self.nln_plas.arr_pop[p]['m'],
-				                self.nln_plas.arr_pop[p]['q'],
-				                prm_v0, prm_n, prm_dv, prm_w   )
-
-		# Return the list of total currents from all modeled ion
-		# species.
-
-		return curr
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RUNNING THE NON-LINEAR ANALYSIS.
@@ -3030,16 +2793,179 @@ class core( QObject ) :
 
 
 
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR CHANGING A SETTING FOR THE NLN ANALYSIS.
+	#-----------------------------------------------------------------------
 
+	def chng_nln_set( self, i, param, val ) :
 
+		# Ensure that the arguments are valid.
 
+		if ( ( i < 0 ) or ( i >= self.nln_n_pop ) ) :
+			return
 
+		# Change the parameter(s) of the specified ion species to the
+		# specified values.
 
+		if   ( param == 'gss_n' ) :
 
+			try :
+				self.nln_set_gss_n[i] = float( val )
+			except :
+				self.nln_set_gss_n[i] = None
 
+			if ( ( self.nln_set_gss_n[i] is not None ) and
+			     ( self.nln_set_gss_n[i] <= 0        )     ) :
+				self.nln_set_gss_n[i] = None
 
+		elif ( param == 'gss_d' ) :
 
+			try :
+				self.nln_set_gss_d[i] = float( val )
+			except :
+				self.nln_set_gss_d[i] = None
 
+		elif ( param == 'gss_w' ) :
+
+			try :
+				self.nln_set_gss_w[i] = float( val )
+			except :
+				self.nln_set_gss_w[i] = None
+
+			if ( ( self.nln_set_gss_w[i] is not None ) and
+			     ( self.nln_set_gss_w[i] <= 0        )     ) :
+				self.nln_set_gss_w[i] = None
+
+		elif ( param == 'sel' ) :
+
+			try :
+				self.nln_set_sel_a[i] = float( val[0] )
+			except :
+				self.nln_set_sel_a[i] = None
+
+			try :
+				self.nln_set_sel_b[i] = float( val[1] )
+			except :
+				self.nln_set_sel_b[i] = None
+
+			if ( ( self.nln_set_sel_a[i] is not None       ) and
+			     ( self.nln_set_sel_b[i] is not None       ) and
+			     ( self.nln_set_sel_a[i]
+			                      >= self.nln_set_sel_b[i] )     ) :
+				self.nln_set_sel_a[i] = None
+				self.nln_set_sel_b[i] = None
+		else :
+			return
+
+		# Validate the settings for the specified ion population.
+
+		if   ( ( self.nln_set_gss_n[i] is None ) or
+		       ( self.nln_set_gss_w[i] is None )    ) :
+			self.nln_set_gss_vld[i] = False
+
+		elif ( ( self.nln_plas.arr_pop[i]['drift'] ) and
+		       ( self.nln_set_gss_d[i] is None     )     ) :
+			self.nln_set_gss_vld[i] = False
+		else :
+			self.nln_set_gss_vld[i] = True
+
+		if ( ( self.nln_set_sel_a[i] is None ) or
+		     ( self.nln_set_sel_b[i] is None )    ) :
+			self.nln_set_sel_vld[i] = False
+
+		else :
+			self.nln_set_sel_vld[i] = True
+
+		# Call the correct function to determine the next procedural
+		# step based on which setting changed
+
+		chng = param[0:3]
+
+		# Emit a signal that indicates that the settings for the
+		# non-linear analysis have changed.
+
+		self.emit( SIGNAL('janus_chng_nln_set') )
+
+		# Regenerate the initial guess or data selection.
+
+		# Note.  The functions called should make any necessay updates
+		#        to the dynamic variables.
+
+		if   ( chng == 'gss' ) :
+
+			self.after_mom( )
+
+		elif ( chng == 'sel' ) :
+
+			self.after_nln_gss( )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR CALCULATING THE NLN MODEL CURRNET.
+	#-----------------------------------------------------------------------
+
+	def calc_nln_curr( self, dat, prm ) :
+
+		# Initialize the returned list: the total calculated current for
+		# each datum.
+
+		curr = [ 0. for d in dat ]
+
+		# For each ion species, extract the passed parameters and
+		# calculate it's contribution to the total current.
+
+		prm_v0 = ( prm[0], prm[1], prm[2] )
+
+		k = 3
+
+		for p in self.nln_gss_pop :
+
+			# Extract the density of population "p".
+
+			prm_n = prm[k]
+
+			k += 1
+
+			# Determine the bulk velocity of population "p",
+			# extracting (if necessary) the population's drift.
+
+			if ( self.nln_plas.arr_pop[p]['drift'] ) :
+
+				prm_dv = prm[k]
+
+				k += 1
+
+			else :
+
+				prm_dv = 0.
+
+			# Extract the thermal speed(s).
+
+			if ( self.nln_plas.arr_pop[p]['aniso'] ) :
+
+				prm_w = ( prm[k], prm[k+1] )
+
+				k += 2
+
+			else :
+
+				prm_w = prm[k]
+
+				k += 1
+
+			# Add the contribution of this ion species to
+			# the total currents.
+
+			for d in range( len( dat ) ) :
+
+				curr[d] += dat[d].calc_curr(
+				                self.nln_plas.arr_pop[p]['m'],
+				                self.nln_plas.arr_pop[p]['q'],
+				                prm_v0, prm_n, prm_dv, prm_w   )
+
+		# Return the list of total currents from all modeled ion
+		# species.
+
+		return curr
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR CHANGING THE DISPLAYED ANALYSIS.
@@ -3142,7 +3068,7 @@ class core( QObject ) :
 
 			elif ( anal == 'gss' ) :
 
-				self.auto_nln_gss( )
+				self.after_mom( )
 
 				if ( self.dyn_nln ) :
 					self.chng_dsp( 'nln' )
@@ -3151,7 +3077,7 @@ class core( QObject ) :
 
 			elif ( anal == 'sel' ) :
 
-				self.auto_nln_sel( )
+				self.after_nln_gss( )
 
 				if ( self.dyn_nln ) :
 					self.chng_dsp( 'nln' )
@@ -3160,7 +3086,7 @@ class core( QObject ) :
 
 			elif ( anal == 'nln' ) :
 
-				self.anls_nln( )
+				self.after_nln_sel( )
 
 				self.chng_dsp( 'nln' )
 
