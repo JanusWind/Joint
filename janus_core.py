@@ -1209,7 +1209,7 @@ class core( QObject ) :
 
 		if ( self.dyn_gss ) :
 
-			self.after_mom( run_fc = run_fc )
+			self.after_mom( )
 
 		else :
 
@@ -1844,12 +1844,11 @@ class core( QObject ) :
 	# DETERMINE THE NEXT PROCEDURAL STEP AFTER MOMENTS ANALYSIS
 	#-----------------------------------------------------------------------
 
-	def after_mom( self, run_fc = False ) :
+	def after_mom( self ) :
 
-		# If no process has been requested or no Wind/FC spectrum has
-		# been loaded, abort.
+		# If no Wind/FC spectrum has been loaded, abort.
 
-		if not( ( run_fc and self.fc_loaded ) ) :
+		if not( self.fc_loaded ) :
 
 			return
 
@@ -1871,16 +1870,9 @@ class core( QObject ) :
 
 			self.auto_nln_gss( )
 
-		# If the nonlinear data selection and/or analysis is set to be
-		# dynamically updated, call the function that determines the
-		# next procedural step.
+		# Call the function that determines the next procedural step.
 
-		if ( self.dyn_sel or self.dyn_nln ) :
-
-			self.after_nln_gss( run_fc = run_fc )
-		else :
-
-			self.after_nln_gss( )
+		self.after_nln_gss( )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR AUTO-GENERATING THE INITIAL GUESS FOR NLN.
@@ -2190,7 +2182,7 @@ class core( QObject ) :
 		# Call the function that decides what to do after the initial 
 		# guess is changed
 
-		self.after_nln_gss( run_fc = ( self.dyn_sel or self.dyn_nln ) )
+		self.after_nln_gss( )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR CHANGING A NLN SPECIES.
@@ -2254,7 +2246,7 @@ class core( QObject ) :
 
 		# Call the function that determines the next procedural step
 
-		self.after_mom( run_fc = True )
+		self.after_mom( )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR CHANGING A NLN POPULATION.
@@ -2354,30 +2346,52 @@ class core( QObject ) :
 
 		# Call the function that determines the next procedural step
 
-		self.after_mom( run_fc = True )
+		self.after_mom( )
 
 	#-----------------------------------------------------------------------
 	# DETERMINE THE NEXT PROCEDURAL STEP AFTER INITIAL GUESS IS MADE FOR NLN
 	#-----------------------------------------------------------------------
 
-	def after_nln_gss( self, run_fc = False ) :
+	def after_nln_gss( self ) :
+
+		# If no Wind/FC spectrum has been loaded or the moments analysis
+		# has not run successfully, abort.
+
+		if( not( self.fc_loaded ) or ( self.mom_fc_res is None ) ):
+
+			return
 
 		# run the "make_nln_gss" function to update the
 		# "self.nln_gss_" arrays, widgets, etc.
 
 		self.make_nln_gss( )
 
+		# If the nonlinear point selection has been set to dynamically
+		# update, perform the automatic point selection and then call
+		# the function that determines the next procedural step and
+		# return.
+
 		if( self.dyn_sel ) :
 
 			self.auto_nln_sel( )
+
 			self.after_nln_sel( )
 
 			return
 
+		# If the nonlinear point selection is not set to dynamically
+		# update, but the nonlinear analysis is, perform the analysis
+		# and return.
+
 		if( self.dyn_nln ) :
 
 			self.anls_nln( )
+
 			return
+
+		# If neither the nonlinear point selection nor the nonlinear
+		# analysis has been set to dynamically update, update the
+		# display.
 
 		self.chng_dsp( 'gsl' )
 
@@ -2510,11 +2524,11 @@ class core( QObject ) :
 
 		if   ( chng == 'gss' ) :
 
-			self.after_mom( run_fc = True )
+			self.after_mom( )
 
 		elif ( chng == 'sel' ) :
 
-			self.after_nln_gss( run_fc = True )
+			self.after_nln_gss( )
 
 
 
@@ -2552,7 +2566,7 @@ class core( QObject ) :
 		pop = where( ( self.nln_gss_vld     ) &
 		             ( self.nln_set_sel_vld )   )[0]
 
-		# If point selection canott be run for any ion population or no
+		# If point selection cannot be run for any ion population or no
 		# magentic-field data are available for this spectrum, run the
 		# validation code (to update the registered widgets, etc.) and
 		# abort.
@@ -2644,9 +2658,14 @@ class core( QObject ) :
 				for b in tk :
 					self.nln_sel[c,d,b] = True
 
-		# Propagate the new data-selection for the non-linear analysis.
+		# Update the count of selected data.
 
-		self.prop_nln_sel( )
+		self.nln_n_sel = len( where( self.nln_sel )[0] )
+
+		# Emit a signal that indicates that the data-selection for the
+		# non-linear analysis has changed.
+
+		self.emit( SIGNAL('janus_chng_nln_sel_all') )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR CHANGING THE SELECTION OF A SINGLE POINT.
@@ -2673,9 +2692,9 @@ class core( QObject ) :
 
 		self.nln_sel[c,d,b] = not self.nln_sel[c,d,b]
 
-		# Propagate the new data-selection for the non-linear analysis.
+		# Update the count of selected data.
 
-		self.prop_nln_sel( pnt=[c,d,b] )
+		self.nln_n_sel = len( where( self.nln_sel )[0] )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR PROPAGATING THE NLN DATA-SELECTION.
@@ -2701,8 +2720,11 @@ class core( QObject ) :
 		# and data selection are being displayed.
 
 		if ( self.dyn_nln ) :
+
 			self.anls_nln( )
+
 		else :
+
 			self.chng_dsp( 'gsl' )
 
 	#-----------------------------------------------------------------------
