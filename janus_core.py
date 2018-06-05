@@ -479,6 +479,8 @@ class core( QObject ) :
 
 		if ( var_nln_gss ) :
 
+			self.mom_res = None
+
 			for p in range( self.nln_n_pop ) :
 				self.nln_plas.arr_pop[p]['n']     = None
 				self.nln_plas.arr_pop[p]['dv']    = None
@@ -1866,7 +1868,48 @@ class core( QObject ) :
 		# Attempt to generate an initial guess of the bulk velocity (of
 		# non-drifting species).
 
+		# Set the weight parameter "g" for the joint initial guess.
+
+		g = 1.
+
+		# Make a new plas( ) object which contains the average moments
+		# of the FC and PESA-L spectra (if PESA-L data were loaded).
+		# Otherwise, it will contain only the FC moments results.
+
+		self.mom_res = plas( )
+
 		try :
+
+			if( self.mom_pl_avg is not None ) :
+
+
+
+				self.mom_res['v0_x'] = ( (
+				                self.mom_fc_res['v0_x'] +
+				                g*self.mom_pl_avg['v0_x' ] ) /
+				                                    ( 1 + g. ) )
+
+				self.mom_res['v0_y'] = ( (
+				                self.mom_fc_res['v0_y'] +
+				                g*self.mom_pl_avg['v0_y' ] ) /
+				                                    ( 1 + g. ) )
+
+				self.mom_res['v0_y'] = ( (
+				                self.mom_fc_res['v0_y'] +
+				                g*self.mom_pl_avg['v0_y' ] ) /
+				                                    ( 1 + g. ) )
+
+				self.mom_pl_avg.add_spec( name='Proton',
+				                          sym='p', m=1., q=1. )
+
+				self.mom_pl_avg.add_pop( 'p', name='Core'
+				                          sym='c', drift=False,
+				                                   aniso=False )
+
+			else :
+
+				self.mom_res = self.mom_fc_res
+
 			self.nln_plas['v0_vec'] = [
 			         round( v, 1 ) for v in self.mom_fc_res['v0_vec'] ]
 		except :
@@ -1878,7 +1921,7 @@ class core( QObject ) :
 		for i in range( self.nln_n_pop ) :
 
 			# If the ion population is not in use, is invalid, or
-			# has invalid guess-settings, cotinue on to the next
+			# has invalid guess-settings, continue on to the next
 			# one.
 
 			if ( ( not self.nln_pop_use[i]     ) or
