@@ -325,6 +325,7 @@ class core( QObject ) :
 			self.mom_pl_avg   = None
 			self.mom_pl_std_v = None
 			self.mom_pl_std_T = None
+			self.mom_res      = None
 
 			# Clear the moments results in each PL spectrum.
 
@@ -360,7 +361,8 @@ class core( QObject ) :
 		if ( var_mom_fc_res ) :
 
 			self.mom_fc_res  = None
-			self.mom_curr = None
+			self.mom_curr    = None
+			self.mom_res     = None
 
 		# If requested, (re-)initialize the variables associated with
 		# the ion species and populations for the non-linear analysis.
@@ -478,8 +480,6 @@ class core( QObject ) :
 		# the initial guesses for the non-linear analysis.
 
 		if ( var_nln_gss ) :
-
-			self.mom_res = None
 
 			for p in range( self.nln_n_pop ) :
 				self.nln_plas.arr_pop[p]['n']     = None
@@ -715,7 +715,7 @@ class core( QObject ) :
 		                get_next=get_next  )
 
 	#-----------------------------------------------------------------------
-	# DETERMINE THE NEXT PROCEDURAL STEP AFTER ACCPETING THE SEARCH TIME
+	# DETERMINE THE NEXT PROCEDURAL STEP AFTER ACCEPTING THE SEARCH TIME
 	#-----------------------------------------------------------------------
 
 	def after_time( self, time_req=None, get_prev=False, get_next=False ) :
@@ -1132,7 +1132,7 @@ class core( QObject ) :
 
 				for b in range( dir_max_ind[c][d],
 				                dir_max_ind[c][d]
-				                          + self.mom_fc_win_bin ) :
+				                       + self.mom_fc_win_bin ) :
 					self.mom_fc_sel_bin[c][d][b] = True
 
 	#-----------------------------------------------------------------------
@@ -1140,6 +1140,8 @@ class core( QObject ) :
 	#-----------------------------------------------------------------------
 
 	def auto_mom_pl_sel( self ) :
+
+		# 3-second wait-time hack so threads can catch up.
 
 		time.sleep(3)
 
@@ -1821,21 +1823,56 @@ class core( QObject ) :
 
 	def after_mom( self ) :
 
-		# If no Wind/FC spectrum has been loaded, abort.
-
-		if not( self.fc_loaded ) :
-
-			return
-
-		# If the moments analysis does not seem to have been run
+		# If the moments analyses do not seem to have been run
 		# (sucessfully), run the "make_nln_gss" function (to update the
 		# "self.nln_gss_" arrays, widgets, etc.) and then abort.
 
-		if ( self.mom_fc_res is None ) :
+		if( ( self.mom_fc_res is None ) or
+		    ( self.mom_pl_avg is None )    ) :
 
 			self.make_nln_gss( )
 
+			self.emit( SIGNAL('janus_mesg'),'core', 'norun', 'nln' )
+
 			return
+
+		# Set the weight parameter "g" for the joint initial guess.
+
+		g = 1.
+
+		#g = self.mom_fc_res['n']/self.mom_pl_avg['n']
+
+		# Make a new plas( ) object which contains the average moments
+		# of the FC and PESA-L spectra (if PESA-L data were loaded).
+		# Otherwise, it will contain only the FC moments results.
+
+		self.mom_res = plas( g=g )
+
+		self.mom_res['v0_x'] = ( ( self.mom_fc_res['v0_x'] +
+		                           g*self.mom_pl_avg['v0_x'] ) /
+		                                              ( 1. + g ) )
+
+		self.mom_res['v0_y'] = ( ( self.mom_fc_res['v0_y'] +
+		                           g*self.mom_pl_avg['v0_y'] ) /
+		                                              ( 1. + g ) )
+
+		self.mom_res['v0_z'] = ( ( self.mom_fc_res['v0_z'] +
+		                           g*self.mom_pl_avg['v0_z'] ) /
+		                                              ( 1. + g ) )
+
+		res_w = ( ( self.mom_fc_res['w_p_c'] +
+		            g*self.mom_pl_avg['w_p_c'] ) / ( 1. + g ) ) 
+
+		self.mom_res.add_spec( name='Proton', sym='p', m=1., q=1. )
+
+		# Note: It is assumed that the moments analysis for FC gives
+		#       a significantly more accurate value for 'n' than the
+		#       moments analysis for PESA-L, so the initial guess for
+		#       'n' is taken to be the value from the FC moments alone.
+
+		self.mom_res.add_pop( 'p', name='Core', sym='c',
+		                       n=self.mom_fc_res['n_p_c'],
+		                       w=res_w, drift=False, aniso=False )
 
 		# If the initial guess is set to be dynamically updated, call
 		# the function that performs the initial guess for the
@@ -1868,50 +1905,13 @@ class core( QObject ) :
 		# Attempt to generate an initial guess of the bulk velocity (of
 		# non-drifting species).
 
-		# Set the weight parameter "g" for the joint initial guess.
-
-		g = 1.
-
-		# Make a new plas( ) object which contains the average moments
-		# of the FC and PESA-L spectra (if PESA-L data were loaded).
-		# Otherwise, it will contain only the FC moments results.
-
-		self.mom_res = plas( )
-
 		try :
 
-			if( self.mom_pl_avg is not None ) :
-
-
-
-				self.mom_res['v0_x'] = ( (
-				                self.mom_fc_res['v0_x'] +
-				                g*self.mom_pl_avg['v0_x' ] ) /
-				                                    ( 1 + g. ) )
-
-				self.mom_res['v0_y'] = ( (
-				                self.mom_fc_res['v0_y'] +
-				                g*self.mom_pl_avg['v0_y' ] ) /
-				                                    ( 1 + g. ) )
-
-				self.mom_res['v0_y'] = ( (
-				                self.mom_fc_res['v0_y'] +
-				                g*self.mom_pl_avg['v0_y' ] ) /
-				                                    ( 1 + g. ) )
-
-				self.mom_pl_avg.add_spec( name='Proton',
-				                          sym='p', m=1., q=1. )
-
-				self.mom_pl_avg.add_pop( 'p', name='Core'
-				                          sym='c', drift=False,
-				                                   aniso=False )
-
-			else :
-
-				self.mom_res = self.mom_fc_res
+			self.nln_plas['g'] = self.mom_res['g']
 
 			self.nln_plas['v0_vec'] = [
-			         round( v, 1 ) for v in self.mom_fc_res['v0_vec'] ]
+			         round( v, 1 ) for v in self.mom_res['v0_vec'] ]
+
 		except :
 			pass
 
@@ -1935,7 +1935,7 @@ class core( QObject ) :
 			try :
 				self.nln_plas.arr_pop[i]['n'] = round_sig(
 				                      self.nln_set_gss_n[i]
-				                      * self.mom_fc_res['n_p'], 4 )
+				                      * self.mom_res['n_p'], 4 )
 			except :
 				self.nln_plas.arr_pop[i]['n'] = None
 
@@ -1945,13 +1945,13 @@ class core( QObject ) :
 			if ( self.nln_plas.arr_pop[i]['drift'] ) :
 				try :
 					sgn = sign( dot(
-					             self.mom_fc_res['v0_vec'],
+					             self.mom_res['v0_vec'],
 					             self.mfi_avg_nrm        ) )
 					if ( sgn == 0. ) :
 						sgn = 1.
 					self.nln_plas.arr_pop[i]['dv'] = \
 					    round_sig( 
-					        sgn * self.mom_fc_res['v0_mag']
+					        sgn * self.mom_res['v0_mag']
 					            * self.nln_set_gss_d[i], 4 )
 				except :
 					self.nln_plas.arr_pop[i]['dv'] = None
@@ -1961,7 +1961,7 @@ class core( QObject ) :
 
 			try :
 				w = round_sig( self.nln_set_gss_w[i] 
-				               * self.mom_fc_res['w_p'], 4 )
+				               * self.mom_res['w_p'], 4 )
 			except :
 
 				w = None

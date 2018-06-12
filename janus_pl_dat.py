@@ -43,7 +43,7 @@ class pl_dat( ) :
 	def __init__( self, spec=None,
 	              t_strt=None, t_stop=None, azim_cen=None, phi_del=None,
 	              elev_cen=None, the_del=None, volt_cen=None, volt_del=None,
-	              psd=None, valid=False, mom_sel = False ) :
+	              psd=None, valid=False, mom_sel = False, nln_sel = False ) :
 
 		self._spec      = spec
 		self._azim_cen  = azim_cen
@@ -55,6 +55,7 @@ class pl_dat( ) :
 		self._psd       = psd
 		self._valid     = valid
 		self.mom_sel    = mom_sel
+		self.nln_sel    = nln_sel
 
 		self._time = ( datetime( 1970, 1, 1 ) + 
 		               timedelta( seconds = (t_strt +
@@ -182,6 +183,8 @@ class pl_dat( ) :
 			return ( self._norm_b_x,self._norm_b_y,self._norm_b_z )
 		elif ( key == 'mom_sel' ) :
 			return ( self.mom_sel )
+		elif ( key == 'nln_sel' ) :
+			return ( self.nln_sel )
 		elif ( key == 'mom0' ) :
 			return ( self._mom0 )
 		elif ( key == 'mom1x' ) :
@@ -225,6 +228,8 @@ class pl_dat( ) :
 				return 0
 		elif ( key == 'psd_mom' ) :
 			return self.psd_mom
+		elif ( key == 'psd_gss' ) :
+			return self.psd_gss
 		else :
 			raise KeyError( 'Invalid key for "pl_dat".' )
 
@@ -272,7 +277,15 @@ class pl_dat( ) :
 		self.mom_sel = sel
 
 	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION TO CALCULATE EXPECTED MAXWELLIAN PSD.
+	# DEFINE THE FUNCTION FOR SETTING THE NON-LINEAR SELECTION BOOLEAN.
+	#-----------------------------------------------------------------------
+
+	def set_nln_sel( self, sel ) :
+
+		self.nln_sel = sel
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION TO CALCULATE EXPECTED MAXWELLIAN PSD FOR MOM. ANL.
 	#-----------------------------------------------------------------------
 
 	def calc_psd_mom( self ) :
@@ -310,3 +323,43 @@ class pl_dat( ) :
 		                                ( self._spec.mom_w)**3 )
 
 		self.psd_mom = ret_norm * ret_exp
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION TO CALCULATE EXPECTED MAXWELLIAN PSD FOR NLN. GSS.
+	#-----------------------------------------------------------------------
+
+	def calc_psd_gss( self ) :
+
+		# If the moments analysis failed, set "self.psd_mom" to None and
+		# abort
+
+		if ( ( self._spec.gss_n is None     ) or
+		     ( self._spec.gss_v_vec is None ) or
+		     ( self._spec.gss_w is None     )    ) :
+
+			self.psd_gss = None
+
+			return
+
+		v2 = sum( [ self._spec.gss_v_vec[i]**2 for i in range( 3 ) ] )
+
+		u_vec = [ self['vel_cen'] * self['dir_x'],
+		          self['vel_cen'] * self['dir_y'],
+		          self['vel_cen'] * self['dir_z']  ]
+
+		# Calculate the exponent
+
+		power = - ( abs( self['vel_cen']**2 + v2 -
+		                 2.*( dot( u_vec, self._spec.gss_v_vec ) ) ) /
+		          (2. * self._spec.gss_w**2 ) )
+
+		# Calculate the exponential term
+
+		ret_exp = exp( power )
+
+		# Calculate the normalization factor
+
+		ret_norm = self._spec.gss_n / ( (2.*pi)**1.5 *
+		                                ( self._spec.gss_w)**3 )
+
+		self.psd_gss = ret_norm * ret_exp

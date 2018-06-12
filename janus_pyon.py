@@ -31,7 +31,7 @@ from janus_const import const
 ## DEFINE THE LIST OF RESERVED NAMES.
 ################################################################################
 
-PARAM = [ 'b0', 'v0', 'n', 'v', 'dv', 'v0', 'w', 'w2', 'r', 't', 'beta',
+PARAM = [ 'g', 'b0', 'v0', 'n', 'v', 'dv', 'v0', 'w', 'w2', 'r', 't', 'beta',
           'ac', 'time', 's','m','q', 'k', 'beta_par', 'beta_per'               ]
 
 COMP = [ 'x', 'y', 'z', 'per', 'par', 'vec', 'mag', 'hat'  ]
@@ -140,7 +140,7 @@ class plas( object ) :
 	# DEFINE THE INITIALIZATION FUNCTION.
 	#-----------------------------------------------------------------------
 
-	def __init__( self, time=None, enforce=False ) :
+	def __init__( self, time=None, enforce=False, g=None ) :
 
 		self.time = time
 
@@ -148,6 +148,8 @@ class plas( object ) :
 		self.arr_pop  = [ ]
 
 		self.covar = None
+
+		self.g = g
 
 		self.v0_x = None
 		self.v0_y = None
@@ -365,6 +367,14 @@ class plas( object ) :
 				else :
 					return None
 
+		elif ( elem['param'] == 'g' ) :
+
+			if ( ( elem['sigma'] is None ) and
+			     ( elem['comp' ] is None )     ) :
+				return self.g
+			else :
+				return None
+
 		# Note.  If this point is reached, the parameter is one to be
 		#        handled by the species or population.
 
@@ -428,6 +438,13 @@ class plas( object ) :
 				     'Type "datetime" required for timestamp.' )
 
 		# TODO Keys
+
+		elif ( key == 'g' ) :
+
+			self.g = None
+
+			if ( value is not None ) :
+				self.g = float( value )
 
 		elif ( key == 'v0_x' ) :
 
