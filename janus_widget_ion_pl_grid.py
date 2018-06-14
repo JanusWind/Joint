@@ -119,6 +119,10 @@ class widget_pl_grid( QWidget ) :
 		                                     self.resp_chng_mom_pl_sel )
 		self.connect( self.core, SIGNAL('janus_chng_mom_pl_res'),
 		                                     self.resp_chng_mom_pl_res )
+		self.connect( self.core, SIGNAL('janus_chng_nln_sel_all'),
+		                                    self.resp_chng_nln_sel_all )
+		self.connect( self.core, SIGNAL('janus_chng_dsp'),
+		                                            self.resp_chng_dsp )
 
 		#TODO add more signals
 
@@ -517,33 +521,28 @@ class widget_pl_grid( QWidget ) :
 				sel_dir = True
 				sel_alt = None
 
-#				if ( self.core.dsp == 'mom'          ) :# and 
-#				     ( self.core.pl_spec_arr[self.n].mom_sel_bin
-#						           is not None ) and
-#				     ( self.core.pl_spec_arr[self.n].mom_sel_dir
+				if( self.core.dsp == 'mom' ):
+
+					sel_bin = self.core.pl_spec_arr[self.n].arr[t][p][b]['mom_sel']
+
+				elif ( ( self.core.dsp == 'gsl'        ) and 
+				       ( self.core.nln_pl_sel[self.n] is not None )     ) :
+
+					sel_bin = self.core.nln_pl_sel[self.n][t][p][b]
+
+#				elif ( ( self.core.dsp == 'nln'        ) and 
+#				       ( self.core.pl_spec_arr[self.n].nln_res_sel
 #					                   is not None )     ) :
 
-				sel_bin = self.core.pl_spec_arr[self.n].arr[t][p][b]['mom_sel']
+#					sel_bin = \
+#					       self.core.pl_spec_arr[self.n].nln_res_sel[t][p][b]
 
-				"""
-				elif ( ( self.core.dsp == 'gsl'        ) and 
-				       ( self.core.pl_spec_arr[self.n].nln_sel is not None )     ) :
+#					if ( self.core.pl_spec_arr[self.n].nln_sel is None ) :
+#						sel_alt = None
+#					else :
+#						sel_alt = \
+#						   self.core.pl_spec_arr[self.n].nln_sel[t][p][b]
 
-					sel_bin = self.core.pl_spec_arr[self.n].nln_sel[t][p][b]
-
-				elif ( ( self.core.dsp == 'nln'        ) and 
-				       ( self.core.pl_spec_arr[self.n].nln_res_sel
-					                   is not None )     ) :
-
-					sel_bin = \
-					       self.core.pl_spec_arr[self.n].nln_res_sel[t][p][b]
-
-					if ( self.core.pl_spec_arr[self.n].nln_sel is None ) :
-						sel_alt = None
-					else :
-						sel_alt = \
-						   self.core.pl_spec_arr[self.n].nln_sel[t][p][b]
-				"""
 				self.chng_pnt( t, p, b, sel_bin,
 					       sel_alt=sel_alt   )
 
@@ -838,6 +837,34 @@ class widget_pl_grid( QWidget ) :
 		# reset any existing fit curves and make new ones.
 
 		self.make_crv( )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_nln_sel_all" SIGNAL.
+	#-----------------------------------------------------------------------
+
+	def resp_chng_nln_sel_all( self ) :
+
+		# If the point selection for the non-linear analysis is being
+		# displayed, reset any existing selection points and create new
+		# ones.
+
+		if ( ( self.core.dsp == 'gsl' ) or
+		     ( self.core.dsp == 'nln' )    ) :
+
+			self.make_pnt( )
+#			self.make_crv( )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_dsp" SIGNAL.
+	#-----------------------------------------------------------------------
+
+	def resp_chng_dsp( self ) :
+
+		# Reset the selection points and fit curves.
+
+		self.make_pnt( )
+#		self.make_crv( )
+
 	'''
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_mom_win" SIGNAL.

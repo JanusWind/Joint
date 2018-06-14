@@ -501,9 +501,11 @@ class core( QObject ) :
 
 		if ( var_nln_sel ) :
 
-			self.nln_sel     = None
+			self.nln_fc_sel     = None
+			self.nln_pl_sel     = None
 
-			self.nln_n_sel   = 0
+			self.nln_fc_n_sel   = 0
+			self.nln_pl_n_sel   = 0
 			self.nln_min_sel = 30
 
 		# If requested, (re-)initialize the variables associated with
@@ -2430,9 +2432,14 @@ class core( QObject ) :
 
 		# Intially deselect all data.
 
-		self.nln_sel = tile( False, [ self.fc_spec['n_cup'],
-                                              self.fc_spec['n_dir'],
-		                              self.fc_spec['n_bin']   ] )
+		self.nln_fc_sel = tile( False, [ self.fc_spec['n_cup'],
+                                                 self.fc_spec['n_dir'],
+		                                 self.fc_spec['n_bin']   ] )
+
+		self.nln_pl_sel = tile( False, [ len( self.pl_spec_arr ),
+		                                 self.pl_spec_arr[0]['n_the'],
+		                                 self.pl_spec_arr[0]['n_phi'],
+		                                 self.pl_spec_arr[0]['n_bin'] ])
 
 		# Determine which ion species have been selected for analysis
 		# and have been given valid parameters, initial geusses, and
@@ -2453,6 +2460,10 @@ class core( QObject ) :
 
 			return
 
+		#-------------------------#
+		#----FC DATA SELECTION----#
+		#-------------------------#
+
 		# Select data based on the selection windows from each of the
 		# look directions selected for the moments analysis.
 
@@ -2466,7 +2477,7 @@ class core( QObject ) :
 		for j in range( n_tk ) :
 
 			# Extract the current look direction and convert it
-			# from altitude-azimuth to rectangular coordiantes.
+			# from altitude-azimuth to rectangular coordinates.
 
 			c   = tk_c[j]
 			d   = tk_d[j]
@@ -2531,11 +2542,107 @@ class core( QObject ) :
 				     ( array( arr_vel_cen[c] ) <= v_max )   )[0]
 
 				for b in tk :
-					self.nln_sel[c,d,b] = True
+					self.nln_fc_sel[c,d,b] = True
 
-		# Update the count of selected data.
+		#-----------------------------#
+		#----PESA-L DATA SELECTION----#
+		#-----------------------------#
 
-		self.nln_n_sel = len( where( self.nln_sel )[0] )
+		for n in range( len( self.pl_spec_arr ) ) :
+
+			# Select data based on the selection windows from each
+			# of the look directions selected for the moments
+			# analysis.
+
+			( tk_t, tk_p ) = where( self.pl_spec_arr[n]['sel_dir'] )
+
+			n_tk = len( tk_t )
+
+			arr_vel_cen = self.pl_spec_arr[n]['vel_cen']
+
+			for j in range( n_tk ) :
+
+				# Extract the current look direction and convert
+				# it from altitude-azimuth to rectangular
+				# coordinates.
+
+				t   = tk_t[j]
+				p   = tk_p[j]
+
+				dlk = self.pl_spec_arr[n].arr[t][p][0]['dir']
+
+				# Select data for each species.
+
+				for i in pop :
+
+					# Extract the estimated bulk velocity
+					# (and the magnitude thereof) of this
+					# ion species (based on the initial
+					# guess).
+
+					vel = array( self.nln_plas['vec_v0'] )
+
+					if ( self.nln_plas.arr_pop[i]['drift'] ) :
+						vel += self.mfi_avg_nrm * \
+						  self.nln_plas.arr_pop[i]['dv']
+
+					v = sqrt( vel[0]**2 + vel[1]**2 +
+					                      vel[2]**2   )
+
+					# Compute the negative of the projected
+					# bulk velocity along the look direction
+
+					# FIXME Why is this not negative?
+
+					v_proj = dot( vel, dlk )
+
+					# Compute the range of projected inflow
+					# speeds specified by this ion species'
+					# charge-to-mass ratio, initial geusses,
+					# and selection window.
+
+					if ( self.nln_plas.arr_pop[i]['aniso'] ) :
+						ang = abs( dot( dlk,
+					                   self.mfi_avg_nrm ))
+						w = sqrt( ( self.nln_plas.arr_pop[i]['w_per']
+						             * sin(ang) )**2 +
+						          ( self.nln_plas.arr_pop[i]['w_par']
+						             * cos(ang) )**2   )
+					else :
+						w = self.nln_plas.arr_pop[i]['w']
+
+					v_min = v_proj + \
+					        ( self.nln_set_sel_a[i]
+					           * w * v_proj / v    )
+					v_max = v_proj + \
+					        ( self.nln_set_sel_b[i]
+					           * w * v_proj / v    )
+
+					v_min = v_min * sqrt(
+					  self.nln_plas.arr_pop[i]['m']
+				 	/ self.nln_plas.arr_pop[i]['q']   )
+					v_max = v_max * sqrt(
+					  self.nln_plas.arr_pop[i]['m']
+					/ self.nln_plas.arr_pop[i]['q']   )
+
+					# Select all seemingly valid
+					# measurements from this look direction
+					# that fall into this range of inflow
+					# speeds.
+
+					tk = where( ( array( arr_vel_cen )
+					              >= v_min ) &
+					            ( array( arr_vel_cen )
+					              <= v_max )              )[0]
+
+					for b in tk :
+						self.nln_pl_sel[n,t,p,b] = True
+
+		# Update the counts of selected data.
+
+		self.nln_fc_n_sel = len( where( self.nln_fc_sel )[0] )
+
+		self.nln_pl_n_sel = len( where( self.nln_pl_sel[0] )[0] )
 
 		# Emit a signal that indicates that the data-selection for the
 		# non-linear analysis has changed.
@@ -2557,19 +2664,19 @@ class core( QObject ) :
 
 		# If necessary, initialize the selection array.
 
-		if ( self.nln_sel is None ) :
-			self.nln_sel = tile( False,
+		if ( self.nln_fc_sel is None ) :
+			self.nln_fc_sel = tile( False,
 			                     [ self.fc_spec['n_cup'],
                                                self.fc_spec['n_dir'],
 			                       self.fc_spec['n_bin']     ] )
 
 		# Change the selection of the requested point.
 
-		self.nln_sel[c,d,b] = not self.nln_sel[c,d,b]
+		self.nln_fc_sel[c,d,b] = not self.nln_fc_sel[c,d,b]
 
 		# Update the count of selected data.
 
-		self.nln_n_sel = len( where( self.nln_sel )[0] )
+		self.nln_fc_n_sel = len( where( self.nln_fc_sel )[0] )
 
 		# Emit a signal that indicates that the data-selection for the
 		# non-linear analysis has changed.
@@ -2624,13 +2731,13 @@ class core( QObject ) :
 		#   -- No initial guess has been generated.
 		#   -- Insufficient data have been selected.
 
-		if ( ( self.fc_spec is None              ) or
-		     ( self.fc_spec['n_bin'] == 0        ) or
-		     ( self.n_mfi == 0                   ) or
-		     ( len( self.nln_gss_pop ) == 0      ) or
-		     ( 0 not in self.nln_gss_pop         ) or
-		     ( len( self.nln_gss_prm ) == 0      ) or
-		     ( self.nln_n_sel < self.nln_min_sel )    ) :
+		if ( ( self.fc_spec is None                 ) or
+		     ( self.fc_spec['n_bin'] == 0           ) or
+		     ( self.n_mfi == 0                      ) or
+		     ( len( self.nln_gss_pop ) == 0         ) or
+		     ( 0 not in self.nln_gss_pop            ) or
+		     ( len( self.nln_gss_prm ) == 0         ) or
+		     ( self.nln_fc_n_sel < self.nln_min_sel )    ) :
 
 			self.emit( SIGNAL('janus_mesg'),
 			           'core', 'norun', 'nln' )
@@ -2652,7 +2759,7 @@ class core( QObject ) :
                 # Save the data selection and then use it to generate data
 		# arrays for the non-linear fit.
 
-		self.nln_res_sel = self.nln_sel.copy( )
+		self.nln_res_sel = self.nln_fc_sel.copy( )
 
 		# Extract the data selection.
 

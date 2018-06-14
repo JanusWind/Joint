@@ -563,9 +563,9 @@ class widget_fc_cup( QWidget ) :
 					       self.core.mom_fc_sel_dir[self.c][d]
 
 				elif ( ( self.core.dsp == 'gsl'        ) and 
-				       ( self.core.nln_sel is not None )     ) :
+				       ( self.core.nln_fc_sel is not None )  ) :
 
-					sel_bin = self.core.nln_sel[self.c][d][b]
+					sel_bin = self.core.nln_fc_sel[self.c][d][b]
 
 				elif ( ( self.core.dsp == 'nln'        ) and 
 				       ( self.core.nln_res_sel
@@ -574,11 +574,11 @@ class widget_fc_cup( QWidget ) :
 					sel_bin = \
 					       self.core.nln_res_sel[self.c][d][b]
 
-					if ( self.core.nln_sel is None ) :
+					if ( self.core.nln_fc_sel is None ) :
 						sel_alt = None
 					else :
 						sel_alt = \
-						   self.core.nln_sel[self.c][d][b]
+						   self.core.nln_fc_sel[self.c][d][b]
 
 				self.chng_pnt( j, i, b, sel_bin,
 					       sel_dir=sel_dir,
@@ -1272,7 +1272,7 @@ class widget_fc_cup( QWidget ) :
 		if ( self.core.dsp == 'gsl' ) :
 
 			self.chng_pnt( j, i, b,
-			               self.core.nln_sel[self.c][d][b] )
+			               self.core.nln_fc_sel[self.c][d][b] )
 
 			self.make_crv( )
 
@@ -1281,11 +1281,11 @@ class widget_fc_cup( QWidget ) :
 			if ( self.core.nln_res_sel is None ) :
 				self.chng_pnt( j, i, b,
 				              False,
-				              sel_alt=self.core.nln_sel[self.c][d][b] )			
+				              sel_alt=self.core.nln_fc_sel[self.c][d][b] )			
 			else :
 				self.chng_pnt( j, i, b,
 				              self.core.nln_res_sel[self.c][d][b],
-				              sel_alt=self.core.nln_sel[self.c][d][b] )
+				              sel_alt=self.core.nln_fc_sel[self.c][d][b] )
 
 			self.make_crv( d_lst=[d] )
 

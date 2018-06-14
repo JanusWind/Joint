@@ -183,8 +183,6 @@ class pl_dat( ) :
 			return ( self._norm_b_x,self._norm_b_y,self._norm_b_z )
 		elif ( key == 'mom_sel' ) :
 			return ( self.mom_sel )
-		elif ( key == 'nln_sel' ) :
-			return ( self.nln_sel )
 		elif ( key == 'mom0' ) :
 			return ( self._mom0 )
 		elif ( key == 'mom1x' ) :
@@ -275,14 +273,6 @@ class pl_dat( ) :
 	def set_mom_sel( self, sel ) :
 
 		self.mom_sel = sel
-
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR SETTING THE NON-LINEAR SELECTION BOOLEAN.
-	#-----------------------------------------------------------------------
-
-	def set_nln_sel( self, sel ) :
-
-		self.nln_sel = sel
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION TO CALCULATE EXPECTED MAXWELLIAN PSD FOR MOM. ANL.

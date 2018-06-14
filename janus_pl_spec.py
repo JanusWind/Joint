@@ -277,6 +277,11 @@ class pl_spec( ) :
 			          for b in range( self._n_bin )
 			          for p in range( self._n_phi )
 			          for t in range( self._n_the )     ]
+		elif ( key == 'sel_dir' ) :
+			return [ [ True in [ self.arr[t][p][b]['mom_sel']
+			                   for b in range( self._n_bin ) ]
+			           for p in range( self._n_phi )             ]
+			           for t in range( self._n_the )             ]
 		elif ( key == 'n_sel_bin' ) :
 			return [ [ sum( [ self.arr[t][p][b]['mom_sel']
 			                  for b in range( self._n_bin ) ] )
@@ -393,55 +398,6 @@ class pl_spec( ) :
 				for b in range( self['n_bin'] ) :
 
 					self.arr[t][p][b].calc_psd_mom( )
-
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR RESETTING ALL NON-LINEAR ANALYSIS VARIABLES
-	#-----------------------------------------------------------------------
-
-	def rset_nln( self ) :
-
-		self.rset_nln_gss( )
-		self.rset_nln_sel( )
-
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR DE-SELECTING ALL DATA FOR THE NLN. ANALYSIS
-	#-----------------------------------------------------------------------
-
-	def rset_nln_sel( self ) :
-
-		# Clear out moments selection: set each pl_dat to be unselected
-		# for moments analysis
-
-		for t in range( self['n_the'] ) :
-
-			for p in range( self['n_phi'] ) :
-
-				for b in range( self['n_bin'] ) :
-
-					self.arr[t][p][b].set_nln_sel( False )
-
-	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR CLEARING THE NON-LINEAR INITIAL GUESS AND PSDs
-	#-----------------------------------------------------------------------
-
-	def rset_nln_gss( self ) :
-
-		# Clear out non-linear initial guess
-
-		self.gss_n     = None
-		self.gss_v_vec = None
-		self.gss_v     = None
-		self.gss_w     = None
-
-		# Set the predicted PSD values to None
-
-		for t in range( self['n_the'] ) :
-
-			for p in range( self['n_phi'] ) :
-
-				for b in range( self['n_bin'] ) :
-
-					self.arr[t][p][b].calc_psd_gss( )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RUNNING THE MOMENTS ANALYSIS ON THIS SPECTRUM.
