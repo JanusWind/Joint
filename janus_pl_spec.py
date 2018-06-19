@@ -133,7 +133,8 @@ class pl_spec( ) :
 		                       elev_cen = elev_cen[t][p][b],
 		                       the_del  = the_del[t][p][b],
 		                       volt_cen = volt_cen[t][p][b], 
-		                       volt_del = volt_del[t][p][b], 
+		                       volt_del = volt_del[t][p][b],
+		                       volt_n   = b, 
 		                       t_strt   = self._t_strt,
 		                       t_stop   = self._t_stop,
 		                       psd      = psd[t][p][b]       ) 
@@ -554,6 +555,12 @@ class pl_spec( ) :
 			if ( psd > psd_max ) :
 				b_max    = b
 				psd_max = psd
+
+		#if t==2 and p==3 :
+		#	print self['vel_strt']
+		#	print self['vel_stop']
+		#	print self['vel_cen']
+		#	print self['psd'][t][p]
 
 		# Return the location of the window with the maximum psd.
 

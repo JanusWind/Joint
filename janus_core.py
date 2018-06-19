@@ -1197,6 +1197,9 @@ class core( QObject ) :
 
 			self.anls_mom_fc( )
 
+			fc_theta = round(self.mom_fc_res['v0_z']/sqrt(self.mom_fc_res['v0_x']**2+self.mom_fc_res['v0_y']**2)*180/pi, 2)
+			fc_phi   = round(self.mom_fc_res['v0_y']/self.mom_fc_res['v0_x']*180/pi, 2)
+
 		if ( run_pl ) :
 
 			# Validate the Wind/PESA-L point-selection
@@ -1206,6 +1209,15 @@ class core( QObject ) :
 			# Run the moments analysis on the Wind/PESA-L data
 
 			self.anls_mom_pl( )
+
+			pl_theta = round(self.mom_pl_avg['v0_z']/sqrt(self.mom_pl_avg['v0_x']**2+self.mom_pl_avg['v0_y']**2)*180/pi, 2)
+			pl_phi   = round(self.mom_pl_avg['v0_y']/self.mom_pl_avg['v0_x']*180/pi, 2)
+
+			#anglefile = open("theta_phi_reduced_2.txt", "a")
+
+			#anglefile.write(" {} {} {} {}".format(fc_theta, fc_phi, pl_theta, pl_phi))
+
+			#anglefile.close()			
 
 		self.emit( SIGNAL('janus_chng_mom_res') )
 

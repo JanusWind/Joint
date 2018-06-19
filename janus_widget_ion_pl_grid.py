@@ -290,6 +290,8 @@ class widget_pl_grid( QWidget ) :
 
 				# Create and store this plot, adjust its limits,
 				# and add it to the grid.
+				# Note: locations of plots are inverted along
+				# theta
 
 				self.plt[t,p] = event_ViewBox( self,
 				                          border=self.pen_plt,
@@ -300,7 +302,7 @@ class widget_pl_grid( QWidget ) :
 				                        yRange=self.y_lim,
 				                        padding=0.         )
 
-				self.grd.addItem( self.plt[t,p], t, p + 2 )
+				self.grd.addItem( self.plt[t,p], self.n_plt_y-t-1, p + 2 )
 
 				# Create and store an (empty) label and add it
 				# to this plot.
@@ -319,6 +321,7 @@ class widget_pl_grid( QWidget ) :
 
 		# If no spectrum has been loaded, use the default limits;
 		# otherwise, use the spectral data to compute axis limits.
+		# Note: velocities are recorded in reverse order.
 
 		if ( self.core.pl_spec_arr is None ) :
 
@@ -385,11 +388,11 @@ class widget_pl_grid( QWidget ) :
 
 		self.make_lim( )
 
-		for p in range( self.n_plt_x ) :
-			 self.axs_x[p].setRange( self.x_lim[0], self.x_lim[1] )
+		#for p in range( self.n_plt_x ) :
+		#	 self.axs_x[p].setRange( self.x_lim[0], self.x_lim[1] )
 
-		for t in range( self.n_plt_y ) :
-			 self.axs_y[t].setRange( self.y_lim[0], self.y_lim[1] )
+		#for t in range( self.n_plt_y ) :
+		#	 self.axs_y[t].setRange( self.y_lim[0], self.y_lim[1] )
 
 		# Histograms are broken down by phi horizontally and
 		# theta vertically
@@ -526,7 +529,7 @@ class widget_pl_grid( QWidget ) :
 					sel_bin = self.core.pl_spec_arr[self.n].arr[t][p][b]['mom_sel']
 
 				elif ( ( self.core.dsp == 'gsl'        ) and 
-				       ( self.core.nln_pl_sel[self.n] is not None )     ) :
+				       ( self.core.nln_pl_sel is not None )  ) :
 
 					sel_bin = self.core.nln_pl_sel[self.n][t][p][b]
 

@@ -43,7 +43,7 @@ class pl_dat( ) :
 	def __init__( self, spec=None,
 	              t_strt=None, t_stop=None, azim_cen=None, phi_del=None,
 	              elev_cen=None, the_del=None, volt_cen=None, volt_del=None,
-	              psd=None, valid=False, mom_sel = False, nln_sel = False ) :
+	              volt_n = None, psd=None, valid=False, mom_sel = False ) :
 
 		self._spec      = spec
 		self._azim_cen  = azim_cen
@@ -52,18 +52,18 @@ class pl_dat( ) :
 		self._the_del   = the_del
 		self._volt_cen  = volt_cen
 		self._volt_del  = volt_del
+		self._volt_n    = volt_n
 		self._psd       = psd
 		self._valid     = valid
 		self.mom_sel    = mom_sel
-		self.nln_sel    = nln_sel
 
 		self._time = ( datetime( 1970, 1, 1 ) + 
 		               timedelta( seconds = (t_strt +
 		               ( t_stop - t_strt ) / 360. * azim_cen ) ) )
 
 		#Note: The voltage is recorded from high to low voltage
-		self._volt_strt = ( self._volt_cen + ( self._volt_del / 2. ) )
-		self._volt_stop = ( self._volt_cen - ( self._volt_del / 2. ) )
+		self._volt_strt = ( self._volt_cen - ( self._volt_del / 2. ) )
+		self._volt_stop = ( self._volt_cen + ( self._volt_del / 2. ) )
 
 		self._vel_strt  = 1E-3*( sqrt(2.0*const['q_p']*
 		                         self['volt_strt']/const['m_p'])    )
@@ -73,7 +73,7 @@ class pl_dat( ) :
 		self._vel_cen   = 1E-3*( sqrt(2.0*const['q_p']*
 		                         self._volt_cen/const['m_p'])       )
 
-		self._vel_del   = (  self['vel_strt']-self['vel_stop']      )
+		self._vel_del   = (  self['vel_stop']-self['vel_strt']      )
 
 		# TODO It is currently assumed that the given values of theta
 		#      and phi are the proper look directions. Need to confirm.
@@ -81,7 +81,9 @@ class pl_dat( ) :
 		# TODO: Confirm these formulae
 
 		self._the       =( 90 + self._elev_cen ) * pi/180 # ( 90 -
-		self._phi       =( 180 + self._azim_cen) * pi/180
+		self._phi       =( 180 + self._azim_cen +
+		                   ( ( self._volt_n - self._spec._n_bin/2. + 0.5) /
+		                     self._spec._n_bin * self._phi_del        ) ) * pi/180
 
 		self._dir_x     = - sin( self._the ) * cos( self._phi )
 		self._dir_y     = - sin( self._the ) * sin( self._phi )
