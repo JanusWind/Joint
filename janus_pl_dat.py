@@ -70,8 +70,8 @@ class pl_dat( ) :
 		self._vel_stop  = 1E-3*( sqrt((2.0*const['q_p']*
 		                         self['volt_stop']/const['m_p']))   )
 
-		self._vel_cen   = 1E-3*( sqrt(2.0*const['q_p']*
-		                         self._volt_cen/const['m_p'])       )
+		self._vel_cen   = (  self['vel_stop']+self['vel_strt']      ) / 2.  #1E-3*( sqrt(2.0*const['q_p']*
+		#                         self._volt_cen/const['m_p'])       )
 
 		self._vel_del   = (  self['vel_stop']-self['vel_strt']      )
 
@@ -81,9 +81,9 @@ class pl_dat( ) :
 		# TODO: Confirm these formulae
 
 		self._the       =( 90 + self._elev_cen ) * pi/180 # ( 90 -
-		self._phi       =( 180 + self._azim_cen +
-		                   ( ( self._volt_n - self._spec._n_bin/2. + 0.5) /
-		                     self._spec._n_bin * self._phi_del        ) ) * pi/180
+		self._phi       =( 180 - self._azim_cen )* pi/180 #+
+		                   #( ( self._volt_n - self._spec._n_bin/2. + 0.5) /
+		                   #  self._spec._n_bin * self._phi_del        ) ) * pi/180
 
 		self._dir_x     = - sin( self._the ) * cos( self._phi )
 		self._dir_y     = - sin( self._the ) * sin( self._phi )
