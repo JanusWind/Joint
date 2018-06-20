@@ -115,6 +115,8 @@ class widget_pl_grid( QWidget ) :
 		# Prepare to respond to signals received from the Janus core.
 
 		self.connect( self.core, SIGNAL('janus_rset'),  self.resp_rset )
+		self.connect( self.core, SIGNAL('janus_chng_pl_spc'),
+		                                            self.resp_chng_pl_spc )
 		self.connect( self.core, SIGNAL('janus_chng_mom_pl_sel'),
 		                                     self.resp_chng_mom_pl_sel )
 		self.connect( self.core, SIGNAL('janus_chng_mom_pl_res'),
@@ -323,7 +325,7 @@ class widget_pl_grid( QWidget ) :
 		# otherwise, use the spectral data to compute axis limits.
 		# Note: velocities are recorded in reverse order.
 
-		if ( self.core.pl_spec_arr is None ) :
+		if ( self.core.pl_spec_arr == [] ) :
 
 			self.domain = [ 300. , 900. ]
 			self.range = [ 1.e-10,  1.e-5 ]
@@ -366,10 +368,20 @@ class widget_pl_grid( QWidget ) :
 
 	def make_hst( self ) :
 
-		# If no spectrum has been loaded, clear any existing histograms
-		# and abort.
+		# Reset the timestamp label
+
+		self.time_label.setText( '' )
+
+		# If no spectrum has been loaded, abort.
 
 		if ( self.core.pl_spec_arr == [] ) : return
+
+		# If the index of this P-L grid is outside the bounds of the P-L
+		# spectrum currently loaded, abort.
+
+		if ( self.n >= len( self.core.pl_spec_arr ) ) : return
+
+		print self.n
 
 		# Generate the timestamp label
 
@@ -388,11 +400,11 @@ class widget_pl_grid( QWidget ) :
 
 		self.make_lim( )
 
-		#for p in range( self.n_plt_x ) :
-		#	 self.axs_x[p].setRange( self.x_lim[0], self.x_lim[1] )
+		for p in range( self.n_plt_x ) :
+			 self.axs_x[p].setRange( self.x_lim[0], self.x_lim[1] )
 
-		#for t in range( self.n_plt_y ) :
-		#	 self.axs_y[t].setRange( self.y_lim[0], self.y_lim[1] )
+		for t in range( self.n_plt_y ) :
+			 self.axs_y[t].setRange( self.y_lim[0], self.y_lim[1] )
 
 		# Histograms are broken down by phi horizontally and
 		# theta vertically
@@ -464,6 +476,10 @@ class widget_pl_grid( QWidget ) :
 				# Adjust this plot's limits and then move it's
 				# label in response.
 
+				self.plt[t,p].setRange( xRange=self.x_lim,
+				                        yRange=self.y_lim,
+				                        padding=0.         )
+
 				self.lbl[t,p].setPos( self.x_lim[1],
 				                      self.y_lim[1]  )
 
@@ -495,11 +511,14 @@ class widget_pl_grid( QWidget ) :
 
 	def make_pnt( self ) :
 
-		# Add selection points to each plot.
+		# If no spectrum has been loaded, abort.
 
-		if ( self.core.pl_spec_arr == [] ) :
+		if ( self.core.pl_spec_arr == [] ) : return
 
-			return
+		# If the index of this P-L grid is outside the bounds of the P-L
+		# spectrum currently loaded, abort.
+
+		if ( self.n >= len( self.core.pl_spec_arr ) ) : return
 
 		# Add selection points to each plot.
 
@@ -554,6 +573,15 @@ class widget_pl_grid( QWidget ) :
 	#-----------------------------------------------------------------------
 
 	def chng_pnt( self, t, p, b, sel_bin, sel_alt=None ) :
+
+		# If no spectrum has been loaded, abort.
+
+		if ( self.core.pl_spec_arr == [] ) : return
+
+		# If the index of this P-L grid is outside the bounds of the P-L
+		# spectrum currently loaded, abort.
+
+		if ( self.n >= len( self.core.pl_spec_arr ) ) : return
 
 		# If this point already exists, remove it from its plot and
 		# delete it.
@@ -640,6 +668,11 @@ class widget_pl_grid( QWidget ) :
 		if ( self.core.pl_spec_arr == [] ) :
 			return
 
+		# If the index of this P-L grid is outside the bounds of the P-L
+		# spectrum currently loaded, abort.
+
+		if ( self.n >= len( self.core.pl_spec_arr ) ) : return
+
 		# For each plot in the grid, generate and display a fit curve
 		# based on the results of the analysis.
 
@@ -713,7 +746,7 @@ class widget_pl_grid( QWidget ) :
 
 	def rset_hst( self, rset_lbl=False ) :
 
-		self.time_label.clear( )
+		self.time_label.setText( '' )
 		self.t = []
 		self.delta_t = []
 
@@ -818,6 +851,20 @@ class widget_pl_grid( QWidget ) :
 		self.rset_hst( )
 		self.rset_pnt( )
 		self.rset_crv( )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_spc" SIGNAL.
+	#-----------------------------------------------------------------------
+
+	def resp_chng_pl_spc( self ) :
+
+		# Clear the plots of all their elements and regenerate them.
+
+		self.rset_crv( )
+		self.rset_pnt( )
+		self.rset_hst( )
+
+		self.make_hst( )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_mom_pl_res" SIGNAL.

@@ -81,9 +81,7 @@ class pl_dat( ) :
 		# TODO: Confirm these formulae
 
 		self._the       =( 90 + self._elev_cen ) * pi/180 # ( 90 -
-		self._phi       =( 180 - self._azim_cen )* pi/180 #+
-		                   #( ( self._volt_n - self._spec._n_bin/2. + 0.5) /
-		                   #  self._spec._n_bin * self._phi_del        ) ) * pi/180
+		self._phi       =( 180 + self._azim_cen )* pi/180
 
 		self._dir_x     = - sin( self._the ) * cos( self._phi )
 		self._dir_y     = - sin( self._the ) * sin( self._phi )
