@@ -374,14 +374,22 @@ class widget_pl_grid( QWidget ) :
 
 		# If no spectrum has been loaded, abort.
 
-		if ( self.core.pl_spec_arr == [] ) : return
+		if ( self.core.pl_spec_arr == [] ) :
+
+			self.hide()
+
+			return
 
 		# If the index of this P-L grid is outside the bounds of the P-L
 		# spectrum currently loaded, abort.
 
-		if ( self.n >= len( self.core.pl_spec_arr ) ) : return
+		if ( self.n >= len( self.core.pl_spec_arr ) ) :
 
-		print self.n
+			self.hide()
+
+			return
+
+		self.show()		
 
 		# Generate the timestamp label
 
@@ -492,7 +500,7 @@ class widget_pl_grid( QWidget ) :
 
 				txt = ( u'({0:+.0f}\N{DEGREE SIGN}, ' + 
 				        u'{1:+.0f}\N{DEGREE SIGN})'     ).format(
-				                                          elev, azim )
+				                                          elev, azim-180 )
 
 				self.lbl[t,p].setText( txt, color=(0,0,0) )
 

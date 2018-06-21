@@ -81,7 +81,7 @@ class pl_dat( ) :
 		# TODO: Confirm these formulae
 
 		self._the       =( 90 + self._elev_cen ) * pi/180 # ( 90 -
-		self._phi       =( 180 + self._azim_cen )* pi/180
+		self._phi       =( -180 + self._azim_cen )* pi/180
 
 		self._dir_x     = - sin( self._the ) * cos( self._phi )
 		self._dir_y     = - sin( self._the ) * sin( self._phi )
@@ -291,17 +291,16 @@ class pl_dat( ) :
 
 			return
 
-		v2 = sum( [ self._spec.mom_v_vec[i]**2 for i in range( 3 ) ] )
-
 		u_vec = [ self['vel_cen'] * self['dir_x'],
 		          self['vel_cen'] * self['dir_y'],
 		          self['vel_cen'] * self['dir_z']  ]
 
 		# Calculate the exponent
 
-		power = - ( abs( self['vel_cen']**2 + v2 -
-		                 2.*( dot( u_vec, self._spec.mom_v_vec ) ) ) /
-		          (2. * self._spec.mom_w**2 ) )
+		u_v = [ u_vec[i] - self._spec.mom_v_vec[i] for i in range( 3 ) ]
+
+		power = - ( sum( [ u_v[i]**2 for i in range( 3 ) ] ) /
+		            (2. * self._spec.mom_w**2 ) )
 
 		# Calculate the exponential term
 

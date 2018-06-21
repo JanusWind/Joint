@@ -1213,11 +1213,11 @@ class core( QObject ) :
 			pl_theta = round(self.mom_pl_avg['v0_z']/sqrt(self.mom_pl_avg['v0_x']**2+self.mom_pl_avg['v0_y']**2)*180/pi, 2)
 			pl_phi   = round(self.mom_pl_avg['v0_y']/self.mom_pl_avg['v0_x']*180/pi, 2)
 
-			#anglefile = open("theta_phi_reduced_2.txt", "a")
+			anglefile = open("theta_phi_reduced_2.txt", "a")
 
-			#anglefile.write(" {} {} {} {}".format(fc_theta, fc_phi, pl_theta, pl_phi))
+			anglefile.write(" {} {} {} {}".format(fc_theta, fc_phi, pl_theta, pl_phi))
 
-			#anglefile.close()			
+			anglefile.close()			
 
 		self.emit( SIGNAL('janus_chng_mom_res') )
 
