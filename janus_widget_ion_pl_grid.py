@@ -105,7 +105,7 @@ class widget_pl_grid( QWidget ) :
 		self.n = n
 		self.t = []
 		self.delta_t = []
-		self.time_label = QLabel( )
+		self.time_label = QLabel( ' ' )
 		self.time_label.setAlignment( Qt.AlignCenter )
 		self.time_label.setContentsMargins( 0,5,0,0 )
 		font = QFont( )
@@ -370,7 +370,7 @@ class widget_pl_grid( QWidget ) :
 
 		# Reset the timestamp label
 
-		self.time_label.setText( '' )
+		self.time_label.setText( ' ' )
 
 		# If no spectrum has been loaded, abort.
 
@@ -399,6 +399,7 @@ class widget_pl_grid( QWidget ) :
 
 		self.delta_t = self.delta_t + [( self.t[-1]-
 		                                 self.t_0    ).total_seconds( )]
+
 
 		self.time_label.setText( str(self.t[-1])[0:-7] + '        ' +
 		                         u'\u0394t = {}'.format(
