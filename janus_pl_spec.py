@@ -556,12 +556,6 @@ class pl_spec( ) :
 				b_max    = b
 				psd_max = psd
 
-		#if t==2 and p==3 :
-		#	print self['vel_strt']
-		#	print self['vel_stop']
-		#	print self['vel_cen']
-		#	print self['psd'][t][p]
-
 		# Return the location of the window with the maximum psd.
 
 		return b_max
@@ -592,3 +586,18 @@ class pl_spec( ) :
 
 		return sum( [ self.arr[t][p][b+w]['psd']
 		                                       for w in range( win ) ] )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR CALC'ING EXPECTED CURRENT FROM A POPULATION.
+	#-----------------------------------------------------------------------
+
+	def calc_psd_gss( self, g, m, q, v0, n, dv, w) :
+
+		# Return a 3-D list with the calculated current for each bin in
+		# the spectrum.
+
+		return [ [ [ self.arr[t][p][b].calc_psd_gss( 
+		                    g, m, q, v0, n, dv, w      )
+		                    for b in range( self['n_bin'] ) ]
+		                    for p in range( self['n_phi'] ) ]
+		                    for t in range( self['n_the'] ) ]

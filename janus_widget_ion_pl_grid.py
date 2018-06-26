@@ -121,6 +121,8 @@ class widget_pl_grid( QWidget ) :
 		                                     self.resp_chng_mom_pl_sel )
 		self.connect( self.core, SIGNAL('janus_chng_mom_pl_res'),
 		                                     self.resp_chng_mom_pl_res )
+		self.connect( self.core, SIGNAL('janus_chng_nln_gss'),
+		                                        self.resp_chng_nln_gss )
 		self.connect( self.core, SIGNAL('janus_chng_nln_sel_all'),
 		                                    self.resp_chng_nln_sel_all )
 		self.connect( self.core, SIGNAL('janus_chng_dsp'),
@@ -157,7 +159,7 @@ class widget_pl_grid( QWidget ) :
 		# number of ion species.
 
 		self.n_k   = 14
-		self.n_ion = 1#self.core.nln_n_pop
+		self.n_ion = self.core.nln_n_pop
 
 		# Initialize the widget and it's plot's.
 
@@ -376,8 +378,6 @@ class widget_pl_grid( QWidget ) :
 
 		if ( self.core.pl_spec_arr == [] ) :
 
-			self.hide()
-
 			return
 
 		# If the index of this P-L grid is outside the bounds of the P-L
@@ -385,11 +385,7 @@ class widget_pl_grid( QWidget ) :
 
 		if ( self.n >= len( self.core.pl_spec_arr ) ) :
 
-			self.hide()
-
-			return
-
-		self.show()		
+			return		
 
 		# Generate the timestamp label
 
@@ -681,6 +677,18 @@ class widget_pl_grid( QWidget ) :
 
 		if ( self.n >= len( self.core.pl_spec_arr ) ) : return
 
+		# Return the "nln_psd_gss_ion axes to their original order.
+
+		if( self.core.nln_psd_gss_ion != [ ] ) :
+
+			nln_psd_gss_ion = [ [ [ [ [
+			self.core.nln_psd_gss_ion[n][t][f][b][p]
+			for b in range( self.core.pl_spec_arr[n]['n_bin'] ) ]
+			for f in range( self.core.pl_spec_arr[n]['n_phi'] ) ]
+			for t in range( self.core.pl_spec_arr[n]['n_the'] ) ]
+			for n in range( len( self.core.pl_spec_arr      ) ) ]
+			for p in range( self.core.nln_gss_n_pop           ) ]
+
 		# For each plot in the grid, generate and display a fit curve
 		# based on the results of the analysis.
 
@@ -696,29 +704,22 @@ class widget_pl_grid( QWidget ) :
 				if ( self.plt[t,p] is None ) :
 					continue
 
-				# If any curves already exist for this plot, remove and
-				# delete them.
-
-				if ( self.crv[t,p] is not None ) :
-					self.plt[t,p].removeItem( self.crv[t,p] )
-					self.crv[t,p] = None
-
-				for n in range( self.n_ion ) :
-					if ( self.crv_ion[t,p,n] is not None ) :
-						self.plt[t,p].removeItem(
-						                   self.crv_ion[t,p,n] )
-						self.crv_ion[t,p,n] = None
-
-				# Create and add the curve of the individual
+				# Create and add the curve of the total
 				# contributions to the modeled psd to the plot.
 
-				for n in range( self.n_ion ) :
+				for n in range( ( 1 if self.core.dsp == 'mom' else self.core.nln_gss_n_pop ) ) :
 
 					# Extract the points for this fit curve.
 
 					x = array( vel_cen )
 
-					y = array( self.core.pl_spec_arr[self.n]['psd_mom'][t][p] )
+					if( self.core.dsp == 'mom' ) :
+
+						y = array( self.core.pl_spec_arr[self.n]['psd_mom'][t][p] )
+
+					elif( self.core.dsp == 'gsl' ) :
+
+						y = array( nln_psd_gss_ion[n][self.n][t][p] )
 
 					# If any points are 0 or None, set them
 					# to an arbitrary minimum value
@@ -743,7 +744,7 @@ class widget_pl_grid( QWidget ) :
 					# this fit curve.
 
 					self.crv_ion[t,p,n] = PlotDataItem(
-					            ax, ay, pen=self.pen_crv_b )
+					            ax, ay, pen=( self.pen_crv_b if self.core.dsp=='mom' else self.pen_crv_g ) )
 
 					self.plt[t,p].addItem(
 					                   self.crv_ion[t,p,n] )
@@ -895,6 +896,19 @@ class widget_pl_grid( QWidget ) :
 		# reset any existing fit curves and make new ones.
 
 		self.make_crv( )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_nln_gss" SIGNAL.
+	#-----------------------------------------------------------------------
+
+	def resp_chng_nln_gss( self ) :
+
+		# If the initial guess for the non-linear analysis is being
+		# displayed, reset any existing fit curves and make new ones.
+
+		if ( self.core.dsp == 'gsl' ) :
+
+			self.make_crv( )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_nln_sel_all" SIGNAL.

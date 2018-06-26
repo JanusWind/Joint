@@ -317,30 +317,37 @@ class pl_dat( ) :
 	# DEFINE THE FUNCTION TO CALCULATE EXPECTED MAXWELLIAN PSD FOR NLN. GSS.
 	#-----------------------------------------------------------------------
 
-	def calc_psd_gss( self ) :
+	def calc_psd_gss( self, g, m, q, v0, n, dv, w ) :
 
 		# If the moments analysis failed, set "self.psd_mom" to None and
 		# abort
 
-		if ( ( self._spec.gss_n is None     ) or
-		     ( self._spec.gss_v_vec is None ) or
-		     ( self._spec.gss_w is None     )    ) :
+		if ( ( n is None     ) or
+		     ( v0 is None    ) or
+		     ( w is None     )    ) :
 
 			self.psd_gss = None
 
 			return
 
-		v2 = sum( [ self._spec.gss_v_vec[i]**2 for i in range( 3 ) ] )
+		# Scale the velocities with charge to mass ratio.
 
-		u_vec = [ self['vel_cen'] * self['dir_x'],
-		          self['vel_cen'] * self['dir_y'],
-		          self['vel_cen'] * self['dir_z']  ]
+		vel_cen = self['vel_cen'] * sqrt( q/m )
+
+		u_vec = [ vel_cen * self['dir_x'],
+		          vel_cen * self['dir_y'],
+		          vel_cen * self['dir_z']  ]
 
 		# Calculate the exponent
 
-		power = - ( abs( self['vel_cen']**2 + v2 -
-		                 2.*( dot( u_vec, self._spec.gss_v_vec ) ) ) /
-		          (2. * self._spec.gss_w**2 ) )
+		u_v = [ u_vec[i] - v0[i] for i in range( 3 ) ]
+
+		# FIXME w is hard-coded isotropic for testing purposes
+
+		w = w[0]
+
+		power = - ( sum( [ u_v[i]**2 for i in range( 3 ) ] ) /
+		            (2. * w**2 ) )
 
 		# Calculate the exponential term
 
@@ -348,7 +355,6 @@ class pl_dat( ) :
 
 		# Calculate the normalization factor
 
-		ret_norm = self._spec.gss_n / ( (2.*pi)**1.5 *
-		                                ( self._spec.gss_w)**3 )
+		ret_norm = n / ( (2.*pi)**1.5 * w**3 )
 
-		self.psd_gss = ret_norm * ret_exp
+		return ret_norm * ret_exp

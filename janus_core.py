@@ -63,7 +63,7 @@ from janus_pl_spec import pl_spec
 
 from numpy import amax, amin, append, arccos, arctan2, arange, argsort, array, \
                     average, cos, deg2rad, diag, dot, exp, indices, interp, \
-                    mean, pi, polyfit, rad2deg, reshape, sign, sin, sum, sqrt, \
+                    mean, pi, polyfit, rad2deg, reshape, shape, sign, sin, sum, sqrt, \
                     std, tile, transpose, where, zeros
 
 from numpy.linalg import lstsq
@@ -1197,9 +1197,6 @@ class core( QObject ) :
 
 			self.anls_mom_fc( )
 
-			fc_theta = round(self.mom_fc_res['v0_z']/sqrt(self.mom_fc_res['v0_x']**2+self.mom_fc_res['v0_y']**2)*180/pi, 2)
-			fc_phi   = round(self.mom_fc_res['v0_y']/self.mom_fc_res['v0_x']*180/pi, 2)
-
 		if ( run_pl ) :
 
 			# Validate the Wind/PESA-L point-selection
@@ -1208,16 +1205,7 @@ class core( QObject ) :
 
 			# Run the moments analysis on the Wind/PESA-L data
 
-			self.anls_mom_pl( )
-
-			pl_theta = round(self.mom_pl_avg['v0_z']/sqrt(self.mom_pl_avg['v0_x']**2+self.mom_pl_avg['v0_y']**2)*180/pi, 2)
-			pl_phi   = round(self.mom_pl_avg['v0_y']/self.mom_pl_avg['v0_x']*180/pi, 2)
-
-			anglefile = open("theta_phi_reduced_2.txt", "a")
-
-			anglefile.write(" {} {} {} {}".format(fc_theta, fc_phi, pl_theta, pl_phi))
-
-			anglefile.close()			
+			self.anls_mom_pl( )			
 
 		self.emit( SIGNAL('janus_chng_mom_res') )
 
@@ -2018,6 +2006,8 @@ class core( QObject ) :
 
 		self.nln_gss_curr_ion = None
 		self.nln_gss_curr_tot = None
+		self.nln_psd_gss_ion  = None
+		self.nln_psd_gss_tot  = None
 
 		# Abort if any of the following cases arise:
 		#   -- No populations have been found to be valid.
@@ -2037,15 +2027,18 @@ class core( QObject ) :
 
 			return
 
-		# Generate the intial guess array (beginning with the reference
-		# velocity) and compute the expected  currents from each
-		# population.
+		# Generate the intial guess array (beginning with the gain
+		# factor "g", followed by the reference velocity) and compute
+		# the expected currents or psd's from each population.
+
+		self.nln_gss_prm = [ self.nln_plas['g'] ]
 
 		pop_v0_vec = self.nln_plas['v0_vec']
 
-		self.nln_gss_prm = list( pop_v0_vec )
+		self.nln_gss_prm.append( list( pop_v0_vec ) )
 
 		self.nln_gss_curr_ion = [ ]
+		self.nln_psd_gss_ion  = [ ]
 
 		for p in self.nln_gss_pop :
 
@@ -2092,7 +2085,7 @@ class core( QObject ) :
 				self.nln_gss_prm.append( pop_w )
 
 			# For each datum in the spectrum, compute the expected
-			# current from each population.
+			# current or psd from each population.
 
 			self.nln_gss_curr_ion.append(
 			     self.fc_spec.calc_curr(
@@ -2100,7 +2093,14 @@ class core( QObject ) :
 			                    self.nln_plas.arr_pop[p]['q'],
 			                    pop_v0_vec, pop_n, pop_dv, pop_w ) )
 
-		# Alter the axis order of the array of currents.
+			self.nln_psd_gss_ion.append( [ spec.calc_psd_gss(
+			                  self.nln_plas['g'],
+			                  self.nln_plas.arr_pop[p]['m'],
+			                  self.nln_plas.arr_pop[p]['q'],
+			                  pop_v0_vec, pop_n,
+			                  pop_dv, pop_w      ) for spec in self.pl_spec_arr] )
+
+		# Alter the axis order of the arrays of currents and psd's.
 
 		self.nln_gss_curr_ion = [ [ [ [ 
 		                     self.nln_gss_curr_ion[p][c][d][b]
@@ -2109,14 +2109,29 @@ class core( QObject ) :
 		                     for d in range( self.fc_spec['n_dir']   ) ]
 		                     for c in range( self.fc_spec['n_cup']   ) ]
 
+		self.nln_psd_gss_ion  = [ [ [ [ [
+		                self.nln_psd_gss_ion[p][n][t][f][b]
+		                for p in range( self.nln_gss_n_pop           ) ]
+		                for b in range( self.pl_spec_arr[n]['n_bin'] ) ]
+		                for f in range( self.pl_spec_arr[n]['n_phi'] ) ]
+		                for t in range( self.pl_spec_arr[n]['n_the'] ) ]
+		                for n in range( len( self.pl_spec_arr )      ) ]
+
 		# For each datum in the spectrum, compute the total expected
-		# current (from all populations).
+		# current or psd (from all populations).
 
 		self.nln_gss_curr_tot = [ [ [ 
 		                     sum( self.nln_gss_curr_ion[c][d][b]     )
 		                     for b in range( self.fc_spec['n_bin']   ) ]
 		                     for d in range( self.fc_spec['n_dir']   ) ]
 		                     for c in range( self.fc_spec['n_cup']   ) ]
+
+		self.nln_psd_gss_tot  = [ [ [ [
+		                sum( self.nln_psd_gss_ion[n][t][f][b]        )
+		                for b in range( self.pl_spec_arr[n]['n_bin'] ) ]
+		                for f in range( self.pl_spec_arr[n]['n_phi'] ) ]
+		                for t in range( self.pl_spec_arr[n]['n_the'] ) ]
+		                for n in range( len( self.pl_spec_arr )      ) ]
 
 		# Emit a signal that indicates that the initial guess for the
 		# non-linear analysis has changed.
