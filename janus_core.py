@@ -382,6 +382,8 @@ class core( QObject ) :
 			self.nln_pop_use = tile( False, self.nln_n_pop )
 			self.nln_pop_vld = tile( False, self.nln_n_pop )
 
+			self.nln_psd_gss_ion  = [ ]
+
 			for s in range ( self.nln_n_spc ) :
 
 				if ( s == 0 ) :

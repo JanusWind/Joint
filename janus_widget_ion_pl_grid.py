@@ -704,8 +704,21 @@ class widget_pl_grid( QWidget ) :
 
 				if ( self.plt[t,p] is None ) :
 					continue
+				'''
+				# If any curves already exist for this plot, remove and
+				# delete them.
 
-				# Create and add the curve of the total
+				if ( self.crv[t,p] is not None ) :
+					self.plt[t,p].removeItem( self.crv[t,p] )
+					self.crv[t,p] = None
+
+				for n in range( self.n_ion ) :
+					if ( self.crv_ion[t,p,n] is not None ) :
+						self.plt[t,p].removeItem(
+						                   self.crv_ion[t,p,n] )
+						self.crv_ion[t,p,n] = None
+				'''
+				# Create and add the curve of the indiviadual
 				# contributions to the modeled psd to the plot.
 
 				for n in range( ( 1 if self.core.dsp == 'mom' else self.core.nln_gss_n_pop ) ) :
@@ -730,6 +743,8 @@ class widget_pl_grid( QWidget ) :
 						     ( y[tk] is None )    ) :
 							y[tk] = 1e-20
 
+					print x, y
+
 					if ( self.log_x ) :
 						ax = log10( x )
 					else :
@@ -749,6 +764,47 @@ class widget_pl_grid( QWidget ) :
 
 					self.plt[t,p].addItem(
 					                   self.crv_ion[t,p,n] )
+
+				'''
+				# If applicable, create and add the curve of the
+				# total contributions to the modeled psd to the
+				# plot
+
+				if( self.core.dsp == 'gsl' ) :
+
+					x = array( vel_cen )
+
+					y = array( self.core.nln_psd_gss_tot[self.n][t][p] )
+
+					# If any points are 0 or None, set them
+					# to an arbitrary minimum value
+
+					for tk in range(len(y)):
+						if ( ( y[tk] == 0    ) or
+						     ( y[tk] is None )    ) :
+							y[tk] = 1e-20
+
+					if ( self.log_x ) :
+						ax = log10( x )
+					else :
+						ax = x
+
+					if ( self.log_y ) :
+						ay = array( [ log10( v )
+						              for v in y ] )
+					else :
+						ay = y
+
+					# Create, store, and add to the plot
+					# this fit curve.
+
+					self.crv[t,p] = PlotDataItem(
+					            ax, ay, pen=( self.pen_crv_b ) )
+
+					self.plt[t,p].addItem(
+					                   self.crv[t,p] )
+				'''
+					
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RESETTING THE PLOTS' HISTOGRAMS (AND LABELS).

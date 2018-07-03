@@ -330,6 +330,16 @@ class pl_dat( ) :
 
 			return
 
+		# Calculate the total velocity using drift
+
+		if ( dv is None ) :
+			v_vec = [ v0[i] for i in range( len( v0 ) ) ]
+		else :
+			v_vec = [ v0[i] + dv * self['norm_b'][i]
+			                           for i in range( len( v0 ) ) ]
+
+
+
 		# Scale the velocities with charge to mass ratio.
 
 		vel_cen = self['vel_cen'] * sqrt( q/m )
@@ -338,23 +348,61 @@ class pl_dat( ) :
 		          vel_cen * self['dir_y'],
 		          vel_cen * self['dir_z']  ]
 
-		# Calculate the exponent
+		# Check whether thermal velocity is a 2-D list, which implies
+		# anisotropy. If it is calculate the perpendicular and parallel
+		# thermal velocities, else continue
 
-		u_v = [ u_vec[i] - v0[i] for i in range( 3 ) ]
+		if ( hasattr( w, '__len__' ) ) :
 
-		# FIXME w is hard-coded isotropic for testing purposes
+			w_per = w[0]
+			w_par = w[1]
 
-		w = w[0]
+			# Calculate the component of the magnetic field unit vector
+			# that lies along the look direction.
 
-		power = - ( sum( [ u_v[i]**2 for i in range( 3 ) ] ) /
+			v_vec_par = [ self['norm_b'][i] * v_vec[i] for i in range(3) ]
+			v_vec_per = [ v_vec[i] - v_vec_par[i] for i in range(3) ]
+
+			u_vec_par = [ self._u_par_x * sqrt( q/m ),
+			              self._u_par_y * sqrt( q/m ),
+			              self._u_par_z * sqrt( q/m )  ]
+
+			u_vec_per = [ self._u_per_x * sqrt( q/m ),
+			              self._u_per_y * sqrt( q/m ),
+			              self._u_per_z * sqrt( q/m )  ]
+		
+			# Calculate the exponent
+
+			u_v_par = [ u_vec_par[i] - v_vec_par[i] for i in range( 3 ) ]
+
+			u_v_per = [ u_vec_per[i] - v_vec_per[i] for i in range( 3 ) ]
+
+			power1 = - ( sum( [ u_v_par[i]**2 for i in range( 3 ) ] ) /
+		                   (2. * w_par**2 ) )
+			power2 = - ( sum( [ u_v_per[i]**2 for i in range( 3 ) ] ) /
+		                   (2. * w_per**2 ) )
+
+			power  = power1 + power2
+
+			# Calculate the normalization factor
+
+			ret_norm = n / ( (2.*pi)**1.5 * w_par * w_per**2 )
+
+		else :
+
+			# Calculate the exponent
+
+			u_v = [ u_vec[i] - v0[i] for i in range( 3 ) ]
+
+			power = - ( sum( [ u_v[i]**2 for i in range( 3 ) ] ) /
 		            (2. * w**2 ) )
+
+			# Calculate the normalization factor
+
+			ret_norm = n / ( (2.*pi)**1.5 * w**3 )
 
 		# Calculate the exponential term
 
 		ret_exp = exp( power )
-
-		# Calculate the normalization factor
-
-		ret_norm = n / ( (2.*pi)**1.5 * w**3 )
 
 		return ret_norm * ret_exp
