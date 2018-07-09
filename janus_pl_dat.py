@@ -256,6 +256,7 @@ class pl_dat( ) :
 
 		self._u_par   = self['vel_cen'] * calc_arr_dot( self['norm_b'],
 		                                                self['dir']    )
+
 		self._u_par_x = self._u_par * self._norm_b_x
 		self._u_par_y = self._u_par * self._norm_b_y
 		self._u_par_z = self._u_par * self._norm_b_z
@@ -347,7 +348,7 @@ class pl_dat( ) :
 		u_vec = [ vel_cen * self['dir_x'],
 		          vel_cen * self['dir_y'],
 		          vel_cen * self['dir_z']  ]
-
+ 
 		# Check whether thermal velocity is a 2-D list, which implies
 		# anisotropy. If it is calculate the perpendicular and parallel
 		# thermal velocities, else continue
@@ -360,7 +361,9 @@ class pl_dat( ) :
 			# Calculate the component of the magnetic field unit vector
 			# that lies along the look direction.
 
-			v_vec_par = [ self['norm_b'][i] * v_vec[i] for i in range(3) ]
+			v_vec_par = [ calc_arr_dot( v_vec, self['norm_b'])*
+			                   self['norm_b'][i] for i in range(3) ]
+
 			v_vec_per = [ v_vec[i] - v_vec_par[i] for i in range(3) ]
 
 			u_vec_par = [ self._u_par_x * sqrt( q/m ),
@@ -392,12 +395,10 @@ class pl_dat( ) :
 
 			# Calculate the exponent
 
-			u_v = [ u_vec[i] - v0[i] for i in range( 3 ) ]
+			u_v = [ u_vec[i] - v_vec[i] for i in range( 3 ) ]
 
 			power = - ( sum( [ u_v[i]**2 for i in range( 3 ) ] ) /
 		            (2. * w**2 ) )
-
-			print v0
 
 			# Calculate the normalization factor
 
@@ -406,5 +407,5 @@ class pl_dat( ) :
 		# Calculate the exponential term
 
 		ret_exp = exp( power )
-
+		print ret_norm * ret_exp
 		return ret_norm * ret_exp
