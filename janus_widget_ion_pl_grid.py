@@ -704,7 +704,7 @@ class widget_pl_grid( QWidget ) :
 
 				if ( self.plt[t,p] is None ) :
 					continue
-				'''
+
 				# If any curves already exist for this plot, remove and
 				# delete them.
 
@@ -717,7 +717,7 @@ class widget_pl_grid( QWidget ) :
 						self.plt[t,p].removeItem(
 						                   self.crv_ion[t,p,n] )
 						self.crv_ion[t,p,n] = None
-				'''
+
 				# Create and add the curve of the indiviadual
 				# contributions to the modeled psd to the plot.
 
@@ -742,8 +742,6 @@ class widget_pl_grid( QWidget ) :
 						if ( ( y[tk] == 0    ) or
 						     ( y[tk] is None )    ) :
 							y[tk] = 1e-20
-
-					print x, y
 
 					if ( self.log_x ) :
 						ax = log10( x )

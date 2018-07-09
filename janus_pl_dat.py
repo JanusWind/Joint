@@ -397,6 +397,8 @@ class pl_dat( ) :
 			power = - ( sum( [ u_v[i]**2 for i in range( 3 ) ] ) /
 		            (2. * w**2 ) )
 
+			print v0
+
 			# Calculate the normalization factor
 
 			ret_norm = n / ( (2.*pi)**1.5 * w**3 )
