@@ -588,7 +588,7 @@ class pl_spec( ) :
 		                                       for w in range( win ) ] )
 
 	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR CALC'ING EXPECTED CURRENT FROM A POPULATION.
+	# DEFINE THE FUNCTION FOR CALC'ING EXPECTED PSD FROM A POPULATION.
 	#-----------------------------------------------------------------------
 
 	def calc_psd_gss( self, g, m, q, v0, n, dv, w) :

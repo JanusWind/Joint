@@ -266,3 +266,16 @@ class fc_dat( ) :
 		         * ( q * const['q_p'] ) * ( 1.e6 * n )
 		         * ( 1.e-4 * self.calc_eff_area( v_vec ) )
 		         * ( ret_prn )                             )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION TO CALCULATE THE NON-LINEAR MODEL CURRENT
+	#-----------------------------------------------------------------------
+
+	def calc_resp( self, g, m, q, v0, n, dv, w ) :
+
+		return self.calc_curr( m, q, v0, n, dv, w )
+
+
+
+
+

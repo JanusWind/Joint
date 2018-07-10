@@ -552,7 +552,7 @@ class widget_pl_grid( QWidget ) :
 
 					sel_bin = self.core.pl_spec_arr[self.n].arr[t][p][b]['mom_sel']
 
-				elif ( ( self.core.dsp == 'gsl'        ) and 
+				elif ( ( self.core.dsp == 'gsl' or self.core.dsp == 'nln' ) and 
 				       ( self.core.nln_pl_sel is not None )  ) :
 
 					sel_bin = self.core.nln_pl_sel[self.n][t][p][b]
@@ -562,7 +562,7 @@ class widget_pl_grid( QWidget ) :
 #					                   is not None )     ) :
 
 #					sel_bin = \
-#					       self.core.pl_spec_arr[self.n].nln_res_sel[t][p][b]
+#					       self.core.nln_pl_sel[t][p][b]
 
 #					if ( self.core.pl_spec_arr[self.n].nln_sel is None ) :
 #						sel_alt = None
@@ -690,6 +690,20 @@ class widget_pl_grid( QWidget ) :
 			for n in range( len( self.core.pl_spec_arr      ) ) ]
 			for p in range( self.core.nln_gss_n_pop           ) ]
 
+			# Return the "nln_res_psd_ion axes to their original order.
+
+		if( self.core.nln_res_psd_ion is not None ) :
+
+			if( self.core.nln_res_psd_ion != [ ] ) :
+
+				nln_res_psd_ion = [ [ [ [ [
+				self.core.nln_res_psd_ion[n][t][f][b][p]
+				for b in range( self.core.pl_spec_arr[n]['n_bin'] ) ]
+				for f in range( self.core.pl_spec_arr[n]['n_phi'] ) ]
+				for t in range( self.core.pl_spec_arr[n]['n_the'] ) ]
+				for n in range( len( self.core.pl_spec_arr      ) ) ]
+				for p in range( self.core.nln_gss_n_pop           ) ]
+
 		# For each plot in the grid, generate and display a fit curve
 		# based on the results of the analysis.
 
@@ -735,6 +749,10 @@ class widget_pl_grid( QWidget ) :
 
 						y = array( nln_psd_gss_ion[n][self.n][t][p] )
 
+					elif( self.core.dsp == 'nln' ) :
+
+						y = arrray( nln_psd_gss_ion[n][self.n][t][p] )
+
 					# If any points are 0 or None, set them
 					# to an arbitrary minimum value
 
@@ -763,7 +781,6 @@ class widget_pl_grid( QWidget ) :
 					self.plt[t,p].addItem(
 					                   self.crv_ion[t,p,n] )
 
-				'''
 				# If applicable, create and add the curve of the
 				# total contributions to the modeled psd to the
 				# plot
@@ -801,8 +818,44 @@ class widget_pl_grid( QWidget ) :
 
 					self.plt[t,p].addItem(
 					                   self.crv[t,p] )
-				'''
-					
+
+				# If applicable, create and add the curve of the
+				# total contributions to the non-linear psd to
+				# the plot
+
+				if( self.core.dsp == 'nln' ) :
+
+					x = array( vel_cen )
+
+					y = array( self.core.nln_res_psd_tot[self.n][t][p] )
+
+					# If any points are 0 or None, set them
+					# to an arbitrary minimum value
+
+					for tk in range(len(y)):
+						if ( ( y[tk] == 0    ) or
+						     ( y[tk] is None )    ) :
+							y[tk] = 1e-20
+
+					if ( self.log_x ) :
+						ax = log10( x )
+					else :
+						ax = x
+
+					if ( self.log_y ) :
+						ay = array( [ log10( v )
+						              for v in y ] )
+					else :
+						ay = y
+
+					# Create, store, and add to the plot
+					# this fit curve.
+
+					self.crv[t,p] = PlotDataItem(
+					            ax, ay, pen=( self.pen_crv_b ) )
+
+					self.plt[t,p].addItem(
+					                   self.crv[t,p] )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR RESETTING THE PLOTS' HISTOGRAMS (AND LABELS).
@@ -990,7 +1043,7 @@ class widget_pl_grid( QWidget ) :
 		# Reset the selection points and fit curves.
 
 		self.make_pnt( )
-#		self.make_crv( )
+		self.make_crv( )
 
 	'''
 	#-----------------------------------------------------------------------

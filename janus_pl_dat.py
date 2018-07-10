@@ -407,5 +407,13 @@ class pl_dat( ) :
 		# Calculate the exponential term
 
 		ret_exp = exp( power )
-		print ret_norm * ret_exp
+
 		return ret_norm * ret_exp
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION TO CALCULATE THE NON-LINEAR MODEL PSD
+	#-----------------------------------------------------------------------
+
+	def calc_resp( self, g, m, q, v0, n, dv, w ) :
+
+		return self.calc_psd_gss( g, m, q, v0, g*n, dv, w )

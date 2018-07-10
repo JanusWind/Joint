@@ -59,6 +59,9 @@ from janus_pl_arcv import pl_arcv
 from janus_fc_spec import fc_spec
 from janus_pl_spec import pl_spec
 
+from janus_fc_dat import fc_dat
+from janus_pl_dat import pl_dat
+
 # Load the necessary array modules and mathematical functions.
 
 from numpy import amax, amin, append, arccos, arctan2, arange, argsort, array, \
@@ -522,7 +525,9 @@ class core( QObject ) :
 			self.nln_res_sel      = None
 
 			self.nln_res_curr_tot = None
+			self.nln_res_psd_tot  = None
 			self.nln_res_curr_ion = None
+			self.nln_res_psd_ion  = None
 
 		# If requested, (re-)initialize the variables which indicate of
 		# the analyses have their results displayed in widgets which
@@ -2783,7 +2788,7 @@ class core( QObject ) :
 
 		def model( x, *p ) :
 
-			return self.calc_nln_curr( x, p )
+			return self.calc_nln_resp( x, p )
 
                 # Save the data selection and then use it to generate data
 		# arrays for the non-linear fit.
@@ -2805,7 +2810,25 @@ class core( QObject ) :
 						x.append(
 						     self.fc_spec.arr[c][d][b] )
 
-		y = [ xx['curr'] for xx in x ]
+		for n in range( len( self.pl_spec_arr ) ) :
+
+			for t in range( self.pl_spec_arr[n]['n_the'] ) :
+
+				for p in range( self.pl_spec_arr[n]['n_phi'] ) :
+
+					for b in range( self.pl_spec_arr[n]['n_bin'] ) :
+
+						if ( self.nln_pl_sel[n][t][p][b] ) :
+
+							x.append(
+							     self.pl_spec_arr[n].arr[t][p][b] )
+
+
+		print [ xx for xx in x ]
+
+
+		y = [ ( xx['curr'] if ( type(xx) == fc_dat ) else xx['psd'] )
+		                                                   for xx in x ]
 
 		# Compute the uncertainties.
 
@@ -2845,17 +2868,19 @@ class core( QObject ) :
 		self.nln_res_plas['b0_y']     = self.mfi_avg_vec[1]
 		self.nln_res_plas['b0_z']     = self.mfi_avg_vec[2]
 
-		pop_v0_vec                    = [fit[0], fit[1], fit[2]]
-		self.nln_res_plas['v0_x']     =  fit[0]
-		self.nln_res_plas['v0_y']     =  fit[1]
-		self.nln_res_plas['v0_z']     =  fit[2]
-		self.nln_res_plas['sig_v0_x'] =  sig[0]
-		self.nln_res_plas['sig_v0_y'] =  sig[1]
-		self.nln_res_plas['sig_v0_z'] =  sig[2]
+		pop_v0_vec                    = [fit[1], fit[2], fit[3]]
+		self.nln_res_plas['g']        =  fit[0]
+		self.nln_res_plas['v0_x']     =  fit[1]
+		self.nln_res_plas['v0_y']     =  fit[2]
+		self.nln_res_plas['v0_z']     =  fit[3]
+		self.nln_res_plas['sig_v0_x'] =  sig[1]
+		self.nln_res_plas['sig_v0_y'] =  sig[2]
+		self.nln_res_plas['sig_v0_z'] =  sig[3]
 
-		c = 3
+		c = 4
 
 		self.nln_res_curr_ion = []
+		self.nln_res_psd_ion  = []
 
 		for p in self.nln_gss_pop :
 
@@ -2926,13 +2951,22 @@ class core( QObject ) :
 			                  self.nln_plas.arr_pop[p]['q'],
 			                  pop_v0_vec, pop_n, pop_dv, pop_w ) )
 
+			for n in range( len( self.pl_spec_arr ) ) :
+
+				self.nln_res_psd_ion[n].append(
+			             self.pl_spec_arr[n].calc_psd_gss (
+				            self.nln_res_plas['g'],
+			                    self.nln_plas.arr_pop[p]['m'],
+			                    self.nln_plas.arr_pop[p]['q'],
+			                    pop_v0_vec, pop_n, pop_dv, pop_w ) )
+
 		# Save the results of the this non-linear analysis to the
 		# results log.
 
 		self.series.add_spec( self.nln_res_plas )
 
-		# Calculate the expected currents based on the results of the
-		# non-linear analysis.
+		# Calculate the expected currents/psds based on the results of
+		# the non-linear analysis.
 
 		self.nln_res_curr_ion = [ [ [ [
 		                     self.nln_res_curr_ion[p][c][d][b]
@@ -2942,12 +2976,27 @@ class core( QObject ) :
 		                     for d in range( self.fc_spec['n_dir']   ) ]
 		                     for c in range( self.fc_spec['n_cup']   ) ]
 
-		self.nln_res_curr_tot =[ [ [ 
+		self.nln_res_curr_tot = [ [ [ 
 		                           sum( self.nln_res_curr_ion[c][d][b] )
 		                     for b in range( self.fc_spec['n_bin']   ) ]
 		                     for d in range( self.fc_spec['n_dir']   ) ]
 		                     for c in range( self.fc_spec['n_cup']   ) ]
 
+		self.nln_res_psd_ion = [ [ [ [ [
+		                     self.nln_res_psd_ion[p][n][t][f][b]
+		                     for p in range( len(
+		                                 self.nln_res_plas.arr_pop ) ) ]
+		                     for b in range( self.pl_spec_arr[n]['n_bin'] ) ]
+		                     for f in range( self.pl_spec_arr[n]['n_phi'] ) ]
+		                     for t in range( self.pl_spec_arr[n]['n_the'] ) ]
+		                     for n in range( len( self.pl_spec_arr )      ) ]
+
+		self.nln_res_psd_tot = [ [ [ [
+		                         sum( self.nln_res_psd_ion[n][t][p][b] )
+		                     for b in range( self.pl_spec_arr[n]['n_bin'] ) ]
+		                     for p in range( self.pl_spec_arr[n]['n_phi'] ) ]
+		                     for t in range( self.pl_spec_arr[n]['n_the'] ) ]
+		                     for n in range( len( self.pl_spec_arr )      ) ]
 
 
 		# Message the user that the non-linear analysis has finished.
@@ -3079,22 +3128,24 @@ class core( QObject ) :
 			self.after_nln_gss( )
 
 	#-----------------------------------------------------------------------
-	# DEFINE THE FUNCTION FOR CALCULATING THE NLN MODEL CURRNET.
+	# DEFINE THE FUNCTION FOR CALCULATING THE NLN MODEL CURRENT.
 	#-----------------------------------------------------------------------
 
-	def calc_nln_curr( self, dat, prm ) :
+	def calc_nln_resp( self, dat, prm ) :
 
 		# Initialize the returned list: the total calculated current for
 		# each datum.
 
-		curr = [ 0. for d in dat ]
+		resp = [ 0. for d in dat ]
 
 		# For each ion species, extract the passed parameters and
 		# calculate it's contribution to the total current.
 
-		prm_v0 = ( prm[0], prm[1], prm[2] )
+		prm_g  = prm[0]
 
-		k = 3
+		prm_v0 = ( prm[1], prm[2], prm[3] )
+
+		k = 4
 
 		for p in self.nln_gss_pop :
 
@@ -3136,15 +3187,16 @@ class core( QObject ) :
 
 			for d in range( len( dat ) ) :
 
-				curr[d] += dat[d].calc_curr(
+				resp[d] += dat[d].calc_resp(
+				                prm_g,
 				                self.nln_plas.arr_pop[p]['m'],
 				                self.nln_plas.arr_pop[p]['q'],
 				                prm_v0, prm_n, prm_dv, prm_w   )
 
-		# Return the list of total currents from all modeled ion
+		# Return the list of total currents/psds from all modeled ion
 		# species.
 
-		return curr
+		return resp
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR CHANGING THE DISPLAYED ANALYSIS.
