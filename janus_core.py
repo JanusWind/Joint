@@ -2042,7 +2042,7 @@ class core( QObject ) :
 
 		pop_v0_vec = self.nln_plas['v0_vec']
 
-		self.nln_gss_prm.append( list( pop_v0_vec ) )
+		[ self.nln_gss_prm.append( x ) for x in pop_v0_vec ]
 
 		self.nln_gss_curr_ion = [ ]
 		self.nln_psd_gss_ion  = [ ]
@@ -2853,18 +2853,17 @@ class core( QObject ) :
 		# Concatinate the FC and PL data, currents/psds, and
 		# uncertainties into lists.
 
-		x = array( x_fc + x_pl )
-		y = array( y_fc + y_pl )
+		x = x_fc + x_pl
+		y = y_fc + y_pl
 
-		sigma = array( sigma_fc + sigma_pl )
+		sigma = sigma_fc + sigma_pl
 
-		print sigma
 #		print y
 		( fit, covar ) = curve_fit( model, x, y, 
 		                            self.nln_gss_prm,
 		                            sigma=sigma       )
 
-		print fit, covar		
+#		print fit, covar		
 
 		#print 'curve'
 
