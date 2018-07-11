@@ -125,6 +125,8 @@ class widget_pl_grid( QWidget ) :
 		                                        self.resp_chng_nln_gss )
 		self.connect( self.core, SIGNAL('janus_chng_nln_sel_all'),
 		                                    self.resp_chng_nln_sel_all )
+		self.connect( self.core, SIGNAL('janus_chng_nln_res'),
+		                                    self.resp_chng_nln_res )
 		self.connect( self.core, SIGNAL('janus_chng_dsp'),
 		                                            self.resp_chng_dsp )
 
@@ -751,7 +753,7 @@ class widget_pl_grid( QWidget ) :
 
 					elif( self.core.dsp == 'nln' ) :
 
-						y = arrray( nln_psd_gss_ion[n][self.n][t][p] )
+						y = array( nln_psd_gss_ion[n][self.n][t][p] )
 
 					# If any points are 0 or None, set them
 					# to an arbitrary minimum value
@@ -823,7 +825,8 @@ class widget_pl_grid( QWidget ) :
 				# total contributions to the non-linear psd to
 				# the plot
 
-				if( self.core.dsp == 'nln' ) :
+				if( ( self.core.dsp == 'nln' ) and
+				    ( self.core.nln_res_psd_tot is not None ) ) :
 
 					x = array( vel_cen )
 
@@ -1043,6 +1046,16 @@ class widget_pl_grid( QWidget ) :
 		# Reset the selection points and fit curves.
 
 		self.make_pnt( )
+		self.make_crv( )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR RESPONDING TO THE "chng_dsp" SIGNAL.
+	#-----------------------------------------------------------------------
+
+	def resp_chng_nln_res( self ) :
+
+		# Reset the fit curves.
+
 		self.make_crv( )
 
 	'''

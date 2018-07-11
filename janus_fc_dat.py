@@ -37,7 +37,7 @@ from janus_helper import calc_arr_norm, calc_arr_dot
 ## DEFINE THE CLASS FOR DATUM
 ################################################################################
 
-class fc_dat( ) :
+class fc_dat( object ) :
 
 	def __init__( self,
                       spec=None, azim=None,
@@ -272,6 +272,8 @@ class fc_dat( ) :
 	#-----------------------------------------------------------------------
 
 	def calc_resp( self, g, m, q, v0, n, dv, w ) :
+
+		print self.calc_curr( m, q, v0, n, dv, w )
 
 		return self.calc_curr( m, q, v0, n, dv, w )
 

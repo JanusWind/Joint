@@ -38,7 +38,7 @@ from janus_helper import calc_arr_norm, calc_arr_dot
 ## DEFINE THE CLASS FOR DATUM
 ################################################################################
 
-class pl_dat( ) :
+class pl_dat( object ) :
 
 	def __init__( self, spec=None,
 	              t_strt=None, t_stop=None, azim_cen=None, phi_del=None,
@@ -415,5 +415,7 @@ class pl_dat( ) :
 	#-----------------------------------------------------------------------
 
 	def calc_resp( self, g, m, q, v0, n, dv, w ) :
+
+		print self.calc_psd_gss( g, m, q, v0, g*n, dv, w )
 
 		return self.calc_psd_gss( g, m, q, v0, g*n, dv, w )

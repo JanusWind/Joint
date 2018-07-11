@@ -2667,7 +2667,7 @@ class core( QObject ) :
 					tk = where( ( array( arr_vel_cen )
 					              >= v_min ) &
 					            ( array( arr_vel_cen )
-					              <= v_max )              )[0]
+					              <= v_max )            )[0]
 
 					for b in tk :
 						self.nln_pl_sel[n,t,p,b] = True
@@ -2797,7 +2797,11 @@ class core( QObject ) :
 
 		# Extract the data selection.
 
-		x = [ ]
+		x_fc = [ ]
+		x_pl = [ ]
+		x    = [ ]
+
+		# FC data selection
 
 		for c in range( self.fc_spec['n_cup'] ) :
 
@@ -2807,8 +2811,14 @@ class core( QObject ) :
 
 					if ( self.nln_res_sel[c][d][b] ) :
 
-						x.append(
+						x_fc.append(
 						     self.fc_spec.arr[c][d][b] )
+
+		# PESA-L data extraction
+
+		# FIXME: Counting statistics methods are being used here.
+		#        The PESA-L data is currently phase-space densities and
+		#        should be changed to particle counts.
 
 		for n in range( len( self.pl_spec_arr ) ) :
 
@@ -2820,19 +2830,41 @@ class core( QObject ) :
 
 						if ( self.nln_pl_sel[n][t][p][b] ) :
 
-							x.append(
+							x_pl.append(
 							     self.pl_spec_arr[n].arr[t][p][b] )
 
+		# Get the currents/psds from the data
 
-		print [ xx for xx in x ]
+		y_fc = [ dat['curr'] for dat in x_fc ]
+		y_pl = [ dat['psd']  for dat in x_pl ]
 
+		# Sum the currents/psds to normalize the sigma values of each
+		# data set
 
-		y = [ ( xx['curr'] if ( type(xx) == fc_dat ) else xx['psd'] )
-		                                                   for xx in x ]
+		tot_fc = sum( y_fc )
+		tot_pl = sum( y_pl )
 
-		# Compute the uncertainties.
+		# Calculate the the normalized uncertainties such that the sum
+		# of the squares of the uncertainties is equal to unity.
 
-		sigma = [ sqrt( yy ) for yy in y ]
+		sigma_fc = sum( [ sqrt( y )/sqrt( tot_fc ) for y in y_fc ] )
+		sigma_pl = sum( [ sqrt( y )/sqrt( tot_pl ) for y in y_pl ] ) 
+
+		# Concatinate the FC and PL data, currents/psds, and
+		# uncertainties into lists.
+
+		x = array( x_fc + x_pl )
+		y = array( y_fc + y_pl )
+
+		sigma = sigma_fc + sigma_pl
+
+		#print type(sigma), sigma
+		#print type(x), x, type(y), y
+		#print type(self.nln_gss_prm), self.nln_gss_prm
+
+		#print curve_fit( model, x, y, self.nln_gss_prm, sigma=sigma )
+
+		#print 'curve'
 
 		# Attempt to perform the non-linear fit.  If this fails, reset
 		# the associated variables and abort.
@@ -2944,6 +2976,14 @@ class core( QObject ) :
 
 			# For each datum in the spectrum, compute the expected
 			# current from each population.
+
+			print self.nln_res_plas['g']
+			print self.nln_plas.arr_pop[p]['m']
+			print self.nln_plas.arr_pop[p]['q']
+			print pop_v0_vec
+			print pop_n
+			print pop_dv
+			print pop_w
 
 			self.nln_res_curr_ion.append(
 			     self.fc_spec.calc_curr ( 
