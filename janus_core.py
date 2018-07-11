@@ -2858,8 +2858,8 @@ class core( QObject ) :
 
 		sigma = sigma_fc + sigma_pl
 
-		print x
-		print y
+		print sigma
+#		print y
 		( fit, covar ) = curve_fit( model, x, y, 
 		                            self.nln_gss_prm,
 		                            sigma=sigma       )
