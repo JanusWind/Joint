@@ -2847,8 +2847,8 @@ class core( QObject ) :
 		# Calculate the the normalized uncertainties such that the sum
 		# of the squares of the uncertainties is equal to unity.
 
-		sigma_fc = sum( [ sqrt( y )/sqrt( tot_fc ) for y in y_fc ] )
-		sigma_pl = sum( [ sqrt( y )/sqrt( tot_pl ) for y in y_pl ] ) 
+		sigma_fc = [ sqrt( y )/sqrt( tot_fc ) for y in y_fc ]
+		sigma_pl = [ sqrt( y )/sqrt( tot_pl ) for y in y_pl ] 
 
 		# Concatinate the FC and PL data, currents/psds, and
 		# uncertainties into lists.
@@ -2856,7 +2856,7 @@ class core( QObject ) :
 		x = array( x_fc + x_pl )
 		y = array( y_fc + y_pl )
 
-		sigma = sigma_fc + sigma_pl
+		sigma = array( sigma_fc + sigma_pl )
 
 		print x
 		print y
