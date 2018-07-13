@@ -2858,15 +2858,6 @@ class core( QObject ) :
 
 		sigma = sigma_fc + sigma_pl
 
-#		print y
-		( fit, covar ) = curve_fit( model, x, y, 
-		                            self.nln_gss_prm,
-		                            sigma=sigma       )
-
-#		print fit, covar		
-
-		#print 'curve'
-
 		# Attempt to perform the non-linear fit.  If this fails, reset
 		# the associated variables and abort.
 
@@ -2914,6 +2905,13 @@ class core( QObject ) :
 
 		self.nln_res_curr_ion = []
 		self.nln_res_psd_ion  = []
+
+		# Set 'self.nln_res_psd_ion' to have 'self.pl_spec_arr'
+		# indicies
+
+		for spec in self.pl_spec_arr :
+
+			self.nln_res_psd_ion.append( [] )
 
 		for p in self.nln_gss_pop :
 
@@ -2975,16 +2973,8 @@ class core( QObject ) :
 			       sig_w=pop_sig_w, sig_w_per=pop_sig_w_per,
 			       sig_w_par=pop_sig_w_par                    )
 
-			# For each datum in the spectrum, compute the expected
-			# current from each population.
-
-			print self.nln_res_plas['g']
-			print self.nln_plas.arr_pop[p]['m']
-			print self.nln_plas.arr_pop[p]['q']
-			print pop_v0_vec
-			print pop_n
-			print pop_dv
-			print pop_w
+			# For each FC datum in the spectrum, compute the
+			# expected current from each population.
 
 			self.nln_res_curr_ion.append(
 			     self.fc_spec.calc_curr ( 
@@ -2992,14 +2982,17 @@ class core( QObject ) :
 			                  self.nln_plas.arr_pop[p]['q'],
 			                  pop_v0_vec, pop_n, pop_dv, pop_w ) )
 
+			# For each PL datum in the spectrum, compute the
+			# expected psd from each population.
+
 			for n in range( len( self.pl_spec_arr ) ) :
 
 				self.nln_res_psd_ion[n].append(
-			             self.pl_spec_arr[n].calc_psd_gss (
-				            self.nln_res_plas['g'],
-			                    self.nln_plas.arr_pop[p]['m'],
-			                    self.nln_plas.arr_pop[p]['q'],
-			                    pop_v0_vec, pop_n, pop_dv, pop_w ) )
+			             [ self.pl_spec_arr[n].calc_psd_gss (
+				          self.nln_res_plas['g'],
+			                  self.nln_plas.arr_pop[p]['m'],
+			                  self.nln_plas.arr_pop[p]['q'],
+			                  pop_v0_vec, pop_n, pop_dv, pop_w ) ] )
 
 		# Save the results of the this non-linear analysis to the
 		# results log.
@@ -3024,7 +3017,7 @@ class core( QObject ) :
 		                     for c in range( self.fc_spec['n_cup']   ) ]
 
 		self.nln_res_psd_ion = [ [ [ [ [
-		                     self.nln_res_psd_ion[p][n][t][f][b]
+		                     self.nln_res_psd_ion[n][p][0][t][f][b]
 		                     for p in range( len(
 		                                 self.nln_res_plas.arr_pop ) ) ]
 		                     for b in range( self.pl_spec_arr[n]['n_bin'] ) ]

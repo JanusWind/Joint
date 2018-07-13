@@ -416,6 +416,4 @@ class pl_dat( object ) :
 
 	def calc_resp( self, g, m, q, v0, n, dv, w ) :
 
-		print self.calc_psd_gss( g, m, q, v0, g*n, dv, w )
-
 		return self.calc_psd_gss( g, m, q, v0, g*n, dv, w )
