@@ -2047,6 +2047,14 @@ class core( QObject ) :
 		self.nln_gss_curr_ion = [ ]
 		self.nln_psd_gss_ion  = [ ]
 
+		# Set 'self.nln_psd_gss_ion' to have 'self.pl_spec_arr'
+		# indicies
+
+		for spec in self.pl_spec_arr :
+
+			self.nln_psd_gss_ion.append( [] )
+
+
 		for p in self.nln_gss_pop :
 
 			# Extract the drift and anisotropy states of the
@@ -2100,12 +2108,15 @@ class core( QObject ) :
 			                    self.nln_plas.arr_pop[p]['q'],
 			                    pop_v0_vec, pop_n, pop_dv, pop_w ) )
 
-			self.nln_psd_gss_ion.append( [ spec.calc_psd_gss(
-			                  self.nln_plas['g'],
-			                  self.nln_plas.arr_pop[p]['m'],
-			                  self.nln_plas.arr_pop[p]['q'],
-			                  pop_v0_vec, pop_n,
-			                  pop_dv, pop_w      ) for spec in self.pl_spec_arr] )
+			for n in range( len( self.pl_spec_arr ) ) :
+
+				self.nln_psd_gss_ion[n].append(
+				               self.pl_spec_arr[n].calc_psd_gss(
+				               self.nln_plas['g'],
+				               self.nln_plas.arr_pop[p]['m'],
+				               self.nln_plas.arr_pop[p]['q'],
+				               pop_v0_vec, pop_n,
+				               pop_dv, pop_w      ) )
 
 		# Alter the axis order of the arrays of currents and psd's.
 
@@ -2117,7 +2128,7 @@ class core( QObject ) :
 		                     for c in range( self.fc_spec['n_cup']   ) ]
 
 		self.nln_psd_gss_ion  = [ [ [ [ [
-		                self.nln_psd_gss_ion[p][n][t][f][b]
+		                self.nln_psd_gss_ion[n][p][t][f][b]
 		                for p in range( self.nln_gss_n_pop           ) ]
 		                for b in range( self.pl_spec_arr[n]['n_bin'] ) ]
 		                for f in range( self.pl_spec_arr[n]['n_phi'] ) ]
@@ -2670,7 +2681,9 @@ class core( QObject ) :
 					              <= v_max )            )[0]
 
 					for b in tk :
-						self.nln_pl_sel[n,t,p,b] = True
+
+						if( self.pl_spec_arr[n]['psd'][t][p][b] != 0 ) :
+							self.nln_pl_sel[n,t,p,b] = True
 
 		# Update the counts of selected data.
 
@@ -2992,7 +3005,7 @@ class core( QObject ) :
 				          self.nln_res_plas['g'],
 			                  self.nln_plas.arr_pop[p]['m'],
 			                  self.nln_plas.arr_pop[p]['q'],
-			                  pop_v0_vec, pop_n, pop_dv, pop_w ) ] )
+			                  pop_v0_vec, self.nln_res_plas['g']*pop_n, pop_dv, pop_w ) ] )
 
 		# Save the results of the this non-linear analysis to the
 		# results log.

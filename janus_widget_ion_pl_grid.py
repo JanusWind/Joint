@@ -682,17 +682,19 @@ class widget_pl_grid( QWidget ) :
 
 		# Return the "nln_psd_gss_ion axes to their original order.
 
-		if( self.core.nln_psd_gss_ion != [ ] ) :
+		if( self.core.nln_psd_gss_ion is not None ) :
 
-			nln_psd_gss_ion = [ [ [ [ [
-			self.core.nln_psd_gss_ion[n][t][f][b][p]
-			for b in range( self.core.pl_spec_arr[n]['n_bin'] ) ]
-			for f in range( self.core.pl_spec_arr[n]['n_phi'] ) ]
-			for t in range( self.core.pl_spec_arr[n]['n_the'] ) ]
-			for n in range( len( self.core.pl_spec_arr      ) ) ]
-			for p in range( self.core.nln_gss_n_pop           ) ]
+			if( self.core.nln_psd_gss_ion != [ ] ) :
 
-			# Return the "nln_res_psd_ion axes to their original order.
+				nln_psd_gss_ion = [ [ [ [ [
+				self.core.nln_psd_gss_ion[n][t][f][b][p]
+				for b in range( self.core.pl_spec_arr[n]['n_bin'] ) ]
+				for f in range( self.core.pl_spec_arr[n]['n_phi'] ) ]
+				for t in range( self.core.pl_spec_arr[n]['n_the'] ) ]
+				for n in range( len( self.core.pl_spec_arr      ) ) ]
+				for p in range( self.core.nln_gss_n_pop           ) ]
+
+		# Return the "nln_res_psd_ion axes to their original order.
 
 		if( self.core.nln_res_psd_ion is not None ) :
 
@@ -753,7 +755,7 @@ class widget_pl_grid( QWidget ) :
 
 					elif( self.core.dsp == 'nln' ) :
 
-						y = array( nln_psd_gss_ion[n][self.n][t][p] )
+						y = array( nln_res_psd_ion[n][self.n][t][p] )
 
 					# If any points are 0 or None, set them
 					# to an arbitrary minimum value
