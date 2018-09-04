@@ -1847,9 +1847,9 @@ class core( QObject ) :
 
 		# Set the weight parameter "g" for the joint initial guess.
 
-		g = 1.
+		#g = 1.
 
-		#g = self.mom_fc_res['n']/self.mom_pl_avg['n']
+		g = self.mom_fc_res['n_p']/self.mom_pl_avg['n_p']
 
 		# Make a new plas( ) object which contains the average moments
 		# of the FC and PESA-L spectra (if PESA-L data were loaded).
@@ -2603,6 +2603,7 @@ class core( QObject ) :
 
 			n_tk = len( tk_t )
 
+			arr_psd_valid = self.pl_spec_arr[n]['psd_valid']
 			arr_vel_cen = self.pl_spec_arr[n]['vel_cen']
 
 			for j in range( n_tk ) :
@@ -2675,8 +2676,11 @@ class core( QObject ) :
 					# that fall into this range of inflow
 					# speeds.
 
-					tk = where( ( array( arr_vel_cen )
-					              >= v_min ) &
+					tk = where(
+					       ( array( arr_psd_valid[t][p] )
+				                 >= self.pl_spec_arr[n]['psd_min'] ) &
+					            ( array( arr_vel_cen )
+					                            >= v_min ) &
 					            ( array( arr_vel_cen )
 					              <= v_max )            )[0]
 
@@ -2860,8 +2864,13 @@ class core( QObject ) :
 		# Calculate the the normalized uncertainties such that the sum
 		# of the squares of the uncertainties is equal to unity.
 
-		sigma_fc = [ sqrt( y )/sqrt( tot_fc ) for y in y_fc ]
-		sigma_pl = [ sqrt( y )/sqrt( tot_pl ) for y in y_pl ] 
+		#sigma_fc = [ sqrt( y * 0.69  ) for y in y_fc ]
+		#sigma_pl = [ sqrt( y * 1e-20 ) for y in y_pl ]
+
+		S = 2.5e-18
+
+		sigma_fc = [ sqrt( y / 0.69 ) for y in y_fc ]
+		sigma_pl = [ sqrt( S * y / 1e-10 ) for y in y_pl ] 
 
 		# Concatinate the FC and PL data, currents/psds, and
 		# uncertainties into lists.
@@ -3044,6 +3053,67 @@ class core( QObject ) :
 		                     for p in range( self.pl_spec_arr[n]['n_phi'] ) ]
 		                     for t in range( self.pl_spec_arr[n]['n_the'] ) ]
 		                     for n in range( len( self.pl_spec_arr )      ) ]
+
+
+		# Manual calculation of chi-squared
+
+		y_psd = []
+		f_psd = []
+
+		for n in range( len( self.pl_spec_arr ) ) :
+
+			for t in range( self.pl_spec_arr[n]['n_the'] ) :
+
+				for p in range( self.pl_spec_arr[n]['n_phi'] ) :
+
+					for b in range( self.pl_spec_arr[n]['n_bin'] ) :
+
+						if ( self.nln_pl_sel[n][t][p][b] ) :
+
+							y_psd.append(
+							     self.pl_spec_arr[n]['psd'][t][p][b] )
+
+							f_psd.append(
+							     self.nln_res_psd_tot[n][t][p][b] )
+
+		y_curr = []
+		f_curr = []
+
+		for c in range( self.fc_spec['n_cup'] ) :
+
+			for d in range( self.fc_spec['n_dir'] ) :
+
+				for b in range( self.fc_spec['n_bin'] ) :
+
+					if ( self.nln_res_sel[c][d][b] ) :
+
+						y_curr.append( self.fc_spec['curr'][c][d][b] )
+
+						f_curr.append( self.nln_res_curr_tot[c][d][b] )
+
+
+		chi2_fc = sum( [ ( ( y_curr[i] - f_curr[i] ) / sigma_fc ) **2
+		                             for i in range( len( y_curr ) ) ] )
+
+		chi2_pl = sum( [ ( ( y_psd[i] - f_psd[i] ) / sigma_pl ) **2
+		                             for i in range( len( y_psd ) ) ] )
+
+		print self.nln_res_plas['n_p']
+		print chi2_fc / chi2_pl
+
+		file_text = ''
+		file_text += str(S)
+		file_text += ' '
+		file_text += str(self.nln_res_plas['n_p'])
+		file_text += ' '
+		file_text += str(chi2_fc / chi2_pl)
+		file_text += '\n'
+
+		chi2_file = open( 'chi2_res', 'a' )
+		chi2_file.write( file_text )
+		chi2_file.close()
+
+		
 
 
 		# Message the user that the non-linear analysis has finished.
