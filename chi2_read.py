@@ -45,7 +45,7 @@ for i in range( len( chi2R_file ) ) :
 
 f1, axs1 = plt.subplots( 4, 1, sharex=True, squeeze=True )
 
-'''
+
 # n_p
 
 axs1[0].axhline( 4.18, c='b', lw='1', label=r'$n_{FC}$')
@@ -56,7 +56,7 @@ axs1[0].set_ylabel( r'$n$ $(cm^{-3})$', fontsize=18 )
 axs1[0].set_xscale( 'log' )
 axs1[0].set_ylim( 3.6, 4.4 )
 axs1[0].legend(fontsize=18)
-'''
+
 
 '''
 # v0_x
@@ -92,21 +92,21 @@ axs1[2].set_ylabel( r'$v_{0z}$ $(km/s)$', fontsize=18 )
 axs1[2].set_xscale( 'log' )
 axs1[2].set_ylim( -3, 3 )
 axs1[2].legend(fontsize=18)
-'''
+
 
 '''
 # v0
 
-axs1[0].axhline( 416., c='b', lw='1', label=r'$v_{0FC}$')
-axs1[0].axhline( 419., c='r', lw='1', label=r'$<v_{0PL}>$' )
-axs1[0].scatter( s, v0, color='k' )
-axs1[0].set_ylabel( r'$v_{0}$ $(km/s)$', fontsize=18 )
-axs1[0].set_xscale( 'log' )
-axs1[0].set_ylim( 415, 420 )
-axs1[0].legend(fontsize=18)
+axs1[1].axhline( 416., c='b', lw='1', label=r'$v_{0FC}$')
+axs1[1].axhline( 419., c='r', lw='1', label=r'$<v_{0PL}>$' )
+axs1[1].scatter( s, v0, color='k' )
+axs1[1].set_ylabel( r'$v_{0}$ $(km/s)$', fontsize=18 )
+axs1[1].set_xscale( 'log' )
+axs1[1].set_ylim( 415, 420 )
+axs1[1].legend(fontsize=18)
 
 
-
+'''
 # the_v
 
 axs1[1].axhline( 90.275, c='b', lw='1', label=r'$\theta_{vFC}$')
@@ -130,7 +130,7 @@ axs1[2].set_ylim( 175, 178 )
 axs1[2].legend(fontsize=18)
 '''
 
-
+'''
 # w_per
 
 axs1[1].scatter( s, w_per, color='k' )
@@ -148,18 +148,18 @@ axs1[2].set_ylabel( r'$w_{par}$', fontsize=18 )
 axs1[2].set_xscale( 'log' )
 axs1[2].set_ylim( 19, 27 )
 axs1[2].legend(fontsize=18)
-
+'''
 
 
 # w
 
-axs1[0].axhline( 25, c='b', lw='1', label=r'$w_{FC}$')
-axs1[0].axhline( 26, c='r', lw='1', label=r'$<w_{PL}>$' )
-axs1[0].scatter( s, w, color='k' )
-axs1[0].set_ylabel( r'$w$', fontsize=18 )
-axs1[0].set_xscale( 'log' )
-axs1[0].set_ylim( 19, 27 )
-axs1[0].legend(fontsize=18)
+axs1[2].axhline( 25, c='b', lw='1', label=r'$w_{FC}$')
+axs1[2].axhline( 26, c='r', lw='1', label=r'$<w_{PL}>$' )
+axs1[2].scatter( s, w, color='k' )
+axs1[2].set_ylabel( r'$w$', fontsize=18 )
+axs1[2].set_xscale( 'log' )
+axs1[2].set_ylim( 19, 27 )
+axs1[2].legend(fontsize=18)
 
 
 #for tick in axs1[0].yaxis.get_major_ticks():
@@ -187,7 +187,7 @@ axs1[0].set_title( r'$T = 1997-01-08/11:59:32$', fontsize=22 )
 plt.subplots_adjust(wspace=0, hspace=0.2)
 plt.tight_layout()
 
-plt.savefig( 'chi-squared_test_plots_w_per_par' +'.eps', bbox_inches='tight', dpi=40 )
+plt.savefig( 'chi-squared_test_plots_n_v0_w' +'.pdf', bbox_inches='tight', dpi=40 )
 
 plt.show()
 
