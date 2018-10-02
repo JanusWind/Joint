@@ -150,6 +150,7 @@ class plas( object ) :
 		self.covar = None
 
 		self.g = g
+		self.sig_g = None
 
 		self.v0_x = None
 		self.v0_y = None
@@ -369,11 +370,18 @@ class plas( object ) :
 
 		elif ( elem['param'] == 'g' ) :
 
-			if ( ( elem['sigma'] is None ) and
-			     ( elem['comp' ] is None )     ) :
-				return self.g
+			if ( elem['sigma'] is None ) :
+
+				if ( elem['comp'] is None ) :
+					return self.g
+				else :
+					return None
 			else :
-				return None
+
+				if ( elem['comp'] is None ) :
+					return self.sig_g
+				else :
+					return None
 
 		# Note.  If this point is reached, the parameter is one to be
 		#        handled by the species or population.
@@ -485,6 +493,14 @@ class plas( object ) :
 					self.v0_y = float( value[1] )
 				if ( value[2] is not None ) :
 					self.v0_z = float( value[2] )
+
+		elif ( key == 'sig_g' ) :
+
+			self.sig_g = None
+
+			if ( value is not None ) :
+
+				self.sig_g = float( value )
 
 		elif ( key == 'sig_v0_x' ) :
 

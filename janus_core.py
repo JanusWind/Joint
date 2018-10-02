@@ -1847,9 +1847,9 @@ class core( QObject ) :
 
 		# Set the weight parameter "g" for the joint initial guess.
 
-		g = 1.
+		#g = 1.
 
-		#g = self.mom_fc_res['n_p']/self.mom_pl_avg['n_p']
+		g = self.mom_fc_res['n_p']/self.mom_pl_avg['n_p']
 
 		# Make a new plas( ) object which contains the average moments
 		# of the FC and PESA-L spectra (if PESA-L data were loaded).
@@ -2038,13 +2038,11 @@ class core( QObject ) :
 		# factor "g", followed by the reference velocity) and compute
 		# the expected currents or psd's from each population.
 
-		#self.nln_gss_prm = [ self.nln_plas['g'] ]
+		self.nln_gss_prm = [ self.nln_plas['g'] ]
 
 		pop_v0_vec = self.nln_plas['v0_vec']
 
-		self.nln_gss_prm = list(pop_v0_vec)
-
-		#[ self.nln_gss_prm.append( x ) for x in pop_v0_vec ]
+		[ self.nln_gss_prm.append( x ) for x in pop_v0_vec ]
 
 		self.nln_gss_curr_ion = [ ]
 		self.nln_psd_gss_ion  = [ ]
@@ -2854,9 +2852,9 @@ class core( QObject ) :
 
 		# Loop over all S values for graphs
 
-		self.S = [ 1.e-20, 5.e-20, 1.e-19, 2.5e-19, 5.e-18,
-		           7.5e-18, 1.e-17, 2.5e-17, 5.e-17, 7.5e-17,
-		           1.e-16, 5.e-16, 1.e-15, 5.e-15, 1.e-14     ]
+		self.S = [ 1.e-20, 5.e-20, 1.e-19, 5.e-19, 1.e-18, 2.5e-18,
+		           5.e-18, 7.5e-18, 1.e-17, 2.5e-17, 5.e-17, 7.5e-17,
+		           1.e-16, 5.e-16, 1.e-15, 5.e-15, 1.e-14             ]
 
 		if( S is None ) :
 			for s in self.S :
@@ -2927,16 +2925,17 @@ class core( QObject ) :
 		self.nln_res_plas['b0_y']     = self.mfi_avg_vec[1]
 		self.nln_res_plas['b0_z']     = self.mfi_avg_vec[2]
 
-		pop_v0_vec                    = [fit[0], fit[1], fit[2]]
-		self.nln_res_plas['g']        =  1#fit[0]
-		self.nln_res_plas['v0_x']     =  fit[0]
-		self.nln_res_plas['v0_y']     =  fit[1]
-		self.nln_res_plas['v0_z']     =  fit[2]
-		self.nln_res_plas['sig_v0_x'] =  sig[0]
-		self.nln_res_plas['sig_v0_y'] =  sig[1]
-		self.nln_res_plas['sig_v0_z'] =  sig[2]
+		pop_v0_vec                    = [fit[1], fit[2], fit[3]]
+		self.nln_res_plas['g']        =  fit[0]
+		self.nln_res_plas['v0_x']     =  fit[1]
+		self.nln_res_plas['v0_y']     =  fit[2]
+		self.nln_res_plas['v0_z']     =  fit[3]
+		self.nln_res_plas['sig_g']    =  sig[0]
+		self.nln_res_plas['sig_v0_x'] =  sig[1]
+		self.nln_res_plas['sig_v0_y'] =  sig[2]
+		self.nln_res_plas['sig_v0_z'] =  sig[3]
 
-		c = 3
+		c = 4
 
 		self.nln_res_curr_ion = []
 		self.nln_res_psd_ion  = []
@@ -3120,7 +3119,13 @@ class core( QObject ) :
 		file_text = ''
 		file_text += str(S)
 		file_text += ' '
-		file_text += str(self.nln_res_plas['n_p'])
+		file_text += str(self.nln_res_plas['n_p_c'])
+		file_text += ' '
+		file_text += str(self.nln_res_plas['n_p_c_sig'])
+		file_text += ' '
+		file_text += str(self.nln_res_plas['g'])
+		file_text += ' '
+		file_text += str(self.nln_res_plas['g_sig'])
 		file_text += ' '
 		file_text += str(self.nln_res_plas['v0_p_c_x'])
 		file_text += ' '
@@ -3136,10 +3141,14 @@ class core( QObject ) :
 		file_text += ' '
 		file_text += str(self.nln_res_plas['w_p_c'])
 		file_text += ' '
-		file_text += str(chi2R_fc / chi2R_pl)
+		file_text += str(chi2R_fc)
+		file_text += ' '
+		file_text += str(chi2R_pl)
 		file_text += '\n'
 
-		chi2_file = open( 'chi2R_res', 'a' )
+		file_string = 'chi2R_res_' + str( self.time_txt ).replace( '/', ';' )
+
+		chi2_file = open( os.path.join( 'chi-squared', str( self.time_txt ).replace( '/', ';' ), file_string ), 'a' )
 		chi2_file.write( file_text )
 		chi2_file.close()
 
@@ -3288,11 +3297,11 @@ class core( QObject ) :
 		# For each ion species, extract the passed parameters and
 		# calculate it's contribution to the total current.
 
-		prm_g  = 1#prm[0]
+		prm_g  = prm[0]
 
-		prm_v0 = ( prm[0], prm[1], prm[2] )
+		prm_v0 = ( prm[1], prm[2], prm[3] )
 
-		k = 3
+		k = 4
 
 		for p in self.nln_gss_pop :
 
