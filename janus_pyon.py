@@ -31,8 +31,9 @@ from janus_const import const
 ## DEFINE THE LIST OF RESERVED NAMES.
 ################################################################################
 
-PARAM = [ 'g', 'b0', 'v0', 'n', 'v', 'dv', 'v0', 'w', 'w2', 'r', 't', 'beta',
-          'ac', 'time', 's','m','q', 'k', 'beta_par', 'beta_per'               ]
+PARAM = [ 'gn', 'gv', 'dthe', 'dphi', 'b0', 'v0', 'n', 'v', 'dv', 'v0', 'w',
+          'w2', 'r', 't', 'beta', 'ac', 'time', 's','m','q', 'k',
+          'beta_par', 'beta_per' ]
 
 COMP = [ 'x', 'y', 'z', 'per', 'par', 'vec', 'mag', 'hat'  ]
 
@@ -140,7 +141,8 @@ class plas( object ) :
 	# DEFINE THE INITIALIZATION FUNCTION.
 	#-----------------------------------------------------------------------
 
-	def __init__( self, time=None, enforce=False, g=None ) :
+	def __init__( self, time=None, enforce=False, gn=None, gV=None,
+	              dthe=None, dphi=None ) :
 
 		self.time = time
 
@@ -149,8 +151,15 @@ class plas( object ) :
 
 		self.covar = None
 
-		self.g = g
-		self.sig_g = None
+		self.gn   = gn
+		self.gV   = gV
+		self.dthe = dthe
+		self.dphi = dphi
+
+		self.sig_gn   = None
+		self.sig_gV   = None
+		self.sig_dthe = None
+		self.sig_dphi = None		
 
 		self.v0_x = None
 		self.v0_y = None
@@ -368,18 +377,63 @@ class plas( object ) :
 				else :
 					return None
 
-		elif ( elem['param'] == 'g' ) :
+		elif ( elem['param'] == 'gn' ) :
 
 			if ( elem['sigma'] is None ) :
 
 				if ( elem['comp'] is None ) :
-					return self.g
+					return self.gn
 				else :
 					return None
 			else :
 
 				if ( elem['comp'] is None ) :
-					return self.sig_g
+					return self.sig_gn
+				else :
+					return None
+
+		elif ( elem['param'] == 'gv' ) :
+
+			if ( elem['sigma'] is None ) :
+
+				if ( elem['comp'] is None ) :
+					return self.gV
+				else :
+					return None
+			else :
+
+				if ( elem['comp'] is None ) :
+					return self.sig_gV
+				else :
+					return None
+
+		elif ( elem['param'] == 'dthe' ) :
+
+			if ( elem['sigma'] is None ) :
+
+				if ( elem['comp'] is None ) :
+					return self.dthe
+				else :
+					return None
+			else :
+
+				if ( elem['comp'] is None ) :
+					return self.sig_dthe
+				else :
+					return None
+
+		elif ( elem['param'] == 'dphi' ) :
+
+			if ( elem['sigma'] is None ) :
+
+				if ( elem['comp'] is None ) :
+					return self.dphi
+				else :
+					return None
+			else :
+
+				if ( elem['comp'] is None ) :
+					return self.sig_dphi
 				else :
 					return None
 
@@ -447,12 +501,33 @@ class plas( object ) :
 
 		# TODO Keys
 
-		elif ( key == 'g' ) :
+		elif ( key == 'gn' ) :
 
-			self.g = None
+			self.gn = None
 
 			if ( value is not None ) :
-				self.g = float( value )
+				self.gn = float( value )
+
+		elif ( key == 'gv' ) :
+
+			self.gV = None
+
+			if ( value is not None ) :
+				self.gV = float( value )
+
+		elif ( key == 'dthe' ) :
+
+			self.dthe = None
+
+			if ( value is not None ) :
+				self.dthe = float( value )
+
+		elif ( key == 'dphi' ) :
+
+			self.dphi = None
+
+			if ( value is not None ) :
+				self.dphi = float( value )
 
 		elif ( key == 'v0_x' ) :
 
@@ -494,13 +569,37 @@ class plas( object ) :
 				if ( value[2] is not None ) :
 					self.v0_z = float( value[2] )
 
-		elif ( key == 'sig_g' ) :
+		elif ( key == 'sig_gn' ) :
 
-			self.sig_g = None
+			self.sig_gn = None
 
 			if ( value is not None ) :
 
-				self.sig_g = float( value )
+				self.sig_gn = float( value )
+
+		elif ( key == 'sig_gv' ) :
+
+			self.sig_gV = None
+
+			if ( value is not None ) :
+
+				self.sig_gV = float( value )
+
+		elif ( key == 'sig_dthe' ) :
+
+			self.sig_dthe = None
+
+			if ( value is not None ) :
+
+				self.sig_dthe = float( value )
+
+		elif ( key == 'sig_dphi' ) :
+
+			self.sig_dphi = None
+
+			if ( value is not None ) :
+
+				self.sig_dphi = float( value )
 
 		elif ( key == 'sig_v0_x' ) :
 

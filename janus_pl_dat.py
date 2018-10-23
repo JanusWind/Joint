@@ -26,7 +26,7 @@
 ################################################################################
 
 from math import sqrt, acos, pi
-from numpy import interp, sin, cos, deg2rad, exp, array, dot
+from numpy import interp, sin, cos, deg2rad, exp, array, dot, sqrt
 from scipy.special import erf
 from datetime import datetime, timedelta
 
@@ -318,7 +318,7 @@ class pl_dat( object ) :
 	# DEFINE THE FUNCTION TO CALCULATE EXPECTED MAXWELLIAN PSD FOR NLN. GSS.
 	#-----------------------------------------------------------------------
 
-	def calc_psd_gss( self, g, m, q, v0, n, dv, w ) :
+	def calc_psd_gss( self, gn, gV, dthe, dphi, m, q, v0, n, dv, w ) :
 
 		# If the moments analysis failed, set "self.psd_mom" to None and
 		# abort
@@ -330,6 +330,16 @@ class pl_dat( object ) :
 			self.psd_gss = None
 
 			return
+
+		# Calibrate the parameters n, v0, and dv (if applicable)
+
+		n = gn * n
+
+		v0 = [ gn * sqrt( gV ) * vv for vv in v0 ]
+
+		if dv is not None :
+
+			dv = sqrt( gV ) * dv
 
 		# Calculate the total velocity using drift
 
@@ -355,8 +365,10 @@ class pl_dat( object ) :
 
 		if ( hasattr( w, '__len__' ) ) :
 
-			w_per = w[0]
-			w_par = w[1]
+			# Calibrate w
+
+			w_per = sqrt( gV ) * w[0]
+			w_par = sqrt( gV ) * w[1]
 
 			# Calculate the component of the magnetic field unit vector
 			# that lies along the look direction.
@@ -393,6 +405,10 @@ class pl_dat( object ) :
 
 		else :
 
+			# Calibrate w
+
+			w = sqrt( gV ) * w
+
 			# Calculate the exponent
 
 			u_v = [ u_vec[i] - v_vec[i] for i in range( 3 ) ]
@@ -414,6 +430,6 @@ class pl_dat( object ) :
 	# DEFINE THE FUNCTION TO CALCULATE THE NON-LINEAR MODEL PSD
 	#-----------------------------------------------------------------------
 
-	def calc_resp( self, g, m, q, v0, n, dv, w ) :
+	def calc_resp( self, gn, gV, dthe, dphi, m, q, v0, n, dv, w ) :
 
-		return self.calc_psd_gss( g, m, q, v0, g*n, dv, w )
+		return self.calc_psd_gss( gn, gV, dthe, dphi, m, q, v0, n, dv, w )

@@ -621,13 +621,13 @@ class pl_spec( ) :
 	# DEFINE THE FUNCTION FOR CALC'ING EXPECTED PSD FROM A POPULATION.
 	#-----------------------------------------------------------------------
 
-	def calc_psd_gss( self, g, m, q, v0, n, dv, w) :
+	def calc_psd_gss( self, gn, gV, dthe, dphi, m, q, v0, n, dv, w) :
 
 		# Return a 3-D list with the calculated current for each bin in
 		# the spectrum.
 
 		return [ [ [ self.arr[t][p][b].calc_psd_gss( 
-		                    g, m, q, v0, n, dv, w      )
+		                    gn, gV, dthe, dphi, m, q, v0, n, dv, w )
 		                    for b in range( self['n_bin'] ) ]
 		                    for p in range( self['n_phi'] ) ]
 		                    for t in range( self['n_the'] ) ]

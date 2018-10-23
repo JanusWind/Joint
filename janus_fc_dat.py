@@ -26,7 +26,7 @@
 ################################################################################
 
 from math import sqrt, acos, pi
-from numpy import interp, sin, cos, deg2rad, exp, array
+from numpy import interp, sin, cos, deg2rad, exp, array, sqrt
 from scipy.special import erf
 
 from janus_const import const
@@ -271,7 +271,7 @@ class fc_dat( object ) :
 	# DEFINE THE FUNCTION TO CALCULATE THE NON-LINEAR MODEL CURRENT
 	#-----------------------------------------------------------------------
 
-	def calc_resp( self, g, m, q, v0, n, dv, w ) :
+	def calc_resp( self, gn, gV, dthe, dphi, m, q, v0, n, dv, w ) :
 
 		return self.calc_curr( m, q, v0, n, dv, w )
 
