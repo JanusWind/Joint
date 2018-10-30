@@ -1848,7 +1848,7 @@ class core( QObject ) :
 		# Set the calibration parameters for the joint initial guess.
 
 		#g = 0.69
-		gn =   self.mom_fc_res['n_p'   ]/self.mom_pl_avg['n_p'   ]
+		gA =   self.mom_pl_avg['n_p'   ]/self.mom_fc_res['n_p'   ]
 		gV = ( self.mom_fc_res['v0_mag']/self.mom_pl_avg['v0_mag'] )**2
 		dthe = -0.6
 		dphi = -2.
@@ -1857,22 +1857,22 @@ class core( QObject ) :
 		# of the FC and PESA-L spectra (if PESA-L data were loaded).
 		# Otherwise, it will contain only the FC moments results.
 
-		self.mom_res = plas( gn = gn, gV = gV, dthe = dthe, dphi = dphi )
+		self.mom_res = plas( gA = gA, gV = gV, dthe = dthe, dphi = dphi )
 
 		self.mom_res['v0_x'] = ( ( self.mom_fc_res['v0_x'] +
-		                           gn*self.mom_pl_avg['v0_x'] ) /
-		                                              ( 1. + gn ) )
+		                           1./gA*self.mom_pl_avg['v0_x'] ) /
+		                                              ( 1. + 1./gA ) )
 
 		self.mom_res['v0_y'] = ( ( self.mom_fc_res['v0_y'] +
-		                           gn*self.mom_pl_avg['v0_y'] ) /
-		                                              ( 1. + gn ) )
+		                           1./gA*self.mom_pl_avg['v0_y'] ) /
+		                                              ( 1. + 1./gA ) )
 
 		self.mom_res['v0_z'] = ( ( self.mom_fc_res['v0_z'] +
-		                           gn*self.mom_pl_avg['v0_z'] ) /
-		                                              ( 1. + gn ) )
+		                           1./gA*self.mom_pl_avg['v0_z'] ) /
+		                                              ( 1. + 1./gA ) )
 
 		res_w = ( ( self.mom_fc_res['w_p_c'] +
-		            gn*self.mom_pl_avg['w_p_c'] ) / ( 1. + gn ) ) 
+		            1./gA*self.mom_pl_avg['w_p_c'] ) / ( 1. + 1./gA ) ) 
 
 		self.mom_res.add_spec( name='Proton', sym='p', m=1., q=1. )
 
@@ -1918,7 +1918,7 @@ class core( QObject ) :
 
 		try :
 
-			self.nln_plas['gn'] = self.mom_res['gn']
+			self.nln_plas['gA'] = self.mom_res['gA']
 
 			self.nln_plas['gV'] = self.mom_res['gV']
 
@@ -2046,7 +2046,7 @@ class core( QObject ) :
 		# factor "g", followed by the reference velocity) and compute
 		# the expected currents or psd's from each population.
 
-		self.nln_gss_prm = [ self.nln_plas['gn'] ]
+		self.nln_gss_prm = [ self.nln_plas['gA'] ]
 
 		self.nln_gss_prm.append( self.nln_plas['gV'] )
 
@@ -2128,7 +2128,7 @@ class core( QObject ) :
 
 				self.nln_psd_gss_ion[n].append(
 				               self.pl_spec_arr[n].calc_psd_gss(
-				               self.nln_plas['gn'],
+				               self.nln_plas['gA'],
 				               self.nln_plas['gV'],
 				               self.nln_plas['dthe'],
 				               self.nln_plas['dphi'],
@@ -2950,7 +2950,7 @@ class core( QObject ) :
 
 		pop_v0_vec                    = [fit[2], fit[3], fit[4]]
 
-		self.nln_res_plas['gn']       =  fit[0]
+		self.nln_res_plas['gA']       =  fit[0]
 		self.nln_res_plas['gV']       =  fit[1]
 		self.nln_res_plas['dthe']     =  -0.6#fit[2]
 		self.nln_res_plas['dphi']     =  -2.#fit[3]
@@ -2958,7 +2958,7 @@ class core( QObject ) :
 		self.nln_res_plas['v0_y']     =  fit[3]
 		self.nln_res_plas['v0_z']     =  fit[4]
 
-		self.nln_res_plas['sig_gn']   =  sig[0]
+		self.nln_res_plas['sig_gA']   =  sig[0]
 		self.nln_res_plas['sig_gV']   =  sig[1]
 #		self.nln_res_plas['sig_dthe'] =  sig[2]
 #		self.nln_res_plas['sig_dphi'] =  sig[3]
@@ -3054,7 +3054,7 @@ class core( QObject ) :
 
 				self.nln_res_psd_ion[n].append(
 			             [ self.pl_spec_arr[n].calc_psd_gss (
-				          self.nln_res_plas['gn'],
+				          self.nln_res_plas['gA'],
 				          self.nln_res_plas['gV'],
 				          self.nln_res_plas['dthe'],
 				          self.nln_res_plas['dphi'],
@@ -3157,9 +3157,9 @@ class core( QObject ) :
 		file_text += ' '
 		file_text += str(self.nln_res_plas['n_p_c_sig'])
 		file_text += ' '
-		file_text += str(self.nln_res_plas['gn'])
+		file_text += str(self.nln_res_plas['gA'])
 		file_text += ' '
-		file_text += str(self.nln_res_plas['gn_sig'])
+		file_text += str(self.nln_res_plas['gA_sig'])
 		file_text += ' '
 		file_text += str(self.nln_res_plas['gV'])
 		file_text += ' '
@@ -3342,8 +3342,8 @@ class core( QObject ) :
 		# calculate it's contribution to the total current.
 
 
-#		prm_gn    = 0.69
-		prm_gn    = prm[0]
+#		prm_gA    = 0.69
+		prm_gA    = prm[0]
 		prm_gV    = prm[1]
 #		prm_dthe  = prm[2]
 #		prm_dphi  = prm[3]
@@ -3395,7 +3395,7 @@ class core( QObject ) :
 			for d in range( len( dat ) ) :
 
 				resp[d] += dat[d].calc_resp(
-				                prm_gn, prm_gV,
+				                prm_gA, prm_gV,
 				                prm_dthe, prm_dphi,
 				                self.nln_plas.arr_pop[p]['m'],
 				                self.nln_plas.arr_pop[p]['q'],

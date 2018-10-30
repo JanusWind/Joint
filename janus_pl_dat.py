@@ -83,9 +83,10 @@ class pl_dat( object ) :
 		self._the       =( 90 + self._elev_cen ) * pi/180 # ( 90 -
 		self._phi       =( -180 + self._azim_cen )* pi/180
 
-		self._dir_x     = - sin( self._the ) * cos( self._phi )
-		self._dir_y     = - sin( self._the ) * sin( self._phi )
-		self._dir_z     = - cos( self._the )
+		self._dir_x = - sin( self._the ) * cos( self._phi )
+		self._dir_y = - sin( self._the ) * sin( self._phi )
+		self._dir_z = - cos( self._the )
+
 		#/TODO
 
 		self._norm_b_x  = None
@@ -111,6 +112,28 @@ class pl_dat( object ) :
 		self._mom1y = self._mom0*self['vel_cen']*self._dir_y
 		self._mom1z = self._mom0*self['vel_cen']*self._dir_z
 		self._mom2  = self._mom0*self['vel_cen']**2
+
+	# ----------------------------------------------------------------------
+	# GENERATE THE LOOK DIRECTIONS AND MOMENTS VALUES.
+	# ----------------------------------------------------------------------
+
+	def adj_mom( self, gA, gV, dthe, dphi ) :
+
+		dthe = dthe * pi/180.
+		dphi = dphi * pi/180.
+
+		self._dir_x_adj = -sin(self._the + dthe) * cos(self._phi + dphi)
+		self._dir_y_adj = -sin(self._the + dthe) * sin(self._phi + dphi)
+		self._dir_z_adj = -cos(self._the + dthe)
+
+		self._mom0_adj  = 1./(sqrt(gV)*gA)*self['psd']*self['vel_cen']**2*\
+		                  sin( self['the_cen'] + dthe )*self['vel_del']*\
+		                  deg2rad( self['the_del'] )*\
+		                  deg2rad( self['phi_del'] )
+		self._mom1x_adj = self._mom0_adj*sqrt(gV)*self['vel_cen']*self._dir_x_adj
+		self._mom1y_adj = self._mom0_adj*sqrt(gV)*self['vel_cen']*self._dir_y_adj
+		self._mom1z_adj = self._mom0_adj*sqrt(gV)*self['vel_cen']*self._dir_z_adj
+		self._mom2_adj  = self._mom0_adj*gV*self['vel_cen']**2
 
 	# ----------------------------------------------------------------------
 	# DEFINE THE KEYS FOR THIS CLASS.
@@ -318,7 +341,7 @@ class pl_dat( object ) :
 	# DEFINE THE FUNCTION TO CALCULATE EXPECTED MAXWELLIAN PSD FOR NLN. GSS.
 	#-----------------------------------------------------------------------
 
-	def calc_psd_gss( self, gn, gV, dthe, dphi, m, q, v0, n, dv, w ) :
+	def calc_psd_gss( self, gA, gV, dthe, dphi, m, q, v0, n, dv, w ) :
 
 		# If the moments analysis failed, set "self.psd_mom" to None and
 		# abort
@@ -430,6 +453,6 @@ class pl_dat( object ) :
 	# DEFINE THE FUNCTION TO CALCULATE THE NON-LINEAR MODEL PSD
 	#-----------------------------------------------------------------------
 
-	def calc_resp( self, gn, gV, dthe, dphi, m, q, v0, n, dv, w ) :
+	def calc_resp( self, gA, gV, dthe, dphi, m, q, v0, n, dv, w ) :
 
-		return self.calc_psd_gss( gn, gV, dthe, dphi, m, q, v0, n, dv, w )
+		return self.calc_psd_gss( gA, gV, dthe, dphi, m, q, v0, n, dv, w )
