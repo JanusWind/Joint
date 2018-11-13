@@ -31,7 +31,7 @@ from janus_const import const
 ## DEFINE THE LIST OF RESERVED NAMES.
 ################################################################################
 
-PARAM = [ 'gn', 'gv', 'dthe', 'dphi', 'b0', 'v0', 'n', 'v', 'dv', 'v0', 'w',
+PARAM = [ 'ga', 'gv', 'dthe', 'dphi', 'b0', 'v0', 'n', 'v', 'dv', 'v0', 'w',
           'w2', 'r', 't', 'beta', 'ac', 'time', 's','m','q', 'k',
           'beta_par', 'beta_per' ]
 
@@ -141,7 +141,7 @@ class plas( object ) :
 	# DEFINE THE INITIALIZATION FUNCTION.
 	#-----------------------------------------------------------------------
 
-	def __init__( self, time=None, enforce=False, gn=None, gV=None,
+	def __init__( self, time=None, enforce=False, gA=None, gV=None,
 	              dthe=None, dphi=None ) :
 
 		self.time = time
@@ -151,12 +151,12 @@ class plas( object ) :
 
 		self.covar = None
 
-		self.gn   = gn
+		self.gA   = gA
 		self.gV   = gV
 		self.dthe = dthe
 		self.dphi = dphi
 
-		self.sig_gn   = None
+		self.sig_gA   = None
 		self.sig_gV   = None
 		self.sig_dthe = None
 		self.sig_dphi = None		
@@ -377,18 +377,18 @@ class plas( object ) :
 				else :
 					return None
 
-		elif ( elem['param'] == 'gn' ) :
+		elif ( elem['param'] == 'ga' ) :
 
 			if ( elem['sigma'] is None ) :
 
 				if ( elem['comp'] is None ) :
-					return self.gn
+					return self.gA
 				else :
 					return None
 			else :
 
 				if ( elem['comp'] is None ) :
-					return self.sig_gn
+					return self.sig_gA
 				else :
 					return None
 
@@ -501,12 +501,12 @@ class plas( object ) :
 
 		# TODO Keys
 
-		elif ( key == 'gn' ) :
+		elif ( key == 'ga' ) :
 
-			self.gn = None
+			self.gA = None
 
 			if ( value is not None ) :
-				self.gn = float( value )
+				self.gA = float( value )
 
 		elif ( key == 'gv' ) :
 
@@ -569,13 +569,13 @@ class plas( object ) :
 				if ( value[2] is not None ) :
 					self.v0_z = float( value[2] )
 
-		elif ( key == 'sig_gn' ) :
+		elif ( key == 'sig_ga' ) :
 
-			self.sig_gn = None
+			self.sig_gA = None
 
 			if ( value is not None ) :
 
-				self.sig_gn = float( value )
+				self.sig_gA = float( value )
 
 		elif ( key == 'sig_gv' ) :
 

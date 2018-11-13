@@ -2050,9 +2050,9 @@ class core( QObject ) :
 
 		self.nln_gss_prm.append( self.nln_plas['gV'] )
 
-#		self.nln_gss_prm.append( [ self.nln_plas['dthe'] ] )
+		self.nln_gss_prm.append( self.nln_plas['dthe'] )
 
-#		self.nln_gss_prm.append( [ self.nln_plas['dphi'] ] )
+		self.nln_gss_prm.append( self.nln_plas['dphi'] )
 
 		pop_v0_vec = self.nln_plas['v0_vec']
 
@@ -2872,9 +2872,10 @@ class core( QObject ) :
 
 		# Loop over all S values for graphs
 
-		self.S = [ 1.e-20, 5.e-20, 1.e-19, 5.e-19, 1.e-18, 2.5e-18,
-		           5.e-18, 7.5e-18, 1.e-17, 2.5e-17, 5.e-17, 7.5e-17,
-		           1.e-16, 5.e-16, 1.e-15, 5.e-15, 1.e-14             ]
+		self.S = [ 1.e-20, 5.e-20, 1.e-19, 1.5e-19, 2.e-19, 2.5e-19, 3.e-19, 3.5e-19, 4.e-19, 4.5e-19, 5.e-19, 1.e-18,
+		           2.5e-18, 5.e-18, 7.5e-18, 1.e-17, 2.5e-17, 5.e-17,
+		           7.5e-17, 1.e-16, 2.5e-16, 5.e-16, 1.e-15, 5.e-15,
+		           1.e-14 ]
 
 		final_run = False
 
@@ -2948,25 +2949,25 @@ class core( QObject ) :
 		self.nln_res_plas['b0_y']     = self.mfi_avg_vec[1]
 		self.nln_res_plas['b0_z']     = self.mfi_avg_vec[2]
 
-		pop_v0_vec                    = [fit[2], fit[3], fit[4]]
+		pop_v0_vec                    = [fit[4], fit[5], fit[6]]
 
 		self.nln_res_plas['gA']       =  fit[0]
 		self.nln_res_plas['gV']       =  fit[1]
-		self.nln_res_plas['dthe']     =  -0.6#fit[2]
-		self.nln_res_plas['dphi']     =  -2.#fit[3]
-		self.nln_res_plas['v0_x']     =  fit[2]
-		self.nln_res_plas['v0_y']     =  fit[3]
-		self.nln_res_plas['v0_z']     =  fit[4]
+		self.nln_res_plas['dthe']     =  fit[2]
+		self.nln_res_plas['dphi']     =  fit[3]
+		self.nln_res_plas['v0_x']     =  fit[4]
+		self.nln_res_plas['v0_y']     =  fit[5]
+		self.nln_res_plas['v0_z']     =  fit[6]
 
 		self.nln_res_plas['sig_gA']   =  sig[0]
 		self.nln_res_plas['sig_gV']   =  sig[1]
-#		self.nln_res_plas['sig_dthe'] =  sig[2]
-#		self.nln_res_plas['sig_dphi'] =  sig[3]
-		self.nln_res_plas['sig_v0_x'] =  sig[2]
-		self.nln_res_plas['sig_v0_y'] =  sig[3]
-		self.nln_res_plas['sig_v0_z'] =  sig[4]
+		self.nln_res_plas['sig_dthe'] =  sig[2]
+		self.nln_res_plas['sig_dphi'] =  sig[3]
+		self.nln_res_plas['sig_v0_x'] =  sig[4]
+		self.nln_res_plas['sig_v0_y'] =  sig[5]
+		self.nln_res_plas['sig_v0_z'] =  sig[6]
 
-		c = 5
+		c = 7
 
 		self.nln_res_curr_ion = []
 		self.nln_res_psd_ion  = []
@@ -3165,14 +3166,14 @@ class core( QObject ) :
 		file_text += ' '
 		file_text += str(self.nln_res_plas['gV_sig'])
 		file_text += ' '
-#		file_text += str(self.nln_res_plas['dthe'])
-#		file_text += ' '
-#		file_text += str(self.nln_res_plas['dthe_sig'])
-#		file_text += ' '
-#		file_text += str(self.nln_res_plas['dphi'])
-#		file_text += ' '
-#		file_text += str(self.nln_res_plas['dphi_sig'])
-#		file_text += ' '
+		file_text += str(self.nln_res_plas['dthe'])
+		file_text += ' '
+		file_text += str(self.nln_res_plas['dthe_sig'])
+		file_text += ' '
+		file_text += str(self.nln_res_plas['dphi'])
+		file_text += ' '
+		file_text += str(self.nln_res_plas['dphi_sig'])
+		file_text += ' '
 		file_text += str(self.nln_res_plas['v0_p_c_x'])
 		file_text += ' '
 		file_text += str(self.nln_res_plas['v0_p_c_y'])
@@ -3198,7 +3199,6 @@ class core( QObject ) :
 		chi2_file.write( file_text )
 		chi2_file.close()
 
-		
 		# On the final run...
 
 		if final_run :
@@ -3213,10 +3213,6 @@ class core( QObject ) :
         	        self.nln_res_runtime = (time.time()-start)
 
 			self.emit( SIGNAL('janus_chng_nln_res') )
-
-
-
-
 
 
 
@@ -3345,14 +3341,14 @@ class core( QObject ) :
 #		prm_gA    = 0.69
 		prm_gA    = prm[0]
 		prm_gV    = prm[1]
-#		prm_dthe  = prm[2]
-#		prm_dphi  = prm[3]
-		prm_dthe  = -0.6
-		prm_dphi  = -2.
+		prm_dthe  = prm[2]
+		prm_dphi  = prm[3]
+#		prm_dthe  = -0.6
+#		prm_dphi  = -2.
 
-		prm_v0 = ( prm[2], prm[3], prm[4] )
+		prm_v0 = ( prm[4], prm[5], prm[6] )
 
-		k = 5
+		k = 7
 
 		for p in self.nln_gss_pop :
 

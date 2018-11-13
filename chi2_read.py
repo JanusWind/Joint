@@ -5,7 +5,8 @@ import os.path
 
 rcParams['figure.figsize'] = 10, 10
 
-date = '1997-01-09;23:04:27'
+#date = '1997-01-09;23:04:27'
+date = '1997-01-10;11:59:45'
 
 chi2R_file = open( os.path.join('chi-squared', date,  'chi2R_res_' + date ), 'r' ).readlines()
 
@@ -13,16 +14,22 @@ s        = [0]*len( chi2R_file )
 n        = [0]*len( chi2R_file )
 n_sig    = [0]*len( chi2R_file )
 n_sig_r  = [0]*len( chi2R_file )
-gn       = [0]*len( chi2R_file )
-gn_sig   = [0]*len( chi2R_file )
-gn_sig_r = [0]*len( chi2R_file )
+gA       = [0]*len( chi2R_file )
+gA_sig   = [0]*len( chi2R_file )
+gA_sig_r = [0]*len( chi2R_file )
 gV       = [0]*len( chi2R_file )
 gV_sig   = [0]*len( chi2R_file )
 gV_sig_r = [0]*len( chi2R_file )
+dthe     = [0]*len( chi2R_file )
+dthe_sig = [0]*len( chi2R_file )
+dphi     = [0]*len( chi2R_file )
+dphi_sig = [0]*len( chi2R_file )
 v0_x     = [0]*len( chi2R_file )
 v0_y     = [0]*len( chi2R_file )
 v0_z     = [0]*len( chi2R_file )
 v0       = [0]*len( chi2R_file )
+v0_sig   = [0]*len( chi2R_file )
+v0_sig_r = [0]*len( chi2R_file )
 the_v    = [0]*len( chi2R_file )
 phi_v    = [0]*len( chi2R_file )
 w_per    = [0]*len( chi2R_file )
@@ -33,28 +40,32 @@ Rchi2pl  = [0]*len( chi2R_file )
 Rchi2R   = [0]*len( chi2R_file )
 
 for i in range( len( chi2R_file ) ) :
-	s[i]       = float(chi2R_file[i][0:-1].split(' ')[0])
-	n[i]       = float(chi2R_file[i][0:-1].split(' ')[1])
-	n_sig[i]   = float(chi2R_file[i][0:-1].split(' ')[2])
-	n_sig_r[i] = n_sig[i] / n[i]
-	gn[i]       = float(chi2R_file[i][0:-1].split(' ')[3])
-	gn_sig[i]   = float(chi2R_file[i][0:-1].split(' ')[4])
-	gn_sig_r[i] = gn_sig[i] / gn[i]
+	s[i]        = float(chi2R_file[i][0:-1].split(' ')[0])
+	n[i]        = float(chi2R_file[i][0:-1].split(' ')[1])
+	n_sig[i]    = float(chi2R_file[i][0:-1].split(' ')[2])
+	n_sig_r[i]  = n_sig[i] / n[i]
+	gA[i]       = float(chi2R_file[i][0:-1].split(' ')[3])
+	gA_sig[i]   = float(chi2R_file[i][0:-1].split(' ')[4])
+	gA_sig_r[i] = gA_sig[i] / gA[i]
 	gV[i]       = float(chi2R_file[i][0:-1].split(' ')[5])
 	gV_sig[i]   = float(chi2R_file[i][0:-1].split(' ')[6])
 	gV_sig_r[i] = gV_sig[i] / gV[i]
-	v0_x[i]    = float(chi2R_file[i][0:-1].split(' ')[7])
-	v0_y[i]    = float(chi2R_file[i][0:-1].split(' ')[8])
-	v0_z[i]    = float(chi2R_file[i][0:-1].split(' ')[9])
-	v0[i]      = float(chi2R_file[i][0:-1].split(' ')[10])
-	the_v[i]   = np.rad2deg(np.arccos(  v0_z[i] /  v0[i] ) )
-	phi_v[i]   = np.rad2deg(np.arctan2( v0_y[i], v0_x[i] ) )
-	w_per[i]   = float(chi2R_file[i][0:-1].split(' ')[11])
-	w_par[i]   = float(chi2R_file[i][0:-1].split(' ')[12])
-	w[i]       = float(chi2R_file[i][0:-1].split(' ')[13])
-	Rchi2fc[i] = float(chi2R_file[i][0:-1].split(' ')[14])
-	Rchi2pl[i] = float(chi2R_file[i][0:-1].split(' ')[15])
-	Rchi2R[i]  = Rchi2fc[i]/Rchi2pl[i]
+	dthe[i]     = float(chi2R_file[i][0:-1].split(' ')[7])
+	dthe_sig[i] = float(chi2R_file[i][0:-1].split(' ')[8])
+	dphi[i]     = float(chi2R_file[i][0:-1].split(' ')[9])
+	dphi_sig[i] = float(chi2R_file[i][0:-1].split(' ')[10])
+	v0_x[i]     = float(chi2R_file[i][0:-1].split(' ')[11])
+	v0_y[i]     = float(chi2R_file[i][0:-1].split(' ')[12])
+	v0_z[i]     = float(chi2R_file[i][0:-1].split(' ')[13])
+	v0[i]       = float(chi2R_file[i][0:-1].split(' ')[14])
+	the_v[i]    = np.rad2deg(np.arccos(  v0_z[i] /  v0[i] ) )
+	phi_v[i]    = np.rad2deg(np.arctan2( v0_y[i], v0_x[i] ) )
+	w_per[i]    = float(chi2R_file[i][0:-1].split(' ')[15])
+	w_par[i]    = float(chi2R_file[i][0:-1].split(' ')[16])
+	w[i]        = float(chi2R_file[i][0:-1].split(' ')[17])
+	Rchi2fc[i]  = float(chi2R_file[i][0:-1].split(' ')[18])
+	Rchi2pl[i]  = float(chi2R_file[i][0:-1].split(' ')[19])
+	Rchi2R[i]   = Rchi2fc[i]/Rchi2pl[i]
 
 #-------------------------#
 #---1997-01-09/23:04:27---#
@@ -70,108 +81,644 @@ for i in range( len( chi2R_file ) ) :
 # w_par --        --
 # w     18        21
 
-f1, axs1 = plt.subplots( 4, 1, sharex=True, squeeze=True )
-'''
-# n_p_c
+print 'data loaded'
 
-axs1[0].axhline( 8.35, c='b', lw='1', label=r'$n_{FC}$' )
-axs1[0].axhline( 8.4, c='r', lw='1', label=r'$<n_{PL}>$' )
-axs1[0].axhline( 8.05, c='r', ls='--', lw='1', label=r'$min(n_{PL})$' )
-axs1[0].scatter( s, n, color='k' )
-axs1[0].errorbar( s, n, yerr=n_sig, color='k', ls='', elinewidth=2 )
-axs1[0].set_ylabel( r'$n_{pc}$ $(cm^{-3})$, $\sigma_n$', fontsize=18 )
-axs1[0].set_xscale( 'log' )
-axs1[0].set_xlim( 9e-21, 2e-14 )
-axs1[0].set_ylim( 8, 10 )
-axs1[0].legend(fontsize=18)
-'''
-'''
-# n_p_c_err_r
+def plot_all() :
 
-axs1[1].axhline( min(n_sig_r), color='r', lw='1', label=r'$min(\sigma_n/n)=${}'.format(round(min(n_sig_r), 6) ) )
-axs1[1].scatter( s, n_sig_r, color='k' )
-axs1[1].set_ylabel( r'$\sigma_n/n$', fontsize=18 )
-axs1[1].set_xscale( 'log' )
-axs1[1].set_yscale( 'log' )
-axs1[1].set_xlim( 9e-21, 2e-14 )
-#axs1[0].set_ylim( 7.3, 8.5 )
-axs1[1].legend(fontsize=18)
+	plot_n_gA_sig_r()
 
-'''
-'''
-# gn
+	plot_v0_gV_sig_r()
 
-axs1[1].axhline( max(gn), c='b', lw='1', label=r'$max(g_n)$')
-axs1[1].axhline( min(gn), c='r', lw='1', label=r'$min(g_n)$' )
-axs1[1].scatter( s, gn, color='k' )
-axs1[1].errorbar( s, gn, yerr=gn_sig, color='k', ls='', elinewidth=2 )
-axs1[1].set_ylabel( r'$g_n$, $\sigma_{g_n}$', fontsize=18 )
-axs1[1].set_xscale( 'log' )
-axs1[1].set_xlim( 9e-21, 2e-14 )
-axs1[1].set_ylim( 0.5, 1.1 )
-axs1[1].legend(fontsize=18)
-'''
-'''
+	plot_n_v0_w()
 
-#gn_err_r
+	plot_v0xyz()
 
-axs1[3].axhline( min(gn_sig_r), color='r', lw='1', label=r'$min(\sigma_{g_n}/{g_n})=$'+str(round(min(gn_sig_r), 6) ) )
-axs1[3].scatter( s, gn_sig_r, color='k' )
-axs1[3].set_ylabel( r'$\sigma_{g_n}/g_n$', fontsize=18 )
-axs1[3].set_xscale( 'log' )
-axs1[3].set_yscale( 'log' )
-axs1[3].set_xlim( 9e-21, 2e-14 )
-#axs1[1].set_ylim( 0.5, 1.1 )
-axs1[3].legend(fontsize=18)
-'''
+	plot_v0_the_phi()
 
+	plot_the_dthe_phi_dphi()
 
-'''
-# v0_x
+	plot_w_per_par()
 
-axs1[0].axhline( -373., c='b', lw='1', label=r'$v_{0xFC}$')
-axs1[0].axhline( -379, c='r', lw='1', label=r'$<v_{0xPL}>$' )
-axs1[0].scatter( s, v0_x, color='k' )
-axs1[0].set_ylabel( r'$v_{0x}$ $(km/s)$', fontsize=18 )
-axs1[0].set_xscale( 'log' )
-axs1[0].set_ylim( -380, -372 )
-axs1[0].legend(fontsize=18)
+	plot_chi2()
+
+	plot_gA_gV_dthe_dphi()
 
 
 
-# v0_y
+def plot_n_gA_sig_r() :
 
-axs1[1].axhline( 30., c='b', lw='1', label=r'$v_{0yFC}$')
-axs1[1].axhline( 18., c='r', lw='1', label=r'$<v_{0yPL}>$' )
-axs1[1].scatter( s, v0_y, color='k' )
-axs1[1].set_ylabel( r'$v_{0y}$ $(km/s)$', fontsize=18 )
-axs1[1].set_xscale( 'log' )
-axs1[1].set_ylim( 17, 31 )
-axs1[1].legend(fontsize=18)
+	f1, axs1 = plt.subplots( 4, 1, sharex=True, squeeze=True )
+
+	axs1[0].set_title( r'$T = $'+date.replace(';','/'), fontsize=22 )
+
+	# n_p_c
+
+	axs1[0].axhline( 8.35, c='b', lw='1', label=r'$n_{FC}$' )
+	axs1[0].axhline( 8.4, c='r', lw='1', label=r'$<n_{PL}>$' )
+	axs1[0].axhline( 8.05, c='r', ls='--', lw='1', label=r'$min(n_{PL})$' )
+	axs1[0].scatter( s, n, color='k' )
+	axs1[0].errorbar( s, n, yerr=n_sig, color='k', ls='', elinewidth=2 )
+	axs1[0].set_ylabel( r'$n_{pc}$ $(cm^{-3})$', fontsize=18 )
+	axs1[0].set_xscale( 'log' )
+	axs1[0].set_xlim( 9e-21, 2e-14 )
+	#axs1[0].set_ylim( 8, 10 )
+	axs1[0].legend(fontsize=18)
+
+	# n_p_c_sig_r
+
+	axs1[1].axhline( min(n_sig_r), color='r', lw='1', label=r'$min(\sigma_n/n)=$'+str(round(min(n_sig_r), 6) ) )
+	axs1[1].scatter( s, n_sig_r, color='k' )
+	axs1[1].set_ylabel( r'$\sigma_n/n$', fontsize=18 )
+	axs1[1].set_xscale( 'log' )
+	axs1[1].set_yscale( 'log' )
+	axs1[1].set_xlim( 9e-21, 2e-14 )
+	#axs1[0].set_ylim( 7.3, 8.5 )
+	axs1[1].legend(fontsize=18)
+
+	# gA
+
+	axs1[2].axhline( max(gA), c='b', lw='1', label=r'$max(g_A)=$'+str(round(max(gA), 4) ) )
+	axs1[2].axhline( min(gA), c='r', lw='1', label=r'$min(g_A)=$'+str(round(min(gA), 4) ) )
+	axs1[2].scatter( s, gA, color='k' )
+	axs1[2].errorbar( s, gA, yerr=gA_sig, color='k', ls='', elinewidth=2 )
+	axs1[2].set_ylabel( r'$g_A$', fontsize=18 )
+	axs1[2].set_xscale( 'log' )
+	axs1[2].set_xlim( 9e-21, 2e-14 )
+	#axs1[2].set_ylim( 0.5, 1.1 )
+	axs1[2].legend(fontsize=18)
+
+
+	#gA_sig_r
+
+	axs1[3].axhline( min(gA_sig_r), color='r', lw='1', label=r'$min(\sigma_{g_A}/{g_A})=$'+str(round(min(gA_sig_r), 6) ) )
+	axs1[3].scatter( s, gA_sig_r, color='k' )
+	axs1[3].set_ylabel( r'$\sigma_{g_A}/g_A$', fontsize=18 )
+	axs1[3].set_xscale( 'log' )
+	axs1[3].set_yscale( 'log' )
+	axs1[3].set_xlim( 9e-21, 2e-14 )
+	#axs1[3].set_ylim( 0.5, 1.1 )
+	axs1[3].legend(fontsize=18)
+
+	plt.subplots_adjust(wspace=0, hspace=0.2)
+	plt.tight_layout()
+
+	plot_vars = 'n_gA_sig_r'
+
+	plt.savefig( os.path.join( 'chi-squared', date, plot_vars + '.pdf' ), bbox_inches='tight', dpi=40 )
+	plt.savefig( os.path.join( 'chi-squared', date, plot_vars + '.eps' ), bbox_inches='tight', dpi=40 )
+
+	plt.show()
 
 
 
-# v0_z
 
-axs1[2].axhline( 7., c='b', lw='1', label=r'$v_{0zFC}$')
-axs1[2].axhline( 11., c='r', lw='1', label=r'$<v_{0zPL}>$' )
-axs1[2].scatter( s, v0_z, color='k' )
-axs1[2].set_ylabel( r'$v_{0z}$ $(km/s)$', fontsize=18 )
-axs1[2].set_xscale( 'log' )
-axs1[2].set_ylim( 6, 12 )
-axs1[2].legend(fontsize=18)
-'''
+def plot_v0_gV_sig_r() :
+
+	f1, axs1 = plt.subplots( 4, 1, sharex=True, squeeze=True )
+
+	axs1[0].set_title( r'$T = $'+date.replace(';','/'), fontsize=22 )
+
+	# v0
+
+	axs1[0].axhline( 374., c='b', lw='1', label=r'$v_{0FC}$')
+	axs1[0].axhline( 380., c='r', lw='1', label=r'$<v_{0PL}>$' )
+	axs1[0].scatter( s, v0, color='k' )
+	axs1[0].set_ylabel( r'$v_{0}$ $(km/s)$', fontsize=18 )
+	axs1[0].set_xscale( 'log' )
+	#axs1[0].set_ylim( 373, 381 )
+	axs1[0].legend(fontsize=18)
+
+	# gV
+
+	axs1[1].axhline( max(gV), c='b', lw='1', label=r'$max(g_V)=$'+str(round(max(gV), 3)))
+	axs1[1].axhline( min(gV), c='r', lw='1', label=r'$min(g_V)=$'+str(round(min(gV), 3)))
+	axs1[1].scatter( s, gV, color='k' )
+	axs1[1].errorbar( s, gV, yerr=gV_sig, color='k', ls='', elinewidth=2 )
+	axs1[1].set_ylabel( r'$g_V$', fontsize=18 )
+	axs1[1].set_xscale( 'log' )
+	axs1[1].set_xlim( 9e-21, 2e-14 )
+	#axs1[1].set_ylim( 0.5, 1.1 )
+	axs1[1].legend(fontsize=18)
 
 
-# v0
+	#gV_err_r
 
-axs1[0].axhline( 374., c='b', lw='1', label=r'$v_{0FC}$')
-axs1[0].axhline( 380., c='r', lw='1', label=r'$<v_{0PL}>$' )
-axs1[0].scatter( s, v0, color='k' )
-axs1[0].set_ylabel( r'$v_{0}$ $(km/s)$', fontsize=18 )
-axs1[0].set_xscale( 'log' )
-axs1[0].set_ylim( 373, 381 )
-axs1[0].legend(fontsize=18)
+	axs1[2].axhline( min(gV_sig_r), color='r', lw='1', label=r'$min(\sigma_{g_V}/{g_V})=$'+str(round(min(gV_sig_r), 6) ) )
+	axs1[2].scatter( s, gV_sig_r, color='k' )
+	axs1[2].set_ylabel( r'$\sigma_{g_V}/g_V$', fontsize=18 )
+	axs1[2].set_xscale( 'log' )
+	axs1[2].set_yscale( 'log' )
+	axs1[2].set_xlim( 9e-21, 2e-14 )
+	#axs1[2].set_ylim( 0.5, 1.1 )
+	axs1[2].legend(fontsize=18)
+
+	# Reduced chi-squared Ratio
+
+	axs1[3].scatter( s, Rchi2R, color='k' )
+	axs1[3].set_ylabel( r'${\chi}^{2(R)}_{FC}/{\chi}^{2(R)}_{PL}$ (no s)', fontsize=18 )
+	axs1[3].set_xscale( 'log' )
+	axs1[3].set_yscale( 'log' )
+	axs1[3].axhline( 1, c='g', lw='1' )
+	axs1[3].set_xlim( 1e-20, 1e-14 )
+	axs1[3].set_ylim( 1e14, 1e19 )
+
+	axs1[3].set_xlabel( r's $({\chi}^{2(R)}_{PL} \textasciitilde 1/(s{\sigma})^2)$', fontsize=18 )
+
+	plt.subplots_adjust(wspace=0, hspace=0.2)
+	plt.tight_layout()
+
+	plot_vars = 'v0_gV_sig_r'
+
+	plt.savefig( os.path.join( 'chi-squared', date, plot_vars + '.pdf' ), bbox_inches='tight', dpi=40 )
+	plt.savefig( os.path.join( 'chi-squared', date, plot_vars + '.eps' ), bbox_inches='tight', dpi=40 )
+
+	plt.show()
+
+
+
+
+
+
+def plot_n_v0_w() :
+
+	f1, axs1 = plt.subplots( 4, 1, sharex=True, squeeze=True )
+
+	axs1[0].set_title( r'$T = $'+date.replace(';','/'), fontsize=22 )
+
+	# n_p_c
+
+	axs1[0].axhline( 8.35, c='b', lw='1', label=r'$n_{FC}$' )
+	axs1[0].axhline( 8.4, c='r', lw='1', label=r'$<n_{PL}>$' )
+	axs1[0].axhline( 8.05, c='r', ls='--', lw='1', label=r'$min(n_{PL})$' )
+	axs1[0].scatter( s, n, color='k' )
+	axs1[0].errorbar( s, n, yerr=n_sig, color='k', ls='', elinewidth=2 )
+	axs1[0].set_ylabel( r'$n_{pc}$ $(cm^{-3})$', fontsize=18 )
+	axs1[0].set_xscale( 'log' )
+	axs1[0].set_xlim( 9e-21, 2e-14 )
+	#axs1[0].set_ylim( 8, 10 )
+	axs1[0].legend(fontsize=18)
+
+	# v0
+
+	axs1[1].axhline( 374., c='b', lw='1', label=r'$v_{0FC}$')
+	axs1[1].axhline( 380., c='r', lw='1', label=r'$<v_{0PL}>$' )
+	axs1[1].scatter( s, v0, color='k' )
+	axs1[1].set_ylabel( r'$v_{0}$ $(km/s)$', fontsize=18 )
+	axs1[1].set_xscale( 'log' )
+	#axs1[1].set_ylim( 373, 381 )
+	axs1[1].legend(fontsize=18)
+
+	# w
+
+	axs1[2].axhline( 18, c='b', lw='1', label=r'$w_{FC}$')
+	axs1[2].axhline( 21, c='r', lw='1', label=r'$<w_{PL}>$' )
+	axs1[2].scatter( s, w, color='k' )
+	axs1[2].set_ylabel( r'$w$', fontsize=18 )
+	axs1[2].set_xscale( 'log' )
+	#axs1[2].set_ylim( 13, 22 )
+	axs1[2].legend(fontsize=18)
+
+	# Reduced chi-squared Ratio
+
+	axs1[3].scatter( s, Rchi2R, color='k' )
+	axs1[3].set_ylabel( r'${\chi}^{2(R)}_{FC}/{\chi}^{2(R)}_{PL}$ (no s)', fontsize=18 )
+	axs1[3].set_xscale( 'log' )
+	axs1[3].set_yscale( 'log' )
+	axs1[3].axhline( 1, c='g', lw='1' )
+	axs1[3].set_xlim( 1e-20, 1e-14 )
+	axs1[3].set_ylim( 1e14, 1e19 )
+
+	axs1[3].set_xlabel( r's $({\chi}^{2(R)}_{PL} \textasciitilde 1/(s{\sigma})^2)$', fontsize=18 )
+
+	plt.subplots_adjust(wspace=0, hspace=0.2)
+	plt.tight_layout()
+
+	plot_vars = 'n_v0_w'
+
+	plt.savefig( os.path.join( 'chi-squared', date, plot_vars + '.pdf' ), bbox_inches='tight', dpi=40 )
+	plt.savefig( os.path.join( 'chi-squared', date, plot_vars + '.eps' ), bbox_inches='tight', dpi=40 )
+
+	plt.show()
+
+
+
+
+def plot_v0xyz() :
+
+	f1, axs1 = plt.subplots( 4, 1, sharex=True, squeeze=True )
+
+	axs1[0].set_title( r'$T = $'+date.replace(';','/'), fontsize=22 )
+
+	# v0
+
+	axs1[0].axhline( 374., c='b', lw='1', label=r'$v_{0FC}$')
+	axs1[0].axhline( 380., c='r', lw='1', label=r'$<v_{0PL}>$' )
+	axs1[0].scatter( s, v0, color='k' )
+	axs1[0].set_ylabel( r'$v_{0}$ $(km/s)$', fontsize=18 )
+	axs1[0].set_xscale( 'log' )
+	axs1[0].set_xlim( 1e-20, 1e-14 )
+	#axs1[0].set_ylim( 373, 381 )
+	axs1[0].legend(fontsize=18)
+
+	# v0_x
+
+	axs1[1].axhline( -373., c='b', lw='1', label=r'$v_{0xFC}$')
+	axs1[1].axhline( -379, c='r', lw='1', label=r'$<v_{0xPL}>$' )
+	axs1[1].scatter( s, v0_x, color='k' )
+	axs1[1].set_ylabel( r'$v_{0x}$ $(km/s)$', fontsize=18 )
+	axs1[1].set_xscale( 'log' )
+	axs1[1].set_xlim( 1e-20, 1e-14 )
+	#axs1[1].set_ylim( -380, -372 )
+	axs1[1].legend(fontsize=18)
+
+	# v0_y
+
+	axs1[2].axhline( 30., c='b', lw='1', label=r'$v_{0yFC}$')
+	axs1[2].axhline( 18., c='r', lw='1', label=r'$<v_{0yPL}>$' )
+	axs1[2].scatter( s, v0_y, color='k' )
+	axs1[2].set_ylabel( r'$v_{0y}$ $(km/s)$', fontsize=18 )
+	axs1[2].set_xscale( 'log' )
+	axs1[2].set_xlim( 1e-20, 1e-14 )
+	#axs1[2].set_ylim( 17, 31 )
+	axs1[2].legend(fontsize=18)
+
+	# v0_z
+
+	axs1[3].axhline( 7., c='b', lw='1', label=r'$v_{0zFC}$')
+	axs1[3].axhline( 11., c='r', lw='1', label=r'$<v_{0zPL}>$' )
+	axs1[3].scatter( s, v0_z, color='k' )
+	axs1[3].set_ylabel( r'$v_{0z}$ $(km/s)$', fontsize=18 )
+	axs1[3].set_xscale( 'log' )
+	axs1[3].set_xlim( 1e-20, 1e-14 )
+	#axs1[3].set_ylim( 6, 12 )
+	axs1[3].legend(fontsize=18)
+
+	axs1[3].set_xlabel( r's $({\chi}^{2(R)}_{PL} \textasciitilde 1/(s{\sigma})^2)$', fontsize=18 )
+
+	axs1[0].set_title( r'$T = $'+date.replace(';','/'), fontsize=22 )
+
+	plt.subplots_adjust(wspace=0, hspace=0.2)
+	plt.tight_layout()
+
+	plot_vars = 'v0xyz'
+
+	plt.savefig( os.path.join( 'chi-squared', date, plot_vars + '.pdf' ), bbox_inches='tight', dpi=40 )
+	plt.savefig( os.path.join( 'chi-squared', date, plot_vars + '.eps' ), bbox_inches='tight', dpi=40 )
+
+	plt.show()
+
+
+
+
+def plot_v0_the_phi() :
+
+	f1, axs1 = plt.subplots( 4, 1, sharex=True, squeeze=True )
+
+	axs1[0].set_title( r'$T = $'+date.replace(';','/'), fontsize=22 )
+
+	# v0
+
+	axs1[0].axhline( 374., c='b', lw='1', label=r'$v_{0FC}$')
+	axs1[0].axhline( 380., c='r', lw='1', label=r'$<v_{0PL}>$' )
+	axs1[0].scatter( s, v0, color='k' )
+	axs1[0].set_ylabel( r'$v_{0}$ $(km/s)$', fontsize=18 )
+	axs1[0].set_xscale( 'log' )
+	axs1[0].set_xlim( 1e-20, 1e-14 )
+	#axs1[0].set_ylim( 373, 381 )
+	axs1[0].legend(fontsize=18)
+
+	# the_v
+
+	axs1[1].axhline( 88.928, c='b', lw='1', label=r'$\theta_{vFC}$')
+	axs1[1].axhline( 88.339, c='r', lw='1', label=r'$<\theta_{vPL}>$' )
+	axs1[1].scatter( s, the_v, color='k' )
+	axs1[1].set_ylabel( r'$\theta_{v}$', fontsize=18 )
+	axs1[1].set_xscale( 'log' )
+	axs1[1].set_xlim( 1e-20, 1e-14 )
+	#axs1[1].set_ylim( 88.3, 89. )
+	axs1[1].legend(fontsize=18)
+
+	# phi_v
+
+	axs1[2].axhline( 175.40, c='b', lw='1', label=r'$\phi_{vFC}$')
+	axs1[2].axhline( 177.28, c='r', lw='1', label=r'$<\phi_{vPL}>$' )
+	axs1[2].scatter( s, phi_v, color='k' )
+	axs1[2].set_ylabel( r'$\phi_{v}$', fontsize=18 )
+	axs1[2].set_xscale( 'log' )
+	axs1[2].set_xlim( 1e-20, 1e-14 )
+	#axs1[2].set_ylim( 175, 178 )
+	axs1[2].legend(fontsize=18)
+
+	# Reduced chi-squared Ratio
+
+	axs1[3].scatter( s, Rchi2R, color='k' )
+	axs1[3].set_ylabel( r'${\chi}^{2(R)}_{FC}/{\chi}^{2(R)}_{PL}$ (no s)', fontsize=18 )
+	axs1[3].set_xscale( 'log' )
+	axs1[3].set_yscale( 'log' )
+	axs1[3].axhline( 1, c='g', lw='1' )
+	axs1[3].set_xlim( 1e-20, 1e-14 )
+	axs1[3].set_ylim( 1e14, 1e19 )
+
+	axs1[3].set_xlabel( r's $({\chi}^{2(R)}_{PL} \textasciitilde 1/(s{\sigma})^2)$', fontsize=18 )
+
+	#for tick in axs1[1].yaxis.get_major_ticks():
+	#	tick.label.set_fontsize(18)
+
+	axs1[0].set_title( r'$T = $'+date.replace(';','/'), fontsize=22 )
+
+	#plt.xticks( rotation=45, fontsize=16 )
+
+	#plt.yticks( fontsize=16 )
+
+	plt.subplots_adjust(wspace=0, hspace=0.2)
+	plt.tight_layout()
+
+	plot_vars = 'v0_the_phi'
+
+	plt.savefig( os.path.join( 'chi-squared', date, plot_vars + '.pdf' ), bbox_inches='tight', dpi=40 )
+	plt.savefig( os.path.join( 'chi-squared', date, plot_vars + '.eps' ), bbox_inches='tight', dpi=40 )
+
+	plt.show()
+
+
+
+def plot_the_dthe_phi_dphi() :
+
+	f1, axs1 = plt.subplots( 4, 1, sharex=True, squeeze=True )
+
+	axs1[0].set_title( r'$T = $'+date.replace(';','/'), fontsize=22 )
+
+	# the_v
+
+	axs1[0].axhline( 88.928, c='b', lw='1', label=r'$\theta_{vFC}$')
+	axs1[0].axhline( 88.339, c='r', lw='1', label=r'$<\theta_{vPL}>$' )
+	axs1[0].scatter( s, the_v, color='k' )
+	axs1[0].set_ylabel( r'$\theta_{v}$', fontsize=18 )
+	axs1[0].set_xscale( 'log' )
+	axs1[0].set_xlim( 1e-20, 1e-14 )
+	#axs1[0].set_ylim( 88.3, 89. )
+	axs1[0].legend(fontsize=18)
+
+	# dthe
+
+	axs1[1].scatter( s, dthe, color='k' )
+	axs1[1].axhline( max(dthe), c='b', lw='1', label=r'$max(\Delta\theta)=$'+str(round(max(dthe), 4) ) )
+	axs1[1].axhline( min(dthe), c='r', lw='1', label=r'$min(\Delta\theta)=$'+str(round(min(dthe), 4) ) )
+	axs1[1].set_ylabel( r'$\Delta\theta$', fontsize=18 )
+	axs1[1].set_xscale( 'log' )
+	axs1[1].set_xlim( 1e-20, 1e-14 )
+	axs1[1].errorbar( s, dthe, yerr=dthe_sig, color='k', ls='', elinewidth=2 )
+	axs1[1].legend(fontsize=18)
+
+	# phi_v
+
+	axs1[2].axhline( 175.40, c='b', lw='1', label=r'$\phi_{vFC}$')
+	axs1[2].axhline( 177.28, c='r', lw='1', label=r'$<\phi_{vPL}>$' )
+	axs1[2].scatter( s, phi_v, color='k' )
+	axs1[2].set_ylabel( r'$\phi_{v}$', fontsize=18 )
+	axs1[2].set_xscale( 'log' )
+	axs1[2].set_xlim( 1e-20, 1e-14 )
+	#axs1[2].set_ylim( 175, 178 )
+	axs1[2].legend(fontsize=18)
+
+	# dphi
+
+	axs1[3].scatter( s, dphi, color='k' )
+	axs1[3].axhline( max(dphi), c='b', lw='1', label=r'$max(\Delta\phi)=$'+str(round(max(dphi), 4) ) )
+	axs1[3].axhline( min(dphi), c='r', lw='1', label=r'$min(\Delta\phi)=$'+str(round(min(dphi), 4) ) )
+	axs1[3].set_ylabel( r'$\Delta\phi$', fontsize=18 )
+	axs1[3].set_xscale( 'log' )
+	axs1[3].set_xlim( 1e-20, 1e-14 )
+	axs1[3].errorbar( s, dphi, yerr=dphi_sig, color='k', ls='', elinewidth=2 )
+	axs1[3].legend(fontsize=18)
+
+	axs1[3].set_xlabel( r's $({\chi}^{2(R)}_{PL} \textasciitilde 1/(s{\sigma})^2)$', fontsize=18 )
+
+	#for tick in axs1[1].yaxis.get_major_ticks():
+	#	tick.label.set_fontsize(18)
+
+	axs1[0].set_title( r'$T = $'+date.replace(';','/'), fontsize=22 )
+
+	#plt.xticks( rotation=45, fontsize=16 )
+
+	#plt.yticks( fontsize=16 )
+
+	plt.subplots_adjust(wspace=0, hspace=0.2)
+	plt.tight_layout()
+
+	plot_vars = 'the_dthe_phi_dphi'
+
+	plt.savefig( os.path.join( 'chi-squared', date, plot_vars + '.pdf' ), bbox_inches='tight', dpi=40 )
+	plt.savefig( os.path.join( 'chi-squared', date, plot_vars + '.eps' ), bbox_inches='tight', dpi=40 )
+
+	plt.show()
+
+
+
+
+
+def plot_w_per_par() :
+
+	f1, axs1 = plt.subplots( 4, 1, sharex=True, squeeze=True )
+
+	axs1[0].set_title( r'$T = $'+date.replace(';','/'), fontsize=22 )
+
+	# w
+
+	axs1[0].axhline( 18, c='b', lw='1', label=r'$w_{FC}$')
+	axs1[0].axhline( 21, c='r', lw='1', label=r'$<w_{PL}>$' )
+	axs1[0].scatter( s, w, color='k' )
+	axs1[0].set_ylabel( r'$w$', fontsize=18 )
+	axs1[0].set_xscale( 'log' )
+	axs1[0].set_xlim( 1e-20, 1e-14 )
+	#axs1[0].set_ylim( 13, 22 )
+	axs1[0].legend(fontsize=18)
+
+	# w_per
+
+	axs1[1].scatter( s, w_per, color='k' )
+	axs1[1].set_ylabel( r'$w_{per}$', fontsize=18 )
+	axs1[1].set_xscale( 'log' )
+	axs1[1].set_xlim( 1e-20, 1e-14 )
+	#axs1[1].set_ylim( 12, 22 )
+	axs1[1].legend(fontsize=18)
+
+	# w_par
+
+	axs1[2].scatter( s, w_par, color='k' )
+	axs1[2].set_ylabel( r'$w_{par}$', fontsize=18 )
+	axs1[2].set_xscale( 'log' )
+	axs1[2].set_xlim( 1e-20, 1e-14 )
+	#axs1[2].set_ylim( 14, 22 )
+	axs1[2].legend(fontsize=18)
+
+	# Reduced chi-squared Ratio
+
+	axs1[3].scatter( s, Rchi2R, color='k' )
+	axs1[3].set_ylabel( r'${\chi}^{2(R)}_{FC}/{\chi}^{2(R)}_{PL}$ (no s)', fontsize=18 )
+	axs1[3].set_xscale( 'log' )
+	axs1[3].set_yscale( 'log' )
+	axs1[3].axhline( 1, c='g', lw='1' )
+	axs1[3].set_xlim( 1e-20, 1e-14 )
+	axs1[3].set_ylim( 1e14, 1e19 )
+
+	axs1[3].set_xlabel( r's $({\chi}^{2(R)}_{PL} \textasciitilde 1/(s{\sigma})^2)$', fontsize=18 )
+
+	#for tick in axs1[1].yaxis.get_major_ticks():
+	#	tick.label.set_fontsize(18)
+
+	axs1[0].set_title( r'$T = $'+date.replace(';','/'), fontsize=22 )
+
+	#plt.xticks( rotation=45, fontsize=16 )
+
+	#plt.yticks( fontsize=16 )
+
+	plt.subplots_adjust(wspace=0, hspace=0.2)
+	plt.tight_layout()
+
+	plot_vars = 'w_per_par'
+
+	plt.savefig( os.path.join( 'chi-squared', date, plot_vars + '.pdf' ), bbox_inches='tight', dpi=40 )
+	plt.savefig( os.path.join( 'chi-squared', date, plot_vars + '.eps' ), bbox_inches='tight', dpi=40 )
+
+	plt.show()
+
+
+
+
+def plot_chi2() :
+
+	f1, axs1 = plt.subplots( 3, 1, sharex=True, squeeze=True )
+
+	axs1[0].set_title( r'$T = $'+date.replace(';','/'), fontsize=22 )
+
+	# Reduced chi-squared FC
+
+	axs1[0].scatter( s, Rchi2fc, color='k' )
+	axs1[0].set_ylabel( r'${\chi}^{2(R)}_{FC}$', fontsize=18 )
+	axs1[0].set_xscale( 'log' )
+	axs1[0].set_yscale( 'log' )
+	#axs1[0].axhline( 1, c='g', lw='1' )
+	axs1[0].set_xlim( 1e-20, 1e-14 )
+	#axs1[0].set_ylim( 0.01, 100 )
+
+	# Reduced chi-squared PL
+
+	axs1[1].scatter( s, Rchi2pl, color='k' )
+	axs1[1].set_ylabel( r'${\chi}^{2(R)}_{PL}$ (no s)', fontsize=18 )
+	axs1[1].set_xscale( 'log' )
+	axs1[1].set_yscale( 'log' )
+	axs1[1].axhline( 1, c='g', lw='1' )
+	axs1[1].set_xlim( 1e-20, 1e-14 )
+	axs1[1].set_ylim( 1e-13, 1e-12 )
+	#axs1[1].set_ylim( 1e-14, 5e-13 )
+	#axs1[1].set_ylim( 0.01, 100 )
+
+	# Reduced chi-squared Ratio
+
+	axs1[2].scatter( s, Rchi2R, color='k' )
+	axs1[2].set_ylabel( r'${\chi}^{2(R)}_{FC}/{\chi}^{2(R)}_{PL}$ (no s)', fontsize=18 )
+	axs1[2].set_xscale( 'log' )
+	axs1[2].set_yscale( 'log' )
+	axs1[2].axhline( 1, c='g', lw='1' )
+	axs1[2].set_xlim( 1e-20, 1e-14 )
+	axs1[2].set_ylim( 1e14, 1e19 )
+
+	axs1[2].set_xlabel( r's $({\chi}^{2(R)}_{PL} \textasciitilde 1/(s{\sigma})^2)$', fontsize=18 )
+
+	#for tick in axs1[1].yaxis.get_major_ticks():
+	#	tick.label.set_fontsize(18)
+
+	axs1[0].set_title( r'$T = $'+date.replace(';','/'), fontsize=22 )
+
+	#plt.xticks( rotation=45, fontsize=16 )
+
+	#plt.yticks( fontsize=16 )
+
+	plt.subplots_adjust(wspace=0, hspace=0.2)
+	plt.tight_layout()
+
+	plot_vars = 'chi2'
+
+	plt.savefig( os.path.join( 'chi-squared', date, plot_vars + '.pdf' ), bbox_inches='tight', dpi=40 )
+	plt.savefig( os.path.join( 'chi-squared', date, plot_vars + '.eps' ), bbox_inches='tight', dpi=40 )
+
+	plt.show()
+
+
+def plot_gA_gV_dthe_dphi() :
+
+	f1, axs1 = plt.subplots( 4, 1, sharex=True, squeeze=True )
+
+	axs1[0].set_title( r'$T = $'+date.replace(';','/'), fontsize=22 )
+
+	# gA
+
+	axs1[0].axhline( max(gA), c='b', lw='1', label=r'$max(g_A)=$'+str(round(max(gA), 4) ))
+	axs1[0].axhline( min(gA), c='r', lw='1', label=r'$min(g_A)=$'+str(round(min(gA), 4) ) )
+	axs1[0].scatter( s, gA, color='k' )
+	axs1[0].errorbar( s, gA, yerr=gA_sig, color='k', ls='', elinewidth=2 )
+	axs1[0].set_ylabel( r'$g_A$', fontsize=18 )
+	axs1[0].set_xscale( 'log' )
+	axs1[0].set_xlim( 9e-21, 2e-14 )
+	#axs1[0].set_ylim( 0.5, 1.1 )
+	axs1[0].legend(fontsize=18)
+
+	# gV
+
+	axs1[1].axhline( max(gV), c='b', lw='1', label=r'$max(g_V)=$'+str(round(max(gV), 3)))
+	axs1[1].axhline( min(gV), c='r', lw='1', label=r'$min(g_V)=$'+str(round(min(gV), 3)))
+	axs1[1].scatter( s, gV, color='k' )
+	axs1[1].errorbar( s, gV, yerr=gV_sig, color='k', ls='', elinewidth=2 )
+	axs1[1].set_ylabel( r'$g_V$', fontsize=18 )
+	axs1[1].set_xscale( 'log' )
+	axs1[1].set_xlim( 9e-21, 2e-14 )
+	#axs1[1].set_ylim( 0.5, 1.1 )
+	axs1[1].legend(fontsize=18)
+
+	# dthe
+
+	axs1[2].scatter( s, dthe, color='k' )
+	axs1[2].axhline( max(dthe), c='b', lw='1', label=r'$max(\Delta\theta)=$'+str(round(max(dthe), 4) ) )
+	axs1[2].axhline( min(dthe), c='r', lw='1', label=r'$min(\Delta\theta)=$'+str(round(min(dthe), 4) ) )
+	axs1[2].set_ylabel( r'$\Delta\theta$', fontsize=18 )
+	axs1[2].set_xscale( 'log' )
+	axs1[2].set_xlim( 1e-20, 1e-14 )
+	axs1[2].errorbar( s, dthe, yerr=dthe_sig, color='k', ls='', elinewidth=2 )
+	axs1[2].legend(fontsize=18)
+
+	# dphi
+
+	axs1[3].scatter( s, dphi, color='k' )
+	axs1[3].axhline( max(dphi), c='b', lw='1', label=r'$max(\Delta\phi)=$'+str(round(max(dphi), 4) ) )
+	axs1[3].axhline( min(dphi), c='r', lw='1', label=r'$min(\Delta\phi)=$'+str(round(min(dphi), 4) ) )
+	axs1[3].set_ylabel( r'$\Delta\phi$', fontsize=18 )
+	axs1[3].set_xscale( 'log' )
+	axs1[3].set_xlim( 1e-20, 1e-14 )
+	axs1[3].errorbar( s, dphi, yerr=dphi_sig, color='k', ls='', elinewidth=2 )
+	axs1[3].legend(fontsize=18)
+
+	axs1[3].set_xlabel( r's $({\chi}^{2(R)}_{PL} \textasciitilde 1/(s{\sigma})^2)$', fontsize=18 )
+
+	#for tick in axs1[1].yaxis.get_major_ticks():
+	#	tick.label.set_fontsize(18)
+
+	axs1[0].set_title( r'$T = $'+date.replace(';','/'), fontsize=22 )
+
+	#plt.xticks( rotation=45, fontsize=16 )
+
+	#plt.yticks( fontsize=16 )
+
+	plt.subplots_adjust(wspace=0, hspace=0.2)
+	plt.tight_layout()
+
+	plot_vars = 'gA_gV_dthe_dphi'
+
+	plt.savefig( os.path.join( 'chi-squared', date, plot_vars + '.pdf' ), bbox_inches='tight', dpi=40 )
+	plt.savefig( os.path.join( 'chi-squared', date, plot_vars + '.eps' ), bbox_inches='tight', dpi=40 )
+
+	plt.show()
+
 
 
 '''
@@ -186,142 +733,3 @@ axs1[1].set_xlim( 9e-21, 2e-14 )
 #axs1[0].set_ylim( 7.3, 8.5 )
 axs1[1].legend(fontsize=18)
 '''
-
-# gV
-
-axs1[2].axhline( max(gV), c='b', lw='1', label=r'$max(g_V)$')
-axs1[2].axhline( min(gV), c='r', lw='1', label=r'$min(g_V)$' )
-axs1[2].scatter( s, gV, color='k' )
-axs1[2].errorbar( s, gV, yerr=gV_sig, color='k', ls='', elinewidth=2 )
-axs1[2].set_ylabel( r'$g_V$, $\sigma_{g_V}$', fontsize=18 )
-axs1[2].set_xscale( 'log' )
-axs1[2].set_xlim( 9e-21, 2e-14 )
-#axs1[2].set_ylim( 0.5, 1.1 )
-axs1[2].legend(fontsize=18)
-
-
-#gV_err_r
-
-axs1[3].axhline( min(gV_sig_r), color='r', lw='1', label=r'$min(\sigma_{g_V}/{g_V})=$'+str(round(min(gV_sig_r), 6) ) )
-axs1[3].scatter( s, gV_sig_r, color='k' )
-axs1[3].set_ylabel( r'$\sigma_{g_V}/g_V$', fontsize=18 )
-axs1[3].set_xscale( 'log' )
-axs1[3].set_yscale( 'log' )
-axs1[3].set_xlim( 9e-21, 2e-14 )
-#axs1[1].set_ylim( 0.5, 1.1 )
-axs1[3].legend(fontsize=18)
-
-
-
-
-
-'''
-# the_v
-
-axs1[1].axhline( 88.928, c='b', lw='1', label=r'$\theta_{vFC}$')
-axs1[1].axhline( 88.339, c='r', lw='1', label=r'$<\theta_{vPL}>$' )
-axs1[1].scatter( s, the_v, color='k' )
-axs1[1].set_ylabel( r'$\theta_{v}$', fontsize=18 )
-axs1[1].set_xscale( 'log' )
-axs1[1].set_ylim( 88.3, 89. )
-axs1[1].legend(fontsize=18)
-
-
-
-# phi_v
-
-axs1[2].axhline( 175.40, c='b', lw='1', label=r'$\phi_{vFC}$')
-axs1[2].axhline( 177.28, c='r', lw='1', label=r'$<\phi_{vPL}>$' )
-axs1[2].scatter( s, phi_v, color='k' )
-axs1[2].set_ylabel( r'$\phi_{v}$', fontsize=18 )
-axs1[2].set_xscale( 'log' )
-axs1[2].set_ylim( 175, 178 )
-axs1[2].legend(fontsize=18)
-'''
-
-'''
-# w_per
-
-axs1[1].scatter( s, w_per, color='k' )
-axs1[1].set_ylabel( r'$w_{per}$', fontsize=18 )
-axs1[1].set_xscale( 'log' )
-axs1[1].set_ylim( 12, 22 )
-axs1[1].legend(fontsize=18)
-
-
-
-# w_par
-
-axs1[2].scatter( s, w_par, color='k' )
-axs1[2].set_ylabel( r'$w_{par}$', fontsize=18 )
-axs1[2].set_xscale( 'log' )
-axs1[2].set_ylim( 14, 22 )
-axs1[2].legend(fontsize=18)
-
-
-
-# w
-
-axs1[0].axhline( 18, c='b', lw='1', label=r'$w_{FC}$')
-axs1[0].axhline( 21, c='r', lw='1', label=r'$<w_{PL}>$' )
-axs1[0].scatter( s, w, color='k' )
-axs1[0].set_ylabel( r'$w$', fontsize=18 )
-axs1[0].set_xscale( 'log' )
-axs1[0].set_ylim( 13, 22 )
-axs1[0].legend(fontsize=18)
-'''
-
-
-'''
-#for tick in axs1[0].yaxis.get_major_ticks():
-#	tick.label.set_fontsize(18)
-
-axs1[0].scatter( s, Rchi2fc, color='k' )
-axs1[0].set_ylabel( r'${\chi}^{2(R)}_{FC}$', fontsize=18 )
-axs1[0].set_xscale( 'log' )
-axs1[0].set_yscale( 'log' )
-#axs1[0].axhline( 1, c='g', lw='1' )
-axs1[0].set_xlim( 1e-20, 1e-14 )
-#axs1[0].set_ylim( 0.01, 100 )
-
-axs1[1].scatter( s, Rchi2pl, color='k' )
-axs1[1].set_ylabel( r'${\chi}^{2(R)}_{PL}$ (no s)', fontsize=18 )
-axs1[1].set_xscale( 'log' )
-axs1[1].set_yscale( 'log' )
-axs1[1].axhline( 1, c='g', lw='1' )
-axs1[1].set_xlim( 1e-20, 1e-14 )
-axs1[1].set_ylim( 2e-13, 4e-13 )
-#axs1[1].set_ylim( 0.01, 100 )
-'''
-'''
-axs1[3].scatter( s, Rchi2R, color='k' )
-axs1[3].set_ylabel( r'${\chi}^{2(R)}_{FC}/{\chi}^{2(R)}_{PL}$ (no s)', fontsize=18 )
-axs1[3].set_xscale( 'log' )
-axs1[3].set_yscale( 'log' )
-axs1[3].axhline( 1, c='g', lw='1' )
-axs1[3].set_xlim( 1e-20, 1e-14 )
-axs1[3].set_ylim( 1e14, 1e17 )
-#axs1[2].set_ylim( 0.01, 100 )
-'''
-axs1[3].set_xlabel( r's $({\chi}^{2(R)}_{PL} \textasciitilde 1/(s{\sigma})^2)$', fontsize=18 )
-
-#for tick in axs1[1].yaxis.get_major_ticks():
-#	tick.label.set_fontsize(18)
-
-axs1[0].set_title( r'$T = $'+date.replace(';','/'), fontsize=22 )
-
-
-#plt.xticks( rotation=45, fontsize=16 )
-
-#plt.yticks( fontsize=16 )
-
-plt.subplots_adjust(wspace=0, hspace=0.2)
-plt.tight_layout()
-
-plot_vars = 'v0_gV_sig_r'
-
-plt.savefig( os.path.join( 'chi-squared', date, plot_vars + '.pdf' ), bbox_inches='tight', dpi=40 )
-plt.savefig( os.path.join( 'chi-squared', date, plot_vars + '.eps' ), bbox_inches='tight', dpi=40 )
-
-plt.show()
-

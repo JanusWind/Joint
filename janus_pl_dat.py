@@ -114,28 +114,6 @@ class pl_dat( object ) :
 		self._mom2  = self._mom0*self['vel_cen']**2
 
 	# ----------------------------------------------------------------------
-	# GENERATE THE LOOK DIRECTIONS AND MOMENTS VALUES.
-	# ----------------------------------------------------------------------
-
-	def adj_mom( self, gA, gV, dthe, dphi ) :
-
-		dthe = dthe * pi/180.
-		dphi = dphi * pi/180.
-
-		self._dir_x_adj = -sin(self._the + dthe) * cos(self._phi + dphi)
-		self._dir_y_adj = -sin(self._the + dthe) * sin(self._phi + dphi)
-		self._dir_z_adj = -cos(self._the + dthe)
-
-		self._mom0_adj  = 1./(sqrt(gV)*gA)*self['psd']*self['vel_cen']**2*\
-		                  sin( self['the_cen'] + dthe )*self['vel_del']*\
-		                  deg2rad( self['the_del'] )*\
-		                  deg2rad( self['phi_del'] )
-		self._mom1x_adj = self._mom0_adj*sqrt(gV)*self['vel_cen']*self._dir_x_adj
-		self._mom1y_adj = self._mom0_adj*sqrt(gV)*self['vel_cen']*self._dir_y_adj
-		self._mom1z_adj = self._mom0_adj*sqrt(gV)*self['vel_cen']*self._dir_z_adj
-		self._mom2_adj  = self._mom0_adj*gV*self['vel_cen']**2
-
-	# ----------------------------------------------------------------------
 	# DEFINE THE KEYS FOR THIS CLASS.
 	# ----------------------------------------------------------------------
 
@@ -143,6 +121,9 @@ class pl_dat( object ) :
 #
 #               return self.__dict__['_'+key]
 #
+
+		# Spectrum Values
+
 		if ( key == 'spec' ) :
 			return self._spec
 		elif ( key == 'valid' ) :
@@ -188,6 +169,9 @@ class pl_dat( object ) :
 			return self._phi
 		elif ( key == 'phi_del' ) :
 			return self._phi_del
+
+		# Calculated Directions
+
 		elif ( key == 'dir_x' ) :
 			return self._dir_x
 		elif ( key == 'dir_y' ) :
@@ -196,6 +180,15 @@ class pl_dat( object ) :
 			return self._dir_z
 		elif ( key == 'dir' ) :
 			return ( self._dir_x, self._dir_y, self._dir_z )
+		elif ( key == 'dir_x_adj' ) :
+			return self._dir_x_adj
+		elif ( key == 'dir_y_adj' ) :
+			return self._dir_y_adj
+		elif ( key == 'dir_z_adj' ) :
+			return self._dir_z_adj
+		elif ( key == 'dir_adj' ) :
+			return ( self._dir_x_adj, self._dir_y_adj,
+			                          self._dir_z_adj  )
 		elif ( key == 'norm_b_x' ) :
 			return self._norm_b_x
 		elif ( key == 'norm_b_y' ) :
@@ -204,6 +197,55 @@ class pl_dat( object ) :
 			return self._norm_b_z
 		elif ( key == 'norm_b' ) :
 			return ( self._norm_b_x,self._norm_b_y,self._norm_b_z )
+
+		# Bulk Velocities
+
+		elif ( key == 'u_par_mag' ) :
+			return self._u_par_mag
+		elif ( key == 'u_par_x' ) :
+			return self._u_par_x
+		elif ( key == 'u_par_y' ) :
+			return self._u_par_y
+		elif ( key == 'u_par_z' ) :
+			return self._u_par_z
+		elif ( key == 'u_par' ) :
+			return ( self._u_par_x, self._u_par_y, self._u_par_z )
+		elif ( key == 'u_per_mag' ) :
+			return self._u_per_mag
+		elif ( key == 'u_per_x' ) :
+			return self._u_per_x
+		elif ( key == 'u_per_y' ) :
+			return self._u_per_y
+		elif ( key == 'u_per_z' ) :
+			return self._u_per_z
+		elif ( key == 'u_per' ) :
+			return ( self._u_per_x, self._u_per_y, self._u_per_z )
+
+		elif ( key == 'u_par_mag_adj' ) :
+			return self._u_par_mag_adj
+		elif ( key == 'u_par_x_adj' ) :
+			return self._u_par_x_adj
+		elif ( key == 'u_par_y_adj' ) :
+			return self._u_par_y_adj
+		elif ( key == 'u_par_z_adj' ) :
+			return self._u_par_z_adj
+		elif ( key == 'u_par_adj' ) :
+			return ( self._u_par_x_adj, self._u_par_y_adj,
+			                            self._u_par_z_adj  )
+		elif ( key == 'u_per_mag_adj' ) :
+			return self._u_per_mag_adj
+		elif ( key == 'u_per_x_adj' ) :
+			return self._u_per_x_adj
+		elif ( key == 'u_per_y_adj' ) :
+			return self._u_per_y_adj
+		elif ( key == 'u_per_z_adj' ) :
+			return self._u_per_z_adj
+		elif ( key == 'u_per_adj' ) :
+			return ( self._u_per_x_adj, self._u_per_y_adj,
+			                            self._u_per_z_adj  )
+
+		# Calculated Moments
+
 		elif ( key == 'mom_sel' ) :
 			return ( self.mom_sel )
 		elif ( key == 'mom0' ) :
@@ -277,18 +319,48 @@ class pl_dat( object ) :
 
 		# Compute perpendicular and parallel velocities.
 
-		self._u_par   = self['vel_cen'] * calc_arr_dot( self['norm_b'],
+		self._u_par_mag = self['vel_cen'] * calc_arr_dot( self['norm_b'],
 		                                                self['dir']    )
 
-		self._u_par_x = self._u_par * self._norm_b_x
-		self._u_par_y = self._u_par * self._norm_b_y
-		self._u_par_z = self._u_par * self._norm_b_z
+		self._u_par_x   = self['u_par_mag'] * self['norm_b_x']
+		self._u_par_y   = self['u_par_mag'] * self['norm_b_y']
+		self._u_par_z   = self['u_par_mag'] * self['norm_b_z']
 
-		self._u_per_x = self['vel_cen'] * self['dir_x'] - self._u_par_x
-		self._u_per_y = self['vel_cen'] * self['dir_y'] - self._u_par_y
-		self._u_per_z = self['vel_cen'] * self['dir_z'] - self._u_par_z
-		self._u_per   = sqrt( self._u_per_x**2 + self._u_per_y**2 +
-		                                         self._u_per_z**2  )
+		self._u_per_x   = self['vel_cen']*self['dir_x']-self['u_par_x']
+		self._u_per_y   = self['vel_cen']*self['dir_y']-self['u_par_y']
+		self._u_per_z   = self['vel_cen']*self['dir_z']-self['u_par_z']
+
+		self._u_per_mag = sqrt( self['u_per_x']**2+self['u_per_y']**2
+		                                          +self['u_per_z']**2 )
+
+	#-----------------------------------------------------------------------
+	# DEFINE THE FUNCTION FOR ADJUSTING THE DIRECTIONS.
+	#-----------------------------------------------------------------------
+
+	def adj_dir( self, dthe, dphi ) :
+
+		dthe = dthe * pi/180.
+		dphi = dphi * pi/180.
+
+		self._dir_x_adj = -sin(self['the_cen'] + dthe) * cos(self['phi_cen'] + dphi)
+		self._dir_y_adj = -sin(self['the_cen'] + dthe) * sin(self['phi_cen'] + dphi)
+		self._dir_z_adj = -cos(self['the_cen'] + dthe)
+
+		# Compute perpendicular and parallel velocities.
+
+		self._u_par_mag_adj = self['vel_cen'] * calc_arr_dot( self['norm_b'],
+		                                                self['dir_adj']    )
+
+		self._u_par_x_adj = self['u_par_mag_adj'] * self['norm_b_x']
+		self._u_par_y_adj = self['u_par_mag_adj'] * self['norm_b_y']
+		self._u_par_z_adj = self['u_par_mag_adj'] * self['norm_b_z']
+
+		self._u_per_x_adj = self['vel_cen']*self['dir_x_adj']-self['u_par_x_adj']
+		self._u_per_y_adj = self['vel_cen']*self['dir_y_adj']-self['u_par_y_adj']
+		self._u_per_z_adj = self['vel_cen']*self['dir_z_adj']-self['u_par_z_adj']
+
+		self._u_per_mag_adj = sqrt( self['u_per_x_adj']**2+self['u_per_y_adj']**2
+		                                          +self['u_per_z_adj']**2 )
 
 	#-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION FOR SETTING THE MOMENTS SELECTION BOOLEAN.
@@ -354,11 +426,15 @@ class pl_dat( object ) :
 
 			return
 
+		# Calibrate the look directions
+
+		self.adj_dir( dthe, dphi )
+
 		# Calibrate the parameters n, v0, and dv (if applicable)
 
-		n = gn * n
+		n = n / ( gA * sqrt( gV ) )
 
-		v0 = [ gn * sqrt( gV ) * vv for vv in v0 ]
+		v0 = [ sqrt( gV ) * vv for vv in v0 ]
 
 		if dv is not None :
 
@@ -372,15 +448,15 @@ class pl_dat( object ) :
 			v_vec = [ v0[i] + dv * self['norm_b'][i]
 			                           for i in range( len( v0 ) ) ]
 
-
-
 		# Scale the velocities with charge to mass ratio.
 
 		vel_cen = self['vel_cen'] * sqrt( q/m )
 
-		u_vec = [ vel_cen * self['dir_x'],
-		          vel_cen * self['dir_y'],
-		          vel_cen * self['dir_z']  ]
+		# Calculate the bulk velocity
+
+		u_vec = [ vel_cen * self['dir_x_adj'],
+		          vel_cen * self['dir_y_adj'],
+		          vel_cen * self['dir_z_adj']  ]
  
 		# Check whether thermal velocity is a 2-D list, which implies
 		# anisotropy. If it is calculate the perpendicular and parallel
@@ -401,13 +477,13 @@ class pl_dat( object ) :
 
 			v_vec_per = [ v_vec[i] - v_vec_par[i] for i in range(3) ]
 
-			u_vec_par = [ self._u_par_x * sqrt( q/m ),
-			              self._u_par_y * sqrt( q/m ),
-			              self._u_par_z * sqrt( q/m )  ]
+			u_vec_par = [ self['u_par_x_adj'] * sqrt( q/m ),
+			              self['u_par_y_adj'] * sqrt( q/m ),
+			              self['u_par_z_adj'] * sqrt( q/m )  ]
 
-			u_vec_per = [ self._u_per_x * sqrt( q/m ),
-			              self._u_per_y * sqrt( q/m ),
-			              self._u_per_z * sqrt( q/m )  ]
+			u_vec_per = [ self['u_per_x_adj'] * sqrt( q/m ),
+			              self['u_per_y_adj'] * sqrt( q/m ),
+			              self['u_per_z_adj'] * sqrt( q/m )  ]
 		
 			# Calculate the exponent
 
