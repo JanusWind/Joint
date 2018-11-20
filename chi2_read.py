@@ -5,8 +5,10 @@ import os.path
 
 rcParams['figure.figsize'] = 10, 10
 
+date = '1997-01-08;14:05:44'
 #date = '1997-01-09;23:04:27'
-date = '1997-01-10;11:59:45'
+#date = '1997-01-10;11:59:45'
+#date = '1997-01-12;20:20:29'
 
 chi2R_file = open( os.path.join('chi-squared', date,  'chi2R_res_' + date ), 'r' ).readlines()
 
@@ -107,6 +109,8 @@ for i in range( len( chi2R_file ) ) :
 # w_par --        --
 # w     18        21
 
+print max(cor_AV), max(cor_Adt), max(cor_Adp), max(cor_Vdt), max(cor_Vdp), max(cor_dtdp)
+
 best_gA = min( gA_sig )
 best_i = np.where( np.array( gA_sig ) == best_gA )[0][0]
 best_s = s[best_i]
@@ -133,6 +137,8 @@ def plot_all() :
 	plot_chi2()
 
 	plot_gA_gV_dthe_dphi()
+
+	plot_gA_gV_dthe_dphi_sig()
 
 
 
