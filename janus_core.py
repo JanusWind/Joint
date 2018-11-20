@@ -2966,6 +2966,8 @@ class core( QObject ) :
 		self.nln_res_plas['sig_v0_y'] =  sig[5]
 		self.nln_res_plas['sig_v0_z'] =  sig[6]
 
+		
+
 		c = 7
 
 		self.nln_res_curr_ion = []
@@ -3172,6 +3174,18 @@ class core( QObject ) :
 		file_text += str(self.nln_res_plas['dphi'])
 		file_text += ' '
 		file_text += str(self.nln_res_plas['dphi_sig'])
+		file_text += ' '
+		file_text += str(self.nln_res_plas.covar[0][1]) #gA-gV
+		file_text += ' '
+		file_text += str(self.nln_res_plas.covar[0][2]) #gA-dthe
+		file_text += ' '
+		file_text += str(self.nln_res_plas.covar[0][3]) #gA-dphi
+		file_text += ' '
+		file_text += str(self.nln_res_plas.covar[1][2]) #gV-dthe
+		file_text += ' '
+		file_text += str(self.nln_res_plas.covar[1][3]) #gV-dphi
+		file_text += ' '
+		file_text += str(self.nln_res_plas.covar[2][3]) #dthe-dphi
 		file_text += ' '
 		file_text += str(self.nln_res_plas['v0_p_c_x'])
 		file_text += ' '
