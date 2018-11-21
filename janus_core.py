@@ -3208,7 +3208,14 @@ class core( QObject ) :
 
 		file_string = 'chi2R_res_' + str( self.time_txt ).replace( '/', ';' )
 
+		if not os.path.exists( 'chi-squared/'+str( self.time_txt ).replace( '/', ';' ) ) :
+
+			os.mkdir( 'chi-squared/'+str( self.time_txt ).replace( '/', ';' ) )
+
 		chi2_file = open( os.path.join( 'chi-squared', str( self.time_txt ).replace( '/', ';' ), file_string ), 'a' )
+
+		if ( S == self.S[0] ) :
+			chi2_file.truncate(0)
 		chi2_file.write( file_text )
 		chi2_file.close()
 

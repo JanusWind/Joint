@@ -116,7 +116,7 @@ class widget_mfi_colat_plot( QWidget ) :
 
 		labelStyle = {'color':'k'}
 		self.axs_x.setLabel( 'Time [s]'   , **labelStyle )
-		self.axs_y.setLabel( 'Elev. [deg]', **labelStyle )
+		self.axs_y.setLabel( 'Colat. [deg]', **labelStyle )
 
 		self.axs_x.label.setFont( self.fnt )
 		self.axs_y.label.setFont( self.fnt )

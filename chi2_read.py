@@ -5,116 +5,162 @@ import os.path
 
 rcParams['figure.figsize'] = 10, 10
 
-date = '1997-01-08;14:05:44'
-#date = '1997-01-09;23:04:27'
-#date = '1997-01-10;11:59:45'
-#date = '1997-01-12;20:20:29'
+dates = []
 
-chi2R_file = open( os.path.join('chi-squared', date,  'chi2R_res_' + date ), 'r' ).readlines()
+#dates += ['1997-01-08;14:05:44']
+#dates += ['1997-01-09;23:04:27']
+dates += ['1997-01-09;03:01:01']
+dates += ['1997-01-09;03:10:42']
+dates += ['1997-01-09;03:21:37']
+dates += ['1997-01-09;03:31:14']
+dates += ['1997-01-09;03:40:52']
+dates += ['1997-01-09;03:50:27']
+dates += ['1997-01-09;04:00:04']
+dates += ['1997-01-09;04:09:42']
+dates += ['1997-01-09;04:20:36']
+dates += ['1997-01-09;04:30:17']
+dates += ['1997-01-09;04:39:49']
+dates += ['1997-01-09;04:49:26']
+dates += ['1997-01-09;05:00:27']
+dates += ['1997-01-09;05:09:58']
+dates += ['1997-01-09;05:19:39']
+dates += ['1997-01-09;05:30:37']
+dates += ['1997-01-09;05:40:11']
+dates += ['1997-01-09;05:49:52']
+dates += ['1997-01-09;06:03:29']
+dates += ['1997-01-09;06:10:24']
+dates += ['1997-01-09;06:20:02']
+dates += ['1997-01-09;06:29:33']
+dates += ['1997-01-09;06:40:37']
+dates += ['1997-01-09;06:48:49']
 
-s        = [0]*len( chi2R_file )
-n        = [0]*len( chi2R_file )
-n_sig    = [0]*len( chi2R_file )
-n_sig_r  = [0]*len( chi2R_file )
-gA       = [0]*len( chi2R_file )
-gA_sig   = [0]*len( chi2R_file )
-gA_sig_r = [0]*len( chi2R_file )
-gV       = [0]*len( chi2R_file )
-gV_sig   = [0]*len( chi2R_file )
-gV_sig_r = [0]*len( chi2R_file )
-dthe     = [0]*len( chi2R_file )
-dthe_sig = [0]*len( chi2R_file )
-dphi     = [0]*len( chi2R_file )
-dphi_sig = [0]*len( chi2R_file )
-cov_AV   = [0]*len( chi2R_file )
-cov_Adt  = [0]*len( chi2R_file )
-cov_Adp  = [0]*len( chi2R_file )
-cov_Vdt  = [0]*len( chi2R_file )
-cov_Vdp  = [0]*len( chi2R_file )
-cov_dtdp = [0]*len( chi2R_file )
-cor_AV   = [0]*len( chi2R_file )
-cor_Adt  = [0]*len( chi2R_file )
-cor_Adp  = [0]*len( chi2R_file )
-cor_Vdt  = [0]*len( chi2R_file )
-cor_Vdp  = [0]*len( chi2R_file )
-cor_dtdp = [0]*len( chi2R_file )
-v0_x     = [0]*len( chi2R_file )
-v0_y     = [0]*len( chi2R_file )
-v0_z     = [0]*len( chi2R_file )
-v0       = [0]*len( chi2R_file )
-v0_sig   = [0]*len( chi2R_file )
-v0_sig_r = [0]*len( chi2R_file )
-the_v    = [0]*len( chi2R_file )
-phi_v    = [0]*len( chi2R_file )
-w_per    = [0]*len( chi2R_file )
-w_par    = [0]*len( chi2R_file )
-w        = [0]*len( chi2R_file )
-Rchi2fc  = [0]*len( chi2R_file )
-Rchi2pl  = [0]*len( chi2R_file )
-Rchi2R   = [0]*len( chi2R_file )
+#dates += ['1997-01-10;11:59:45']
+#dates += ['1997-01-12;20:20:29']
 
-for i in range( len( chi2R_file ) ) :
-	s[i]        = float(chi2R_file[i][0:-1].split(' ')[0])
-	n[i]        = float(chi2R_file[i][0:-1].split(' ')[1])
-	n_sig[i]    = float(chi2R_file[i][0:-1].split(' ')[2])
-	n_sig_r[i]  = n_sig[i] / n[i]
-	gA[i]       = float(chi2R_file[i][0:-1].split(' ')[3])
-	gA_sig[i]   = float(chi2R_file[i][0:-1].split(' ')[4])
-	gA_sig_r[i] = gA_sig[i] / gA[i]
-	gV[i]       = float(chi2R_file[i][0:-1].split(' ')[5])
-	gV_sig[i]   = float(chi2R_file[i][0:-1].split(' ')[6])
-	gV_sig_r[i] = gV_sig[i] / gV[i]
-	dthe[i]     = float(chi2R_file[i][0:-1].split(' ')[7])
-	dthe_sig[i] = float(chi2R_file[i][0:-1].split(' ')[8])
-	dphi[i]     = float(chi2R_file[i][0:-1].split(' ')[9])
-	dphi_sig[i] = float(chi2R_file[i][0:-1].split(' ')[10])
-	cov_AV[i]   = float(chi2R_file[i][0:-1].split(' ')[11])
-	cov_Adt[i]  = float(chi2R_file[i][0:-1].split(' ')[12])
-	cov_Adp[i]  = float(chi2R_file[i][0:-1].split(' ')[13])
-	cov_Vdt[i]  = float(chi2R_file[i][0:-1].split(' ')[14])
-	cov_Vdp[i]  = float(chi2R_file[i][0:-1].split(' ')[15])
-	cov_dtdp[i] = float(chi2R_file[i][0:-1].split(' ')[16])
+for date in dates :
 
-	cor_AV[i]   = cov_AV[i]**2/(gA_sig[i]*gV_sig[i])
-	cor_Adt[i]  = cov_Adt[i]**2/(gA_sig[i]*dthe_sig[i])
-	cor_Adp[i]  = cov_dtdp[i]**2/(gA_sig[i]*dphi_sig[i])
-	cor_Vdt[i]  = cov_Vdt[i]**2/(gV_sig[i]*dthe_sig[i])
-	cor_Vdp[i]  = cov_Vdp[i]**2/(gV_sig[i]*dphi_sig[i])
-	cor_dtdp[i] = cov_dtdp[i]**2/(dthe_sig[i]*dphi_sig[i])
+	chi2R_file = open( os.path.join('chi-squared', date,  'chi2R_res_' + date ), 'r' ).readlines()
 
-	v0_x[i]     = float(chi2R_file[i][0:-1].split(' ')[17])
-	v0_y[i]     = float(chi2R_file[i][0:-1].split(' ')[18])
-	v0_z[i]     = float(chi2R_file[i][0:-1].split(' ')[19])
-	v0[i]       = float(chi2R_file[i][0:-1].split(' ')[20])
-	the_v[i]    = np.rad2deg(np.arccos(  v0_z[i] /  v0[i] ) )
-	phi_v[i]    = np.rad2deg(np.arctan2( v0_y[i], v0_x[i] ) )
-	w_per[i]    = float(chi2R_file[i][0:-1].split(' ')[21])
-	w_par[i]    = float(chi2R_file[i][0:-1].split(' ')[22])
-	w[i]        = float(chi2R_file[i][0:-1].split(' ')[23])
-	Rchi2fc[i]  = float(chi2R_file[i][0:-1].split(' ')[24])
-	Rchi2pl[i]  = float(chi2R_file[i][0:-1].split(' ')[25])
-	Rchi2R[i]   = Rchi2fc[i]/Rchi2pl[i]
+	s        = [0]*len( chi2R_file )
+	n        = [0]*len( chi2R_file )
+	n_sig    = [0]*len( chi2R_file )
+	n_sig_r  = [0]*len( chi2R_file )
+	gA       = [0]*len( chi2R_file )
+	gA_sig   = [0]*len( chi2R_file )
+	gA_sig_r = [0]*len( chi2R_file )
+	gV       = [0]*len( chi2R_file )
+	gV_sig   = [0]*len( chi2R_file )
+	gV_sig_r = [0]*len( chi2R_file )
+	dthe     = [0]*len( chi2R_file )
+	dthe_sig = [0]*len( chi2R_file )
+	dphi     = [0]*len( chi2R_file )
+	dphi_sig = [0]*len( chi2R_file )
+	cov_AV   = [0]*len( chi2R_file )
+	cov_Adt  = [0]*len( chi2R_file )
+	cov_Adp  = [0]*len( chi2R_file )
+	cov_Vdt  = [0]*len( chi2R_file )
+	cov_Vdp  = [0]*len( chi2R_file )
+	cov_dtdp = [0]*len( chi2R_file )
+	cor_AV   = [0]*len( chi2R_file )
+	cor_Adt  = [0]*len( chi2R_file )
+	cor_Adp  = [0]*len( chi2R_file )
+	cor_Vdt  = [0]*len( chi2R_file )
+	cor_Vdp  = [0]*len( chi2R_file )
+	cor_dtdp = [0]*len( chi2R_file )
+	v0_x     = [0]*len( chi2R_file )
+	v0_y     = [0]*len( chi2R_file )
+	v0_z     = [0]*len( chi2R_file )
+	v0       = [0]*len( chi2R_file )
+	v0_sig   = [0]*len( chi2R_file )
+	v0_sig_r = [0]*len( chi2R_file )
+	the_v    = [0]*len( chi2R_file )
+	phi_v    = [0]*len( chi2R_file )
+	w_per    = [0]*len( chi2R_file )
+	w_par    = [0]*len( chi2R_file )
+	w        = [0]*len( chi2R_file )
+	Rchi2fc  = [0]*len( chi2R_file )
+	Rchi2pl  = [0]*len( chi2R_file )
+	Rchi2R   = [0]*len( chi2R_file )
 
-#-------------------------#
-#---1997-01-09/23:04:27---#
-#-------FC--------PL------#
-# n     8.35      8.4
-# v0_x  -373      -379
-# v0_y  30        18
-# v0_z  7         11
-# v0    374       380
-# the_v 88.928    88.339
-# phi_v 175.40    177.28
-# w_per --        --
-# w_par --        --
-# w     18        21
+	for i in range( len( chi2R_file ) ) :
+		s[i]        = float(chi2R_file[i][0:-1].split(' ')[0])
+		n[i]        = float(chi2R_file[i][0:-1].split(' ')[1])
+		n_sig[i]    = float(chi2R_file[i][0:-1].split(' ')[2])
+		n_sig_r[i]  = n_sig[i] / n[i]
+		gA[i]       = float(chi2R_file[i][0:-1].split(' ')[3])
+		gA_sig[i]   = float(chi2R_file[i][0:-1].split(' ')[4])
+		gA_sig_r[i] = gA_sig[i] / gA[i]
+		gV[i]       = float(chi2R_file[i][0:-1].split(' ')[5])
+		gV_sig[i]   = float(chi2R_file[i][0:-1].split(' ')[6])
+		gV_sig_r[i] = gV_sig[i] / gV[i]
+		dthe[i]     = float(chi2R_file[i][0:-1].split(' ')[7])
+		dthe_sig[i] = float(chi2R_file[i][0:-1].split(' ')[8])
+		dphi[i]     = float(chi2R_file[i][0:-1].split(' ')[9])
+		dphi_sig[i] = float(chi2R_file[i][0:-1].split(' ')[10])
+		cov_AV[i]   = float(chi2R_file[i][0:-1].split(' ')[11])
+		cov_Adt[i]  = float(chi2R_file[i][0:-1].split(' ')[12])
+		cov_Adp[i]  = float(chi2R_file[i][0:-1].split(' ')[13])
+		cov_Vdt[i]  = float(chi2R_file[i][0:-1].split(' ')[14])
+		cov_Vdp[i]  = float(chi2R_file[i][0:-1].split(' ')[15])
+		cov_dtdp[i] = float(chi2R_file[i][0:-1].split(' ')[16])
 
-print max(cor_AV), max(cor_Adt), max(cor_Adp), max(cor_Vdt), max(cor_Vdp), max(cor_dtdp)
+		cor_AV[i]   = cov_AV[i]/(gA_sig[i]*gV_sig[i])
+		cor_Adt[i]  = cov_Adt[i]/(gA_sig[i]*dthe_sig[i])
+		cor_Adp[i]  = cov_dtdp[i]/(gA_sig[i]*dphi_sig[i])
+		cor_Vdt[i]  = cov_Vdt[i]/(gV_sig[i]*dthe_sig[i])
+		cor_Vdp[i]  = cov_Vdp[i]/(gV_sig[i]*dphi_sig[i])
+		cor_dtdp[i] = cov_dtdp[i]/(dthe_sig[i]*dphi_sig[i])
 
-best_gA = min( gA_sig )
-best_i = np.where( np.array( gA_sig ) == best_gA )[0][0]
-best_s = s[best_i]
+		v0_x[i]     = float(chi2R_file[i][0:-1].split(' ')[17])
+		v0_y[i]     = float(chi2R_file[i][0:-1].split(' ')[18])
+		v0_z[i]     = float(chi2R_file[i][0:-1].split(' ')[19])
+		v0[i]       = float(chi2R_file[i][0:-1].split(' ')[20])
+		the_v[i]    = np.rad2deg(np.arccos(  v0_z[i] /  v0[i] ) )
+		phi_v[i]    = np.rad2deg(np.arctan2( v0_y[i], v0_x[i] ) )
+		w_per[i]    = float(chi2R_file[i][0:-1].split(' ')[21])
+		w_par[i]    = float(chi2R_file[i][0:-1].split(' ')[22])
+		w[i]        = float(chi2R_file[i][0:-1].split(' ')[23])
+		Rchi2fc[i]  = float(chi2R_file[i][0:-1].split(' ')[24])
+		Rchi2pl[i]  = float(chi2R_file[i][0:-1].split(' ')[25])
+		Rchi2R[i]   = Rchi2fc[i]/Rchi2pl[i]
 
+	print date, max(cor_AV), max(cor_Adt), max(cor_Adp), max(cor_Vdt), max(cor_Vdp), max(cor_dtdp)
+
+	best_gA = min( gA_sig )
+	best_i  = np.where( np.array( gA_sig ) == best_gA )[0][0]
+	best_s  = s[best_i]
+
+	file_text  = ''
+	file_text += date
+	file_text += ' '
+	file_text += str( best_s )
+	file_text += ' '
+	file_text += str( gA[best_i] )
+	file_text += ' '
+	file_text += str( gA_sig[best_i] )
+	file_text += ' '
+	file_text += str( gV[best_i] )
+	file_text += ' '
+	file_text += str( gV_sig[best_i] )
+	file_text += ' '
+	file_text += str( dthe[best_i] )
+	file_text += ' '
+	file_text += str( dthe_sig[best_i] )
+	file_text += ' '
+	file_text += str( dphi[best_i] )
+	file_text += ' '
+	file_text += str( dphi_sig[best_i] )
+	file_text += '\n'
+
+	file_string = 'intercal_params_' + dates[0] + '_' + dates[-1]
+
+	intercal_file = open( os.path.join( 'chi-squared', file_string ), 'a' )
+	if ( date == dates[0] ) :
+		intercal_file.truncate(0)
+	intercal_file.write( file_text )
+	intercal_file.close()
+
+	#plot_gA_gV_dthe_dphi_sig( )
 
 print 'data loaded'
 
@@ -138,7 +184,7 @@ def plot_all() :
 
 	plot_gA_gV_dthe_dphi()
 
-	plot_gA_gV_dthe_dphi_sig()
+	plot_gA_gV_dthe_dphi_sig( )
 
 
 
@@ -269,10 +315,6 @@ def plot_v0_gV_sig() :
 	plt.savefig( os.path.join( 'chi-squared', date, plot_vars + '.eps' ), bbox_inches='tight', dpi=40 )
 
 	plt.show()
-
-
-
-
 
 
 def plot_n_v0_w() :
@@ -764,7 +806,7 @@ def plot_gA_gV_dthe_dphi() :
 
 	plt.show()
 
-def plot_gA_gV_dthe_dphi_sig() :
+def plot_gA_gV_dthe_dphi_sig( ) :
 
 	f1, axs1 = plt.subplots( 4, 2, sharex=True, squeeze=True )
 
@@ -880,7 +922,7 @@ def plot_gA_gV_dthe_dphi_sig() :
 	plt.savefig( os.path.join( 'chi-squared', date, plot_vars + '.pdf' ), bbox_inches='tight', dpi=40 )
 	plt.savefig( os.path.join( 'chi-squared', date, plot_vars + '.eps' ), bbox_inches='tight', dpi=40 )
 
-	plt.show()
+	#plt.show()
 
 '''
 # v0_sig
