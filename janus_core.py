@@ -947,7 +947,7 @@ class core( QObject ) :
 		                      + self.mfi_b_y[i]**2.0 )
 		                        for i in range( len( self.mfi_b_x ) ) ]
 
-		mfi_b_colat       = arctan2( self.mfi_b_z, mfi_b_rho )
+		mfi_b_colat       = arctan2( mfi_b_rho, self.mfi_b_z )
 		mfi_b_lon         = arctan2( self.mfi_b_y, self.mfi_b_x )
 
 		self.mfi_b_colat  = rad2deg( mfi_b_colat )
@@ -1845,32 +1845,34 @@ class core( QObject ) :
 
 			return
 
-		# Set the weight parameter "g" for the joint initial guess.
+		# Set the calibration parameters for the joint initial guess.
 
-		g = 1.
-
-		#g = self.mom_fc_res['n']/self.mom_pl_avg['n']
+		#g = 0.69
+		gA =   self.mom_pl_avg['n_p'   ]/self.mom_fc_res['n_p'   ]
+		gV = ( self.mom_fc_res['v0_mag']/self.mom_pl_avg['v0_mag'] )**2
+		dthe = -0.6
+		dphi = -2.
 
 		# Make a new plas( ) object which contains the average moments
 		# of the FC and PESA-L spectra (if PESA-L data were loaded).
 		# Otherwise, it will contain only the FC moments results.
 
-		self.mom_res = plas( g=g )
+		self.mom_res = plas( gA = gA, gV = gV, dthe = dthe, dphi = dphi )
 
 		self.mom_res['v0_x'] = ( ( self.mom_fc_res['v0_x'] +
-		                           g*self.mom_pl_avg['v0_x'] ) /
-		                                              ( 1. + g ) )
+		                           1./gA*self.mom_pl_avg['v0_x'] ) /
+		                                              ( 1. + 1./gA ) )
 
 		self.mom_res['v0_y'] = ( ( self.mom_fc_res['v0_y'] +
-		                           g*self.mom_pl_avg['v0_y'] ) /
-		                                              ( 1. + g ) )
+		                           1./gA*self.mom_pl_avg['v0_y'] ) /
+		                                              ( 1. + 1./gA ) )
 
 		self.mom_res['v0_z'] = ( ( self.mom_fc_res['v0_z'] +
-		                           g*self.mom_pl_avg['v0_z'] ) /
-		                                              ( 1. + g ) )
+		                           1./gA*self.mom_pl_avg['v0_z'] ) /
+		                                              ( 1. + 1./gA ) )
 
 		res_w = ( ( self.mom_fc_res['w_p_c'] +
-		            g*self.mom_pl_avg['w_p_c'] ) / ( 1. + g ) ) 
+		            1./gA*self.mom_pl_avg['w_p_c'] ) / ( 1. + 1./gA ) ) 
 
 		self.mom_res.add_spec( name='Proton', sym='p', m=1., q=1. )
 
@@ -1916,7 +1918,13 @@ class core( QObject ) :
 
 		try :
 
-			self.nln_plas['g'] = self.mom_res['g']
+			self.nln_plas['gA'] = self.mom_res['gA']
+
+			self.nln_plas['gV'] = self.mom_res['gV']
+
+			self.nln_plas['dthe'] = self.mom_res['dthe']
+
+			self.nln_plas['dphi'] = self.mom_res['dphi']
 
 			self.nln_plas['v0_vec'] = [
 			         round( v, 1 ) for v in self.mom_res['v0_vec'] ]
@@ -2038,14 +2046,30 @@ class core( QObject ) :
 		# factor "g", followed by the reference velocity) and compute
 		# the expected currents or psd's from each population.
 
-		self.nln_gss_prm = [ self.nln_plas['g'] ]
+		self.nln_gss_prm = [ self.nln_plas['gA'] ]
+
+		self.nln_gss_prm.append( self.nln_plas['gV'] )
+
+		self.nln_gss_prm.append( self.nln_plas['dthe'] )
+
+		self.nln_gss_prm.append( self.nln_plas['dphi'] )
 
 		pop_v0_vec = self.nln_plas['v0_vec']
+
+		#self.nln_gss_prm = list( pop_v0_vec )
 
 		[ self.nln_gss_prm.append( x ) for x in pop_v0_vec ]
 
 		self.nln_gss_curr_ion = [ ]
 		self.nln_psd_gss_ion  = [ ]
+
+		# Set 'self.nln_psd_gss_ion' to have 'self.pl_spec_arr'
+		# indicies
+
+		for spec in self.pl_spec_arr :
+
+			self.nln_psd_gss_ion.append( [] )
+
 
 		for p in self.nln_gss_pop :
 
@@ -2100,12 +2124,18 @@ class core( QObject ) :
 			                    self.nln_plas.arr_pop[p]['q'],
 			                    pop_v0_vec, pop_n, pop_dv, pop_w ) )
 
-			self.nln_psd_gss_ion.append( [ spec.calc_psd_gss(
-			                  self.nln_plas['g'],
-			                  self.nln_plas.arr_pop[p]['m'],
-			                  self.nln_plas.arr_pop[p]['q'],
-			                  pop_v0_vec, pop_n,
-			                  pop_dv, pop_w      ) for spec in self.pl_spec_arr] )
+			for n in range( len( self.pl_spec_arr ) ) :
+
+				self.nln_psd_gss_ion[n].append(
+				               self.pl_spec_arr[n].calc_psd_gss(
+				               self.nln_plas['gA'],
+				               self.nln_plas['gV'],
+				               self.nln_plas['dthe'],
+				               self.nln_plas['dphi'],
+				               self.nln_plas.arr_pop[p]['m'],
+				               self.nln_plas.arr_pop[p]['q'],
+				               pop_v0_vec, pop_n,
+				               pop_dv, pop_w      ) )
 
 		# Alter the axis order of the arrays of currents and psd's.
 
@@ -2117,7 +2147,7 @@ class core( QObject ) :
 		                     for c in range( self.fc_spec['n_cup']   ) ]
 
 		self.nln_psd_gss_ion  = [ [ [ [ [
-		                self.nln_psd_gss_ion[p][n][t][f][b]
+		                self.nln_psd_gss_ion[n][p][t][f][b]
 		                for p in range( self.nln_gss_n_pop           ) ]
 		                for b in range( self.pl_spec_arr[n]['n_bin'] ) ]
 		                for f in range( self.pl_spec_arr[n]['n_phi'] ) ]
@@ -2592,6 +2622,7 @@ class core( QObject ) :
 
 			n_tk = len( tk_t )
 
+			arr_psd_valid = self.pl_spec_arr[n]['psd_valid']
 			arr_vel_cen = self.pl_spec_arr[n]['vel_cen']
 
 			for j in range( n_tk ) :
@@ -2664,13 +2695,18 @@ class core( QObject ) :
 					# that fall into this range of inflow
 					# speeds.
 
-					tk = where( ( array( arr_vel_cen )
-					              >= v_min ) &
+					tk = where(
+					       ( array( arr_psd_valid[t][p] )
+				                 >= self.pl_spec_arr[n]['psd_min'] ) &
+					            ( array( arr_vel_cen )
+					                            >= v_min ) &
 					            ( array( arr_vel_cen )
 					              <= v_max )            )[0]
 
 					for b in tk :
-						self.nln_pl_sel[n,t,p,b] = True
+
+						if( self.pl_spec_arr[n]['psd'][t][p][b] != 0 ) :
+							self.nln_pl_sel[n,t,p,b] = True
 
 		# Update the counts of selected data.
 
@@ -2746,7 +2782,7 @@ class core( QObject ) :
 	# DEFINE THE FUNCTION FOR RUNNING THE NON-LINEAR ANALYSIS.
 	#-----------------------------------------------------------------------
 
-	def anls_nln( self ) :
+	def anls_nln( self, S=None ) :
 
 		# Re-initialize the output of the non-linear analysis.
 
@@ -2782,7 +2818,8 @@ class core( QObject ) :
 
 		# Message the user that the non-linear analysis has begun.
 
-		self.emit( SIGNAL('janus_mesg'), 'core', 'begin', 'nln' )
+		if S is None :
+			self.emit( SIGNAL('janus_mesg'), 'core', 'begin', 'nln' )
 
 		# Define the function for evaluating the modeled current.
 
@@ -2833,6 +2870,20 @@ class core( QObject ) :
 							x_pl.append(
 							     self.pl_spec_arr[n].arr[t][p][b] )
 
+		# Loop over all S values for graphs
+
+		self.S = [ 1.e-18, 1.778e-18, 3.16e-18, 5.62e-18,
+		           1.e-17, 1.778e-17, 3.16e-17, 5.62e-17,
+		           1.e-16, 1.778e-16, 3.16e-16, 5.62e-16, 1.e-15 ]
+
+		final_run = False
+
+		if( S is None ) :
+			for s in self.S :
+				self.anls_nln( S=s )
+			S = 1.e-17
+			final_run = True
+
 		# Get the currents/psds from the data
 
 		y_fc = [ dat['curr'] for dat in x_fc ]
@@ -2847,8 +2898,13 @@ class core( QObject ) :
 		# Calculate the the normalized uncertainties such that the sum
 		# of the squares of the uncertainties is equal to unity.
 
-		sigma_fc = [ sqrt( y )/sqrt( tot_fc ) for y in y_fc ]
-		sigma_pl = [ sqrt( y )/sqrt( tot_pl ) for y in y_pl ] 
+		#sigma_fc = [ sqrt( y * 0.69  ) for y in y_fc ]
+		#sigma_pl = [ sqrt( y * 1e-20 ) for y in y_pl ]
+
+		#S = 1.e-14
+
+		sigma_fc = [ sqrt( y / 0.69 ) for y in y_fc ]
+		sigma_pl = [ sqrt( S * y / 1e-10 ) for y in y_pl ] 
 
 		# Concatinate the FC and PL data, currents/psds, and
 		# uncertainties into lists.
@@ -2858,35 +2914,26 @@ class core( QObject ) :
 
 		sigma = sigma_fc + sigma_pl
 
-#		print y
+		# Attempt to perform the non-linear fit.  If this fails, reset
+		# the associated variables and abort.
+
+#		try :
+
 		( fit, covar ) = curve_fit( model, x, y, 
 		                            self.nln_gss_prm,
 		                            sigma=sigma       )
 
-#		print fit, covar		
+		sig = sqrt( diag( covar ) )
 
-		#print 'curve'
+#		except :
 
-		# Attempt to perform the non-linear fit.  If this fails, reset
-		# the associated variables and abort.
+#			self.emit( SIGNAL('janus_mesg'), 'core', 'fail', 'nln' )
 
-		try :
+#			self.rset_var( var_nln_res=True )
 
-			( fit, covar ) = curve_fit( model, x, y, 
-			                            self.nln_gss_prm,
-			                            sigma=sigma       )
+#			self.emit( SIGNAL('janus_chng_nln_res') )
 
-			sig = sqrt( diag( covar ) )
-
-		except :
-
-			self.emit( SIGNAL('janus_mesg'), 'core', 'fail', 'nln' )
-
-			self.rset_var( var_nln_res=True )
-
-			self.emit( SIGNAL('janus_chng_nln_res') )
-
-			return
+#			return
 
 		# Save the properties and fit parameters for each ion species
 		# used in this analysis.
@@ -2901,19 +2948,37 @@ class core( QObject ) :
 		self.nln_res_plas['b0_y']     = self.mfi_avg_vec[1]
 		self.nln_res_plas['b0_z']     = self.mfi_avg_vec[2]
 
-		pop_v0_vec                    = [fit[1], fit[2], fit[3]]
-		self.nln_res_plas['g']        =  fit[0]
-		self.nln_res_plas['v0_x']     =  fit[1]
-		self.nln_res_plas['v0_y']     =  fit[2]
-		self.nln_res_plas['v0_z']     =  fit[3]
-		self.nln_res_plas['sig_v0_x'] =  sig[1]
-		self.nln_res_plas['sig_v0_y'] =  sig[2]
-		self.nln_res_plas['sig_v0_z'] =  sig[3]
+		pop_v0_vec                    = [fit[4], fit[5], fit[6]]
 
-		c = 4
+		self.nln_res_plas['gA']       =  fit[0]
+		self.nln_res_plas['gV']       =  fit[1]
+		self.nln_res_plas['dthe']     =  fit[2]
+		self.nln_res_plas['dphi']     =  fit[3]
+		self.nln_res_plas['v0_x']     =  fit[4]
+		self.nln_res_plas['v0_y']     =  fit[5]
+		self.nln_res_plas['v0_z']     =  fit[6]
+
+		self.nln_res_plas['sig_gA']   =  sig[0]
+		self.nln_res_plas['sig_gV']   =  sig[1]
+		self.nln_res_plas['sig_dthe'] =  sig[2]
+		self.nln_res_plas['sig_dphi'] =  sig[3]
+		self.nln_res_plas['sig_v0_x'] =  sig[4]
+		self.nln_res_plas['sig_v0_y'] =  sig[5]
+		self.nln_res_plas['sig_v0_z'] =  sig[6]
+
+		
+
+		c = 7
 
 		self.nln_res_curr_ion = []
 		self.nln_res_psd_ion  = []
+
+		# Set 'self.nln_res_psd_ion' to have 'self.pl_spec_arr'
+		# indicies
+
+		for spec in self.pl_spec_arr :
+
+			self.nln_res_psd_ion.append( [] )
 
 		for p in self.nln_gss_pop :
 
@@ -2975,16 +3040,8 @@ class core( QObject ) :
 			       sig_w=pop_sig_w, sig_w_per=pop_sig_w_per,
 			       sig_w_par=pop_sig_w_par                    )
 
-			# For each datum in the spectrum, compute the expected
-			# current from each population.
-
-			print self.nln_res_plas['g']
-			print self.nln_plas.arr_pop[p]['m']
-			print self.nln_plas.arr_pop[p]['q']
-			print pop_v0_vec
-			print pop_n
-			print pop_dv
-			print pop_w
+			# For each FC datum in the spectrum, compute the
+			# expected current from each population.
 
 			self.nln_res_curr_ion.append(
 			     self.fc_spec.calc_curr ( 
@@ -2992,14 +3049,20 @@ class core( QObject ) :
 			                  self.nln_plas.arr_pop[p]['q'],
 			                  pop_v0_vec, pop_n, pop_dv, pop_w ) )
 
+			# For each PL datum in the spectrum, compute the
+			# expected psd from each population.
+
 			for n in range( len( self.pl_spec_arr ) ) :
 
 				self.nln_res_psd_ion[n].append(
-			             self.pl_spec_arr[n].calc_psd_gss (
-				            self.nln_res_plas['g'],
-			                    self.nln_plas.arr_pop[p]['m'],
-			                    self.nln_plas.arr_pop[p]['q'],
-			                    pop_v0_vec, pop_n, pop_dv, pop_w ) )
+			             [ self.pl_spec_arr[n].calc_psd_gss (
+				          self.nln_res_plas['gA'],
+				          self.nln_res_plas['gV'],
+				          self.nln_res_plas['dthe'],
+				          self.nln_res_plas['dphi'],
+			                  self.nln_plas.arr_pop[p]['m'],
+			                  self.nln_plas.arr_pop[p]['q'],
+			                  pop_v0_vec, pop_n, pop_dv, pop_w ) ] )
 
 		# Save the results of the this non-linear analysis to the
 		# results log.
@@ -3024,7 +3087,7 @@ class core( QObject ) :
 		                     for c in range( self.fc_spec['n_cup']   ) ]
 
 		self.nln_res_psd_ion = [ [ [ [ [
-		                     self.nln_res_psd_ion[p][n][t][f][b]
+		                     self.nln_res_psd_ion[n][p][0][t][f][b]
 		                     for p in range( len(
 		                                 self.nln_res_plas.arr_pop ) ) ]
 		                     for b in range( self.pl_spec_arr[n]['n_bin'] ) ]
@@ -3040,24 +3103,136 @@ class core( QObject ) :
 		                     for n in range( len( self.pl_spec_arr )      ) ]
 
 
-		# Message the user that the non-linear analysis has finished.
+		# Manual calculation of chi-squared
 
-		self.emit( SIGNAL('janus_mesg'), 'core', 'end', 'nln' )
+		y_psd = []
+		f_psd = []
 
-		# Emit a signal that indicates that the results of the
-		# non-linear analysis have changed.
+		for n in range( len( self.pl_spec_arr ) ) :
 
-                self.nln_res_runtime = (time.time()-start)
+			for t in range( self.pl_spec_arr[n]['n_the'] ) :
 
-		self.emit( SIGNAL('janus_chng_nln_res') )
+				for p in range( self.pl_spec_arr[n]['n_phi'] ) :
+
+					for b in range( self.pl_spec_arr[n]['n_bin'] ) :
+
+						if ( self.nln_pl_sel[n][t][p][b] ) :
+
+							y_psd.append(
+							     self.pl_spec_arr[n]['psd'][t][p][b] )
+
+							f_psd.append(
+							     self.nln_res_psd_tot[n][t][p][b] )
+
+		y_curr = []
+		f_curr = []
+
+		for c in range( self.fc_spec['n_cup'] ) :
+
+			for d in range( self.fc_spec['n_dir'] ) :
+
+				for b in range( self.fc_spec['n_bin'] ) :
+
+					if ( self.nln_res_sel[c][d][b] ) :
+
+						y_curr.append( self.fc_spec['curr'][c][d][b] )
+
+						f_curr.append( self.nln_res_curr_tot[c][d][b] )
 
 
+		chi2_fc = sum( [ ( ( y_curr[i] - f_curr[i] ) / sigma_fc ) **2
+		                             for i in range( len( y_curr ) ) ] )
 
+		chi2R_fc = chi2_fc / ( len( y_curr ) - len( self.nln_gss_prm ) )
 
+		chi2_pl = sum( [ ( ( y_psd[i] - f_psd[i] ) / sigma_pl * sqrt(S) ) **2
+		                             for i in range( len( y_psd ) ) ] )
 
+		chi2R_pl = chi2_pl / ( len( y_psd ) - len( self.nln_gss_prm ) )
 
+		print S
 
+		file_text = ''
+		file_text += str(S)
+		file_text += ' '
+		file_text += str(self.nln_res_plas['n_p_c'])
+		file_text += ' '
+		file_text += str(self.nln_res_plas['n_p_c_sig'])
+		file_text += ' '
+		file_text += str(self.nln_res_plas['gA'])
+		file_text += ' '
+		file_text += str(self.nln_res_plas['gA_sig'])
+		file_text += ' '
+		file_text += str(self.nln_res_plas['gV'])
+		file_text += ' '
+		file_text += str(self.nln_res_plas['gV_sig'])
+		file_text += ' '
+		file_text += str(self.nln_res_plas['dthe'])
+		file_text += ' '
+		file_text += str(self.nln_res_plas['dthe_sig'])
+		file_text += ' '
+		file_text += str(self.nln_res_plas['dphi'])
+		file_text += ' '
+		file_text += str(self.nln_res_plas['dphi_sig'])
+		file_text += ' '
+		file_text += str(self.nln_res_plas.covar[0][1]) #gA-gV
+		file_text += ' '
+		file_text += str(self.nln_res_plas.covar[0][2]) #gA-dthe
+		file_text += ' '
+		file_text += str(self.nln_res_plas.covar[0][3]) #gA-dphi
+		file_text += ' '
+		file_text += str(self.nln_res_plas.covar[1][2]) #gV-dthe
+		file_text += ' '
+		file_text += str(self.nln_res_plas.covar[1][3]) #gV-dphi
+		file_text += ' '
+		file_text += str(self.nln_res_plas.covar[2][3]) #dthe-dphi
+		file_text += ' '
+		file_text += str(self.nln_res_plas['v0_p_c_x'])
+		file_text += ' '
+		file_text += str(self.nln_res_plas['v0_p_c_y'])
+		file_text += ' '
+		file_text += str(self.nln_res_plas['v0_p_c_z'])
+		file_text += ' '
+		file_text += str(self.nln_res_plas['v0_p_c'])
+		file_text += ' '
+		file_text += str(self.nln_res_plas['w_per_p_c'])
+		file_text += ' '
+		file_text += str(self.nln_res_plas['w_par_p_c'])
+		file_text += ' '
+		file_text += str(self.nln_res_plas['w_p_c'])
+		file_text += ' '
+		file_text += str(chi2R_fc)
+		file_text += ' '
+		file_text += str(chi2R_pl)
+		file_text += '\n'
 
+		file_string = 'chi2R_res_' + str( self.time_txt ).replace( '/', ';' )
+
+		if not os.path.exists( 'chi-squared/'+str( self.time_txt ).replace( '/', ';' ) ) :
+
+			os.mkdir( 'chi-squared/'+str( self.time_txt ).replace( '/', ';' ) )
+
+		chi2_file = open( os.path.join( 'chi-squared', str( self.time_txt ).replace( '/', ';' ), file_string ), 'a' )
+
+		if ( S == self.S[0] ) :
+			chi2_file.truncate(0)
+		chi2_file.write( file_text )
+		chi2_file.close()
+
+		# On the final run...
+
+		if final_run :
+
+			# Message the user that the non-linear analysis has finished.
+
+			self.emit( SIGNAL('janus_mesg'), 'core', 'end', 'nln' )
+
+			# Emit a signal that indicates that the results of the
+			# non-linear analysis have changed.
+
+        	        self.nln_res_runtime = (time.time()-start)
+
+			self.emit( SIGNAL('janus_chng_nln_res') )
 
 
 
@@ -3182,11 +3357,18 @@ class core( QObject ) :
 		# For each ion species, extract the passed parameters and
 		# calculate it's contribution to the total current.
 
-		prm_g  = prm[0]
 
-		prm_v0 = ( prm[1], prm[2], prm[3] )
+#		prm_gA    = 0.69
+		prm_gA    = prm[0]
+		prm_gV    = prm[1]
+		prm_dthe  = prm[2]
+		prm_dphi  = prm[3]
+#		prm_dthe  = -0.6
+#		prm_dphi  = -2.
 
-		k = 4
+		prm_v0 = ( prm[4], prm[5], prm[6] )
+
+		k = 7
 
 		for p in self.nln_gss_pop :
 
@@ -3229,7 +3411,8 @@ class core( QObject ) :
 			for d in range( len( dat ) ) :
 
 				resp[d] += dat[d].calc_resp(
-				                prm_g,
+				                prm_gA, prm_gV,
+				                prm_dthe, prm_dphi,
 				                self.nln_plas.arr_pop[p]['m'],
 				                self.nln_plas.arr_pop[p]['q'],
 				                prm_v0, prm_n, prm_dv, prm_w   )

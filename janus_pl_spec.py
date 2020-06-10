@@ -65,14 +65,15 @@ class pl_spec( ) :
 	def __init__( self,
 	              t_strt=None, t_stop=None, elev_cen=None, the_del=None,
 	              azim_cen=None, phi_del=None, volt_cen=None, volt_del=None,
-	              psd=None                                               ) :
+	              psd=None, psd_min=1e-10                                ) :
 
-		self._n_bin  = 14
-		self._n_the  = 5
-		self._n_phi  = 5
-		self._t_strt = t_strt
-		self._t_stop = t_stop
-		self._rot    = t_stop - t_strt
+		self._n_bin   = 14
+		self._n_the   = 5
+		self._n_phi   = 5
+		self._t_strt  = t_strt
+		self._t_stop  = t_stop
+		self._rot     = t_stop - t_strt
+		self._psd_min = psd_min
 
 		self._sel_min_bin = 3
 		self._sel_min_dir = 3
@@ -304,6 +305,35 @@ class pl_spec( ) :
 
 		raise KeyError( 'Reassignment not permitted except through'
 		                                    + ' "set_*" functions.' )
+
+	def validate( self ) :
+
+		# Validate each datum in the spectrum.
+
+		# Note.  Each datum should already contain a Boolean parameter,
+		#        "valid", that is pre-valued to indicate whether all
+		#        necessary values have been provided.
+
+		for t in range( self._n_the ) :
+
+			for p in range( self._n_phi ) :
+
+				for b in range( self._n_bin - 1 ) :
+
+					# If the datum is not valid on its own
+					# (e.g., a parameter value is missing),
+					# move on to the next datum (since
+					# nothing more needs to be done).
+
+					if ( not self.arr[t][p][b]['valid'] ) :
+						continue
+
+					# If the current is too low, mark it as
+					# invalid.
+
+					if ( self.arr[t][p][b]['psd'] <
+					                    self['psd_min'] ) :
+						self.arr[t][p][b]._valid = False
 
         #-----------------------------------------------------------------------
 	# DEFINE THE FUNCTION TO ASSIGN THE MAGNETIC FIELD TO EACH DATUM. 
@@ -591,13 +621,13 @@ class pl_spec( ) :
 	# DEFINE THE FUNCTION FOR CALC'ING EXPECTED PSD FROM A POPULATION.
 	#-----------------------------------------------------------------------
 
-	def calc_psd_gss( self, g, m, q, v0, n, dv, w) :
+	def calc_psd_gss( self, gn, gV, dthe, dphi, m, q, v0, n, dv, w) :
 
 		# Return a 3-D list with the calculated current for each bin in
 		# the spectrum.
 
 		return [ [ [ self.arr[t][p][b].calc_psd_gss( 
-		                    g, m, q, v0, n, dv, w      )
+		                    gn, gV, dthe, dphi, m, q, v0, n, dv, w )
 		                    for b in range( self['n_bin'] ) ]
 		                    for p in range( self['n_phi'] ) ]
 		                    for t in range( self['n_the'] ) ]
